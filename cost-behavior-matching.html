@@ -126,10 +126,11 @@
     user-select: none;
     transition: border-color .12s, background .12s, box-shadow .12s;
   }
-  .sc-item:hover  { border-color: #94a3b8; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
-  .sc-item.sel    { border-color: #3b7dd8; border-width: 1.5px; background: #eff6ff; }
-  .sc-item.correct{ border-color: #5a9e3a; border-width: 1.5px; background: #f0f9e8; }
-  .sc-item.wrong  { border-color: #c94040; border-width: 1.5px; background: #fff1f1; }
+  .sc-item:hover    { border-color: #94a3b8; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+  .sc-item.assigned { border-color: #cbd5e1; background: #f1f5f9; }
+  .sc-item.sel      { border-color: #3b7dd8; border-width: 1.5px; background: #eff6ff; }
+  .sc-item.correct  { border-color: #5a9e3a; border-width: 1.5px; background: #f0f9e8; }
+  .sc-item.wrong    { border-color: #c94040; border-width: 1.5px; background: #fff1f1; }
 
   .sc-ltr  { font-size: 13px; font-weight: 700; color: #1a2744; min-width: 16px; flex-shrink: 0; margin-top: 1px; }
   .sc-body { flex: 1; min-width: 0; }
@@ -510,7 +511,10 @@ function render() {
     const bdg  = document.getElementById('bdg-' + l);
     const res  = document.getElementById('res-' + l);
 
-    item.className = 'sc-item' + (sel === l ? ' sel' : '');
+    let cls = 'sc-item';
+    if (sel === l)               cls += ' sel';
+    else if (assignments[l])     cls += ' assigned';
+    item.className = cls;
 
     if (assignments[l]) {
       bdg.textContent = 'Graph ' + assignments[l];
