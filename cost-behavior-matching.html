@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chapter 2: Cost Behavior Practice</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  /* ── Reset & base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    background: #f4f0e8;
+    color: #1a2744;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    background: #1a2744;
+    color: #fff;
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .header-left h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+  .header-left p  { font-size: 13px; color: #a0aec0; margin-top: 2px; }
+
+  /* QR panel trigger */
+  .qr-btn {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    transition: background .15s;
+  }
+  .qr-btn:hover { background: rgba(255,255,255,0.18); }
+
+  /* QR Modal overlay */
+  .qr-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .qr-overlay.show { display: flex; }
+  .qr-modal {
+    background: #fff;
+    border-radius: 14px;
+    padding: 32px;
+    text-align: center;
+    max-width: 300px;
+    width: 90%;
+  }
+  .qr-modal h2 { font-size: 16px; font-weight: 600; color: #1a2744; margin-bottom: 6px; }
+  .qr-modal p  { font-size: 12px; color: #64748b; margin-bottom: 18px; line-height: 1.5; }
+  #qr-code { display: flex; justify-content: center; margin-bottom: 16px; }
+  #qr-url  { font-size: 11px; color: #94a3b8; word-break: break-all; margin-bottom: 18px; }
+  .qr-close {
+    background: #1a2744; color: #fff;
+    border: none; border-radius: 8px;
+    padding: 8px 24px; font-size: 13px;
+    cursor: pointer; font-family: inherit;
+  }
+
+  /* ── Main layout ── */
+  main {
+    max-width: 900px;
+    margin: 28px auto;
+    padding: 0 20px 48px;
+  }
+
+  .hint-box {
+    background: #fff;
+    border: 1px solid #dde3ef;
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: #475569;
+    line-height: 1.6;
+    margin-bottom: 22px;
+  }
+  .hint-box strong { color: #1a2744; font-weight: 600; }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr 1.45fr;
+    gap: 20px;
+    align-items: start;
+  }
+
+  /* ── Column labels ── */
+  .col-lbl {
+    font-size: 11px;
+    font-weight: 600;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    margin-bottom: 10px;
+  }
+
+  /* ── Scenario items ── */
+  .sc-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 9px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 9px;
+    margin-bottom: 6px;
+    cursor: pointer;
+    background: #fff;
+    user-select: none;
+    transition: border-color .12s, background .12s, box-shadow .12s;
+  }
+  .sc-item:hover  { border-color: #94a3b8; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+  .sc-item.sel    { border-color: #3b7dd8; border-width: 1.5px; background: #eff6ff; }
+  .sc-item.correct{ border-color: #5a9e3a; border-width: 1.5px; background: #f0f9e8; }
+  .sc-item.wrong  { border-color: #c94040; border-width: 1.5px; background: #fff1f1; }
+
+  .sc-ltr  { font-size: 13px; font-weight: 700; color: #1a2744; min-width: 16px; flex-shrink: 0; margin-top: 1px; }
+  .sc-body { flex: 1; min-width: 0; }
+  .sc-txt  { font-size: 12.5px; color: #334155; line-height: 1.45; }
+  .sc-meta { display: flex; align-items: center; gap: 7px; margin-top: 5px; min-height: 18px; }
+  .sc-bdg  {
+    font-size: 11px; font-weight: 600;
+    padding: 1px 8px; border-radius: 20px;
+    background: #dbeafe; color: #1e40af;
+    display: none;
+  }
+  .sc-res { font-size: 11.5px; font-weight: 600; }
+
+  /* ── Graph grid ── */
+  .g-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .g-card {
+    border: 1px solid #e2e8f0;
+    border-radius: 9px;
+    padding: 7px 5px 4px;
+    cursor: pointer;
+    background: #fff;
+    user-select: none;
+    transition: border-color .12s, background .12s, box-shadow .12s;
+  }
+  .g-card:hover    { border-color: #94a3b8; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+  .g-card.clickable{ border-color: #3b7dd8; border-width: 1.5px; background: #f8fbff; }
+  .g-num {
+    font-size: 11px; text-align: center;
+    color: #94a3b8; font-weight: 600;
+    margin-top: 3px;
+  }
+  .g-svg { display: block; width: 100%; height: auto; }
+  .ax { stroke: #cbd5e1; stroke-width: .9; fill: none; }
+  .cl { stroke: #D85A30; stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+  .ax-lbl { font-size: 5px; fill: #94a3b8; font-family: system-ui, sans-serif; }
+  .axis-note { font-size: 12px; color: #64748b; background: #f8f6f0; border: 1px solid #dde3ef; border-radius: 8px; padding: 8px 12px; margin-bottom: 10px; line-height: 1.6; }
+  .axis-note strong { color: #1a2744; font-weight: 600; }
+  .ax-lbl { font-size: 5px; fill: #94a3b8; font-family: system-ui, sans-serif; }
+  .axis-note { font-size: 12px; color: #64748b; background: #f8f6f0; border: 1px solid #dde3ef; border-radius: 8px; padding: 8px 12px; margin-bottom: 10px; line-height: 1.6; }
+  .axis-note strong { color: #1a2744; font-weight: 600; }
+
+  /* Selection tip */
+  .sel-tip {
+    font-size: 12px;
+    color: #3b7dd8;
+    font-style: italic;
+    min-height: 18px;
+    margin-bottom: 8px;
+  }
+
+  /* ── Footer ── */
+  .footer {
+    margin-top: 22px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .check-btn {
+    background: #1a2744; color: #fff;
+    border: none; border-radius: 9px;
+    padding: 10px 24px; font-size: 14px;
+    cursor: pointer; font-family: inherit;
+    font-weight: 500;
+    transition: background .15s;
+  }
+  .check-btn:hover { background: #243660; }
+  .reset-btn {
+    font-size: 13px; color: #64748b;
+    background: none; border: none;
+    cursor: pointer; text-decoration: underline;
+    font-family: inherit;
+  }
+  #score-out {
+    font-size: 14px; font-weight: 600;
+    color: #1a2744;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 6px 14px;
+  }
+  #score-out:empty { display: none; }
+
+  /* ── Progress bar ── */
+  .progress-wrap {
+    margin-bottom: 18px;
+  }
+  .progress-label {
+    font-size: 12px; color: #94a3b8;
+    margin-bottom: 5px;
+  }
+  .progress-bar {
+    height: 4px; background: #e2e8f0;
+    border-radius: 99px; overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%; background: #D85A30;
+    border-radius: 99px;
+    width: 0%;
+    transition: width .3s;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 600px) {
+    .layout { grid-template-columns: 1fr; }
+    .g-grid { grid-template-columns: repeat(4, 1fr); }
+    header { padding: 14px 16px; }
+    main { padding: 0 12px 40px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="header-left">
+    <h1>Chapter 2: Cost Behavior Practice</h1>
+  </div>
+  <button class="qr-btn" onclick="showQR()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="2" height="2"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="19" width="3" height="2"/><rect x="19" y="19" width="2" height="2"/></svg>
+    Share with students
+  </button>
+</header>
+
+<!-- QR Modal -->
+<div class="qr-overlay" id="qr-overlay" onclick="hideQR(event)">
+  <div class="qr-modal">
+    <h2>Scan to open on your device</h2>
+    <p>Students can scan this QR code or type the URL to open the activity on their phone or laptop.</p>
+    <div id="qr-code"></div>
+    <div id="qr-url"></div>
+    <button class="qr-close" onclick="hideQR()">Close</button>
+  </div>
+</div>
+
+<!-- Main -->
+<main>
+  <div class="hint-box">
+    <strong>Instructions:</strong> Click a scenario (a–i) to select it — it turns blue. Then click the matching graph. Some graphs may match more than one scenario. Click a scenario again to change your answer.
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-label" id="progress-label">0 of 9 assigned</div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+  </div>
+
+  <div class="layout">
+    <!-- Scenarios -->
+    <div>
+      <div class="col-lbl">Scenarios</div>
+
+      <div class="sc-item" id="sc-a" onclick="clickScenario('a')">
+        <span class="sc-ltr">a.</span>
+        <div class="sc-body">
+          <div class="sc-txt">Total costs per day for a consultant paid $200/hour with a maximum fee of $1,000</div>
+          <div class="sc-meta"><span class="sc-bdg" id="bdg-a"></span><span class="sc-res" id="res-a"></span></div>
+        </div>
+      </div>
+
+      <div class="sc-item" id="sc-b" onclick="clickScenario('b')">
+        <span class="sc-ltr">b.</span>
+        <div class="sc-body">
+          <div class="sc-txt">Rent on an exhibit space at a convention</div>
+          <div class="sc-meta"><span class="sc-bdg" id="bdg-b"></span><span class="sc-res" id="res-b"></span></div>
+        </div>
+      </div>
+
+      <div class="sc-item" id="sc-c" onclick="clickScenario('c')">
+        <span class="sc-ltr">c.</span>
+        <div class="sc-body">
+          <div class="sc-txt">Total costs for salaries of social workers where each can handle a max of 25 cases</div>
+          <div class="sc-meta"><span class="sc-bdg" id="bdg-c"></span><span class="sc-res" id="res-c"></span></div>
+        </div>
+      </div>
+
+      <div class="sc-item" id="sc-d" onclick="clickScenario('d')">
+        <span class="sc-ltr">d.</span>
+        <div class="sc-body">
+          <div class="sc-txt">A water bill with a flat fee of $800 plus $0.05 for every gallon after 10,000</div>
+          <div class="sc-meta"><span class="sc-bdg" id="bdg-d"></span><span class="sc-res" id="res-d"></span></div>
+        </div>
+      </div>
+
+      <div class="sc-item" id="sc-e" onclick="clickScenario('e')">
+        <span class="sc-ltr">e.</span>
+        <div class="sc-body">
+          <div class="sc-txt">Variable cost per unit</div>
+          <div class="sc-meta"><span class="sc-bdg" id="bdg-e"></span><span class="sc-res" id="res-e"></span></div>
+        </div>
+      </div>
+
+      <div class="sc-item" id="sc-f" onclick="clickScenario('f')">
+        <span class="sc-ltr">f.</span>
+        <div class="sc-body">
+          <div class="sc-txt">Average fixed costs per unit</div>
+          <div class="sc-meta"><span class="sc-bdg" id="bdg-f"></span><span class="sc-res" id="res-f"></span></div>
+        </div>
+      </div>
+
+      <div class="sc-item" id="sc-g" onclick="clickScenario('g')">
+        <span class="sc-ltr">g.</span>
+        <div class="sc-body">
+          <div class="sc-txt">Total costs for an employee paid $15/hr for first 40 hours and $20/hr thereafter</div>
+          <div class="sc-meta"><span class="sc-bdg" id="bdg-g"></span><span class="sc-res" id="res-g"></span></div>
+        </div>
+      </div>
+
+      <div class="sc-item" id="sc-h" onclick="clickScenario('h')">
+        <span class="sc-ltr">h.</span>
+        <div class="sc-body">
+          <div class="sc-txt">Total material costs</div>
+          <div class="sc-meta"><span class="sc-bdg" id="bdg-h"></span><span class="sc-res" id="res-h"></span></div>
+        </div>
+      </div>
+
+      <div class="sc-item" id="sc-i" onclick="clickScenario('i')">
+        <span class="sc-ltr">i.</span>
+        <div class="sc-body">
+          <div class="sc-txt">Total fixed costs</div>
+          <div class="sc-meta"><span class="sc-bdg" id="bdg-i"></span><span class="sc-res" id="res-i"></span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Graphs -->
+    <div>
+      <div class="col-lbl">Graphs</div>
+      <div class="axis-note">In every graph: <strong>x-axis</strong> = activity level (units produced, hours worked, cases, gallons&hellip;) &nbsp;&middot;&nbsp; <strong>y-axis</strong> = cost ($)</div>
+      <div class="sel-tip" id="sel-tip"></div>
+      <div class="g-grid">
+
+        <div class="g-card" id="gc-1" onclick="clickGraph(1)">
+          <svg class="g-svg" viewBox="0 0 80 72" xmlns="http://www.w3.org/2000/svg">
+            <line class="ax" x1="10" y1="60" x2="73" y2="60"/>
+            <line class="ax" x1="10" y1="60" x2="10" y2="6"/>
+            <line class="ax" x1="73" y1="60" x2="70" y2="57"/><line class="ax" x1="73" y1="60" x2="70" y2="63"/>
+            <line class="ax" x1="10" y1="6" x2="7" y2="9"/><line class="ax" x1="10" y1="6" x2="13" y2="9"/>
+            <text class="ax-lbl" x="40" y="70" text-anchor="middle">Activity</text>
+            <text class="ax-lbl" x="3" y="34" text-anchor="middle" transform="rotate(-90,3,34)">Cost ($)</text>
+            <line class="cl" x1="10" y1="60" x2="70" y2="12"/>
+          </svg>
+          <div class="g-num">1</div>
+        </div>
+
+        <div class="g-card" id="gc-2" onclick="clickGraph(2)">
+          <svg class="g-svg" viewBox="0 0 80 72" xmlns="http://www.w3.org/2000/svg">
+            <line class="ax" x1="10" y1="60" x2="73" y2="60"/>
+            <line class="ax" x1="10" y1="60" x2="10" y2="6"/>
+            <line class="ax" x1="73" y1="60" x2="70" y2="57"/><line class="ax" x1="73" y1="60" x2="70" y2="63"/>
+            <line class="ax" x1="10" y1="6" x2="7" y2="9"/><line class="ax" x1="10" y1="6" x2="13" y2="9"/>
+            <text class="ax-lbl" x="40" y="70" text-anchor="middle">Activity</text>
+            <text class="ax-lbl" x="3" y="34" text-anchor="middle" transform="rotate(-90,3,34)">Cost ($)</text>
+            <line class="cl" x1="10" y1="36" x2="70" y2="36"/>
+          </svg>
+          <div class="g-num">2</div>
+        </div>
+
+        <div class="g-card" id="gc-3" onclick="clickGraph(3)">
+          <svg class="g-svg" viewBox="0 0 80 72" xmlns="http://www.w3.org/2000/svg">
+            <line class="ax" x1="10" y1="60" x2="73" y2="60"/>
+            <line class="ax" x1="10" y1="60" x2="10" y2="6"/>
+            <line class="ax" x1="73" y1="60" x2="70" y2="57"/><line class="ax" x1="73" y1="60" x2="70" y2="63"/>
+            <line class="ax" x1="10" y1="6" x2="7" y2="9"/><line class="ax" x1="10" y1="6" x2="13" y2="9"/>
+            <text class="ax-lbl" x="40" y="70" text-anchor="middle">Activity</text>
+            <text class="ax-lbl" x="3" y="34" text-anchor="middle" transform="rotate(-90,3,34)">Cost ($)</text>
+            <polyline class="cl" points="10,60 36,22 70,22"/>
+          </svg>
+          <div class="g-num">3</div>
+        </div>
+
+        <div class="g-card" id="gc-4" onclick="clickGraph(4)">
+          <svg class="g-svg" viewBox="0 0 80 72" xmlns="http://www.w3.org/2000/svg">
+            <line class="ax" x1="10" y1="60" x2="73" y2="60"/>
+            <line class="ax" x1="10" y1="60" x2="10" y2="6"/>
+            <line class="ax" x1="73" y1="60" x2="70" y2="57"/><line class="ax" x1="73" y1="60" x2="70" y2="63"/>
+            <line class="ax" x1="10" y1="6" x2="7" y2="9"/><line class="ax" x1="10" y1="6" x2="13" y2="9"/>
+            <text class="ax-lbl" x="40" y="70" text-anchor="middle">Activity</text>
+            <text class="ax-lbl" x="3" y="34" text-anchor="middle" transform="rotate(-90,3,34)">Cost ($)</text>
+            <path class="cl" d="M12,10 Q18,13 26,21 T46,38 T70,53"/>
+          </svg>
+          <div class="g-num">4</div>
+        </div>
+
+        <div class="g-card" id="gc-5" onclick="clickGraph(5)">
+          <svg class="g-svg" viewBox="0 0 80 72" xmlns="http://www.w3.org/2000/svg">
+            <line class="ax" x1="10" y1="60" x2="73" y2="60"/>
+            <line class="ax" x1="10" y1="60" x2="10" y2="6"/>
+            <line class="ax" x1="73" y1="60" x2="70" y2="57"/><line class="ax" x1="73" y1="60" x2="70" y2="63"/>
+            <line class="ax" x1="10" y1="6" x2="7" y2="9"/><line class="ax" x1="10" y1="6" x2="13" y2="9"/>
+            <text class="ax-lbl" x="40" y="70" text-anchor="middle">Activity</text>
+            <text class="ax-lbl" x="3" y="34" text-anchor="middle" transform="rotate(-90,3,34)">Cost ($)</text>
+            <polyline class="cl" points="10,55 28,55 28,41 46,41 46,27 68,27"/>
+          </svg>
+          <div class="g-num">5</div>
+        </div>
+
+        <div class="g-card" id="gc-6" onclick="clickGraph(6)">
+          <svg class="g-svg" viewBox="0 0 80 72" xmlns="http://www.w3.org/2000/svg">
+            <line class="ax" x1="10" y1="60" x2="73" y2="60"/>
+            <line class="ax" x1="10" y1="60" x2="10" y2="6"/>
+            <line class="ax" x1="73" y1="60" x2="70" y2="57"/><line class="ax" x1="73" y1="60" x2="70" y2="63"/>
+            <line class="ax" x1="10" y1="6" x2="7" y2="9"/><line class="ax" x1="10" y1="6" x2="13" y2="9"/>
+            <text class="ax-lbl" x="40" y="70" text-anchor="middle">Activity</text>
+            <text class="ax-lbl" x="3" y="34" text-anchor="middle" transform="rotate(-90,3,34)">Cost ($)</text>
+            <polyline class="cl" points="10,42 38,42 70,12"/>
+          </svg>
+          <div class="g-num">6</div>
+        </div>
+
+        <div class="g-card" id="gc-7" onclick="clickGraph(7)">
+          <svg class="g-svg" viewBox="0 0 80 72" xmlns="http://www.w3.org/2000/svg">
+            <line class="ax" x1="10" y1="60" x2="73" y2="60"/>
+            <line class="ax" x1="10" y1="60" x2="10" y2="6"/>
+            <line class="ax" x1="73" y1="60" x2="70" y2="57"/><line class="ax" x1="73" y1="60" x2="70" y2="63"/>
+            <line class="ax" x1="10" y1="6" x2="7" y2="9"/><line class="ax" x1="10" y1="6" x2="13" y2="9"/>
+            <text class="ax-lbl" x="40" y="70" text-anchor="middle">Activity</text>
+            <text class="ax-lbl" x="3" y="34" text-anchor="middle" transform="rotate(-90,3,34)">Cost ($)</text>
+            <polyline class="cl" points="10,60 42,46 70,10"/>
+          </svg>
+          <div class="g-num">7</div>
+        </div>
+
+      </div>
+
+        <!-- Graph 2: Horizontal flat -->
+        <div class="g-card" id="gc-2" onclick="clickGraph(2)">
+          <svg class="g-svg" viewBox="0 0 80 68" xmlns="http://www.w3.org/2000/svg">
+            <line class="ax" x1="8" y1="60" x2="73" y2="60"/>
+            <line class="ax" x1="8" y1="60" x2="8" y2="6"/>
+            <line class="ax" x1="73" y1="60" x2="70" y2="57"/><line class="ax" x1="73" y1="60" x2="70" y2="63"/>
+            <line class="ax" x1="8" y1="6" x2="5" y2="9"/><line class="ax" x1="8" y1="6" x2="11" y2="9"/>
+            <line class="cl" x1="8" y1="36" x2="70" y2="36"/>
+          </svg>
+          <div class="g-num">2</div>
+        </div>
+
+        <!-- Graph 3: Capped (rises then flat) -->
+        <div class="g-card" id="gc-3" onclick="clickGraph(3)">
+          <svg class="g-svg" viewBox="0 0 80 68" xmlns="http://www.w3.org/2000/svg">
+            <line class="ax" x1="8" y1="60" x2="73" y2="60"/>
+            <line class="ax" x1="8" y1="60" x2="8" y2="6"/>
+            <line class="ax" x1="73" y1="60" x2="70" y2="57"/><line class="ax" x1="73" y1="60" x2="70" y2="63"/>
+            <line class="ax" x1="8" y1="6" x2="5" y2="9"/><line class="ax" x1="8" y1="6" x2="11" y2="9"/>
+            <polyline class="cl" points="8,60 35,22 70,22"/>
+          </svg>
+          <div class="g-num">3</div>
+        </div>
+
+        <!-- Graph 4: Declining curve (AFC) -->
+        <div class="g-card" id="gc-4" onclick="clickGraph(4)">
+          <svg class="g-svg" viewBox="0 0 80 68" xmlns="http://www.w3.org/2000/svg">
+            <line class="ax" x1="8" y1="60" x2="73" y2="60"/>
+            <line class="ax" x1="8" y1="60" x2="8" y2="6"/>
+            <line class="ax" x1="73" y1="60" x2="70" y2="57"/><line class="ax" x1="73" y1="60" x2="70" y2="63"/>
+            <line class="ax" x1="8" y1="6" x2="5" y2="9"/><line class="ax" x1="8" y1="6" x2="11" y2="9"/>
+            <path class="cl" d="M10,10 Q16,13 24,21 T44,38 T70,53"/>
+          </svg>
+          <div class="g-num">4</div>
+        </div>
+
+        <!-- Graph 5: Step function -->
+        <div class="g-card" id="gc-5" onclick="clickGraph(5)">
+          <svg class="g-svg" viewBox="0 0 80 68" xmlns="http://www.w3.org/2000/svg">
+            <line class="ax" x1="8" y1="60" x2="73" y2="60"/>
+            <line class="ax" x1="8" y1="60" x2="8" y2="6"/>
+            <line class="ax" x1="73" y1="60" x2="70" y2="57"/><line class="ax" x1="73" y1="60" x2="70" y2="63"/>
+            <line class="ax" x1="8" y1="6" x2="5" y2="9"/><line class="ax" x1="8" y1="6" x2="11" y2="9"/>
+            <polyline class="cl" points="8,55 28,55 28,40 48,40 48,25 68,25"/>
+          </svg>
+          <div class="g-num">5</div>
+        </div>
+
+        <!-- Graph 6: Hockey stick (flat then rising) -->
+        <div class="g-card" id="gc-6" onclick="clickGraph(6)">
+          <svg class="g-svg" viewBox="0 0 80 68" xmlns="http://www.w3.org/2000/svg">
+            <line class="ax" x1="8" y1="60" x2="73" y2="60"/>
+            <line class="ax" x1="8" y1="60" x2="8" y2="6"/>
+            <line class="ax" x1="73" y1="60" x2="70" y2="57"/><line class="ax" x1="73" y1="60" x2="70" y2="63"/>
+            <line class="ax" x1="8" y1="6" x2="5" y2="9"/><line class="ax" x1="8" y1="6" x2="11" y2="9"/>
+            <polyline class="cl" points="8,42 38,42 70,12"/>
+          </svg>
+          <div class="g-num">6</div>
+        </div>
+
+        <!-- Graph 7: Kinked (steeper slope after threshold) -->
+        <div class="g-card" id="gc-7" onclick="clickGraph(7)">
+          <svg class="g-svg" viewBox="0 0 80 68" xmlns="http://www.w3.org/2000/svg">
+            <line class="ax" x1="8" y1="60" x2="73" y2="60"/>
+            <line class="ax" x1="8" y1="60" x2="8" y2="6"/>
+            <line class="ax" x1="73" y1="60" x2="70" y2="57"/><line class="ax" x1="73" y1="60" x2="70" y2="63"/>
+            <line class="ax" x1="8" y1="6" x2="5" y2="9"/><line class="ax" x1="8" y1="6" x2="11" y2="9"/>
+            <polyline class="cl" points="8,60 42,46 70,10"/>
+          </svg>
+          <div class="g-num">7</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <button class="check-btn" onclick="checkAnswers()">Check answers</button>
+    <button class="reset-btn" onclick="resetAll()">Reset</button>
+    <span id="score-out"></span>
+  </div>
+</main>
+
+<script>
+const scenarios = ['a','b','c','d','e','f','g','h','i'];
+const correct   = {a:3, b:2, c:5, d:6, e:2, f:4, g:7, h:1, i:2};
+let sel = null, assignments = {}, checked = false;
+
+function clickScenario(l) {
+  if (checked) return;
+  sel = sel === l ? null : l;
+  render();
+}
+
+function clickGraph(n) {
+  if (checked) return;
+  if (sel !== null) { assignments[sel] = n; sel = null; }
+  render();
+}
+
+function checkAnswers() {
+  const done = scenarios.filter(l => assignments[l] !== undefined).length;
+  if (done < 9) {
+    document.getElementById('score-out').textContent = 'Assign all 9 first (' + done + '/9 done)';
+    return;
+  }
+  checked = true;
+  const score = scenarios.filter(l => assignments[l] === correct[l]).length;
+  document.getElementById('score-out').textContent = score + ' / 9 correct';
+  render();
+}
+
+function resetAll() {
+  sel = null; assignments = {}; checked = false;
+  document.getElementById('score-out').textContent = '';
+  render();
+}
+
+function render() {
+  const done = scenarios.filter(l => assignments[l] !== undefined).length;
+  document.getElementById('progress-label').textContent = done + ' of 9 assigned';
+  document.getElementById('progress-fill').style.width = Math.round(done / 9 * 100) + '%';
+  document.getElementById('sel-tip').textContent = sel ? 'Now click a graph to assign scenario ' + sel + '.' : '';
+
+  for (const l of scenarios) {
+    const item = document.getElementById('sc-' + l);
+    const bdg  = document.getElementById('bdg-' + l);
+    const res  = document.getElementById('res-' + l);
+
+    item.className = 'sc-item' + (sel === l ? ' sel' : '');
+
+    if (assignments[l]) {
+      bdg.textContent = 'Graph ' + assignments[l];
+      bdg.style.display = '';
+    } else {
+      bdg.style.display = 'none';
+    }
+
+    if (checked) {
+      const ok = assignments[l] === correct[l];
+      item.className = 'sc-item ' + (ok ? 'correct' : 'wrong');
+      res.textContent = ok ? '✓ Correct' : '✗  → Graph ' + correct[l];
+      res.style.color = ok ? '#2d6a1f' : '#9b2020';
+    } else {
+      res.textContent = '';
+    }
+  }
+
+  for (let n = 1; n <= 7; n++) {
+    document.getElementById('gc-' + n).className =
+      'g-card' + (sel !== null && !checked ? ' clickable' : '');
+  }
+}
+
+/* ── QR Code ── */
+let qrGenerated = false;
+function showQR() {
+  document.getElementById('qr-overlay').classList.add('show');
+  if (!qrGenerated) {
+    const url = window.location.href;
+    document.getElementById('qr-url').textContent = url;
+    new QRCode(document.getElementById('qr-code'), {
+      text: url, width: 180, height: 180,
+      colorDark: '#1a2744', colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+    qrGenerated = true;
+  }
+}
+function hideQR(e) {
+  if (!e || e.target === document.getElementById('qr-overlay')) {
+    document.getElementById('qr-overlay').classList.remove('show');
+  }
+}
+</script>
+</body>
+</html>
