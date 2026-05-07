@@ -260,13 +260,6 @@
     transition: background .15s;
   }
   .check-btn:hover { background: #243660; }
-  .reveal-btn {
-    background: #fff; color: #1a2744;
-    border: 1.5px solid #cbd5e1; border-radius: 9px;
-    padding: 9px 18px; font-size: 13.5px;
-    cursor: pointer; font-family: inherit;
-  }
-  .reveal-btn:hover { border-color: #94a3b8; }
   .reset-btn {
     font-size: 13px; color: #64748b;
     background: none; border: none;
@@ -348,7 +341,6 @@
 
     <div class="footer">
       <button class="check-btn" onclick="checkAnswers()">Check answers</button>
-      <button class="reveal-btn" onclick="revealAll()">Reveal answers</button>
       <button class="reset-btn" onclick="resetAll()">Reset</button>
       <span id="score-out"></span>
     </div>
@@ -491,22 +483,6 @@ function checkAnswers() {
   }
   out.textContent = correct + ' / ' + total + ' correct' + (blanks ? ' (' + blanks + ' blank)' : '');
   if (correct === total) playBell(); else playHorn();
-}
-
-function revealAll() {
-  document.querySelectorAll('#practice-body tr').forEach(row => {
-    const units = parseInt(row.dataset.units);
-    const exp = expectedFor(units);
-    ['tc', 'ac', 'vc'].forEach(col => {
-      const inp = row.querySelector(`input[data-col="${col}"]`);
-      const hint = row.querySelector(`span.corr-hint[data-col="${col}"]`);
-      inp.value = fmt(exp[col], col);
-      inp.classList.remove('wrong');
-      inp.classList.add('correct');
-      hint.textContent = '';
-    });
-  });
-  document.getElementById('score-out').textContent = 'Answers revealed';
 }
 
 function resetAll() {
