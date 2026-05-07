@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chapter 2: Cost Function Practice</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  /* ── Reset & base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    background: #f4f0e8;
+    color: #1a2744;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    background: #1a2744;
+    color: #fff;
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .header-left h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+  .header-left p  { font-size: 13px; color: #a0aec0; margin-top: 2px; }
+
+  .qr-btn {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    transition: background .15s;
+  }
+  .qr-btn:hover { background: rgba(255,255,255,0.18); }
+
+  /* QR Modal */
+  .qr-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .qr-overlay.show { display: flex; }
+  .qr-modal {
+    background: #fff;
+    border-radius: 14px;
+    padding: 32px;
+    text-align: center;
+    max-width: 300px;
+    width: 90%;
+  }
+  .qr-modal h2 { font-size: 16px; font-weight: 600; color: #1a2744; margin-bottom: 6px; }
+  .qr-modal p  { font-size: 12px; color: #64748b; margin-bottom: 18px; line-height: 1.5; }
+  #qr-code { display: flex; justify-content: center; margin-bottom: 16px; }
+  #qr-url  { font-size: 11px; color: #94a3b8; word-break: break-all; margin-bottom: 18px; }
+  .qr-close {
+    background: #1a2744; color: #fff;
+    border: none; border-radius: 8px;
+    padding: 8px 24px; font-size: 13px;
+    cursor: pointer; font-family: inherit;
+  }
+
+  /* ── Main layout ── */
+  main {
+    max-width: 880px;
+    margin: 28px auto;
+    padding: 0 20px 48px;
+  }
+
+  .part {
+    background: #fff;
+    border: 1px solid #dde3ef;
+    border-radius: 12px;
+    padding: 22px 24px 24px;
+    margin-bottom: 22px;
+  }
+
+  .part-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .part-tag {
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    background: #1a2744;
+    padding: 3px 10px;
+    border-radius: 99px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+  .part-tag.practice {
+    background: #D85A30;
+  }
+  .part-header h2 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -.01em;
+  }
+  .part-header .subtitle {
+    font-size: 13px;
+    color: #64748b;
+  }
+
+  .setup-box {
+    background: #f8f6f0;
+    border: 1px solid #e6dfd0;
+    border-radius: 9px;
+    padding: 14px 16px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: #334155;
+    margin-bottom: 16px;
+  }
+  .setup-box strong { color: #1a2744; }
+  .setup-box p + p { margin-top: 6px; }
+  .formula {
+    background: #fff;
+    border: 1px solid #dde3ef;
+    padding: 1px 8px;
+    border-radius: 5px;
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-size: 12.5px;
+    color: #1a2744;
+  }
+  .step-note {
+    background: #fff8ed;
+    border-left: 3px solid #D85A30;
+    padding: 8px 12px;
+    margin-top: 10px;
+    border-radius: 0 6px 6px 0;
+  }
+  .step-note .lightning { color: #D85A30; font-weight: 700; }
+
+  /* ── Tables ── */
+  table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-bottom: 6px;
+  }
+  thead th {
+    background: #fde9c8;
+    color: #1a2744;
+    font-size: 12.5px;
+    font-weight: 700;
+    text-align: center;
+    padding: 10px 8px;
+    border-bottom: 2px solid #f0c674;
+  }
+  thead th:first-child { border-top-left-radius: 8px; }
+  thead th:last-child  { border-top-right-radius: 8px; }
+  tbody td {
+    background: #f0f5fa;
+    padding: 9px 8px;
+    text-align: center;
+    font-size: 14px;
+    border-bottom: 1px solid #e1eaf3;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:last-child td:first-child { border-bottom-left-radius: 8px; }
+  tbody tr:last-child td:last-child  { border-bottom-right-radius: 8px; }
+  tbody td:first-child { font-weight: 600; color: #1a2744; }
+
+  tbody tr.step-row td {
+    background: #fff5e9;
+    border-top: 2px dashed #f0a674;
+  }
+  tbody tr.step-row td:first-child { color: #b04417; }
+
+  /* Practice inputs */
+  .practice-table tbody td.input-cell {
+    padding: 6px 8px;
+    position: relative;
+  }
+  .practice-table input {
+    width: 100%;
+    max-width: 130px;
+    padding: 7px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    transition: border-color .12s, background .12s;
+  }
+  .practice-table input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .practice-table input.correct {
+    border-color: #5a9e3a;
+    background: #f0f9e8;
+    color: #2d6a1f;
+    font-weight: 600;
+  }
+  .practice-table input.wrong {
+    border-color: #c94040;
+    background: #fff1f1;
+    color: #9b2020;
+  }
+  .corr-hint {
+    display: block;
+    font-size: 11px;
+    color: #5a9e3a;
+    font-weight: 600;
+    margin-top: 3px;
+    min-height: 14px;
+  }
+
+  /* Insight callout */
+  .insight {
+    margin-top: 14px;
+    background: #eff6ff;
+    border: 1px solid #c7dcf5;
+    border-left: 4px solid #3b7dd8;
+    border-radius: 0 8px 8px 0;
+    padding: 11px 14px;
+    font-size: 13px;
+    line-height: 1.55;
+    color: #1a2744;
+  }
+  .insight strong { color: #1e40af; }
+
+  /* Footer (Part 2 actions) */
+  .footer {
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .check-btn {
+    background: #1a2744; color: #fff;
+    border: none; border-radius: 9px;
+    padding: 10px 24px; font-size: 14px;
+    cursor: pointer; font-family: inherit;
+    font-weight: 500;
+    transition: background .15s;
+  }
+  .check-btn:hover { background: #243660; }
+  .reveal-btn {
+    background: #fff; color: #1a2744;
+    border: 1.5px solid #cbd5e1; border-radius: 9px;
+    padding: 9px 18px; font-size: 13.5px;
+    cursor: pointer; font-family: inherit;
+  }
+  .reveal-btn:hover { border-color: #94a3b8; }
+  .reset-btn {
+    font-size: 13px; color: #64748b;
+    background: none; border: none;
+    cursor: pointer; text-decoration: underline;
+    font-family: inherit;
+  }
+  #score-out {
+    font-size: 14px; font-weight: 600;
+    color: #1a2744;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 6px 14px;
+  }
+  #score-out:empty { display: none; }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    header { padding: 14px 16px; }
+    main { padding: 0 12px 40px; }
+    .part { padding: 18px 14px 18px; }
+    thead th, tbody td { font-size: 12px; padding: 7px 4px; }
+    .practice-table input { font-size: 13px; padding: 6px 4px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="header-left">
+    <h1>Cost Function Practice</h1>
+  </div>
+  <button class="qr-btn" onclick="showQR()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="2" height="2"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="19" width="3" height="2"/><rect x="19" y="19" width="2" height="2"/></svg>
+    Share with students
+  </button>
+</header>
+
+<!-- QR Modal -->
+<div class="qr-overlay" id="qr-overlay" onclick="hideQR(event)">
+  <div class="qr-modal">
+    <h2>Scan to open on your device</h2>
+    <p>Students can scan this QR code or type the URL to open the activity on their phone or laptop.</p>
+    <div id="qr-code"></div>
+    <div id="qr-url"></div>
+    <button class="qr-close" onclick="hideQR()">Close</button>
+  </div>
+</div>
+
+<!-- Main -->
+<main>
+
+  <!-- ───────── BARKSPA PRACTICE ───────── -->
+  <section class="part">
+    <div class="part-header">
+      <h2>BarkSpa</h2>
+      <span class="subtitle">dog grooming</span>
+    </div>
+
+    <div class="setup-box">
+      <p>BarkSpa's monthly <strong>fixed costs</strong> are <strong>$2,400</strong> (rent and depreciation on tubs and dryers). Its <strong>variable cost</strong> is <strong>$7</strong> per groom (shampoo, treats, and direct labor at the standard pay rate).</p>
+      <p>The <strong>relevant range</strong> — the activity level where this cost behavior holds — is <strong>100–500</strong> grooms per month. If BarkSpa operates between <strong>501 and 1,000</strong> grooms in a month, two things change: an additional tub and dryer are needed, adding <strong>$1,200</strong> to fixed costs, and the existing groomers have to work overtime, raising variable cost to <strong>$9.50</strong> per groom.</p>
+    </div>
+
+    <table class="practice-table">
+      <thead>
+        <tr>
+          <th>No. of Grooms</th>
+          <th>Total Cost</th>
+          <th>Avg Cost per Groom</th>
+          <th>Marginal Cost</th>
+        </tr>
+      </thead>
+      <tbody id="practice-body">
+        <!-- rows injected by JS -->
+      </tbody>
+    </table>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkAnswers()">Check answers</button>
+      <button class="reveal-btn" onclick="revealAll()">Reveal answers</button>
+      <button class="reset-btn" onclick="resetAll()">Reset</button>
+      <span id="score-out"></span>
+    </div>
+  </section>
+
+</main>
+
+<script>
+/* ───────── BarkSpa cost data ───────── */
+const FIXED_BASE   = 2400;   // rent + depreciation on tubs & dryers (relevant range)
+const FIXED_STEP   = 1200;   // added when above the relevant range (extra tub + dryer)
+const VC_NORMAL    = 7;      // variable rate within relevant range (100–500)
+const VC_OVERTIME  = 9.50;   // variable rate above the relevant range (501–1000)
+const RANGE_TOP    = 500;
+
+const LEVELS = [100, 200, 300, 400, 500, 800];
+
+function fixedFor(units) {
+  return units > RANGE_TOP ? FIXED_BASE + FIXED_STEP : FIXED_BASE;
+}
+function vcFor(units) {
+  return units > RANGE_TOP ? VC_OVERTIME : VC_NORMAL;
+}
+function tc(units) {
+  return fixedFor(units) + vcFor(units) * units;
+}
+function expectedFor(units) {
+  const t = tc(units);
+  return { tc: t, ac: t / units, vc: vcFor(units) };
+}
+
+/* ───────── Build practice table ───────── */
+const tbody = document.getElementById('practice-body');
+LEVELS.forEach(units => {
+  const isStep = units > RANGE_TOP;
+  const tr = document.createElement('tr');
+  if (isStep) tr.classList.add('step-row');
+  tr.dataset.units = units;
+  tr.innerHTML = `
+    <td>${units}</td>
+    <td class="input-cell">
+      <input type="text" data-col="tc" inputmode="decimal" placeholder="$">
+      <span class="corr-hint" data-col="tc"></span>
+    </td>
+    <td class="input-cell">
+      <input type="text" data-col="ac" inputmode="decimal" placeholder="$">
+      <span class="corr-hint" data-col="ac"></span>
+    </td>
+    <td class="input-cell">
+      <input type="text" data-col="vc" inputmode="decimal" placeholder="$">
+      <span class="corr-hint" data-col="vc"></span>
+    </td>
+  `;
+  tbody.appendChild(tr);
+});
+
+/* ───────── Helpers ───────── */
+function parseNum(s) {
+  if (typeof s !== 'string') return NaN;
+  return parseFloat(s.replace(/[\$,\s]/g, ''));
+}
+function fmt(v, col) {
+  if (col === 'tc') return '$' + v.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 2});
+  return '$' + v.toFixed(2);
+}
+
+/* ───────── Audio (matches matching app) ───────── */
+let audioCtx = null;
+function getAudio() {
+  if (!audioCtx) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (AC) audioCtx = new AC();
+  }
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+function playBell() {
+  const ctx = getAudio(); if (!ctx) return;
+  const now = ctx.currentTime;
+  [523.25, 659.25, 783.99].forEach(f => {
+    const osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = 'sine'; osc.frequency.value = f;
+    osc.connect(g).connect(ctx.destination);
+    g.gain.setValueAtTime(0, now);
+    g.gain.linearRampToValueAtTime(0.15, now + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 1.6);
+    osc.start(now); osc.stop(now + 1.7);
+  });
+}
+function playHorn() {
+  const ctx = getAudio(); if (!ctx) return;
+  const now = ctx.currentTime;
+  const notes = [
+    { f: 466.16, t: 0.00, d: 0.18 },
+    { f: 440.00, t: 0.20, d: 0.18 },
+    { f: 415.30, t: 0.40, d: 0.55 }
+  ];
+  notes.forEach(({ f, t, d }) => {
+    const osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(f, now + t);
+    if (d > 0.3) osc.frequency.exponentialRampToValueAtTime(f * 0.88, now + t + d);
+    osc.connect(g).connect(ctx.destination);
+    g.gain.setValueAtTime(0, now + t);
+    g.gain.linearRampToValueAtTime(0.12, now + t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, now + t + d);
+    osc.start(now + t); osc.stop(now + t + d + 0.05);
+  });
+}
+
+/* ───────── Check / Reveal / Reset ───────── */
+function checkAnswers() {
+  let correct = 0, total = 0, blanks = 0;
+  document.querySelectorAll('#practice-body tr').forEach(row => {
+    const units = parseInt(row.dataset.units);
+    const exp = expectedFor(units);
+    ['tc', 'ac', 'vc'].forEach(col => {
+      const inp = row.querySelector(`input[data-col="${col}"]`);
+      const hint = row.querySelector(`span.corr-hint[data-col="${col}"]`);
+      const val = parseNum(inp.value);
+      total++;
+      inp.classList.remove('correct', 'wrong');
+      hint.textContent = '';
+      if (inp.value.trim() === '') { blanks++; return; }
+      // tolerance: $0.02 for AC (handles $11.88 vs $11.875), exact for others within $0.50
+      const tol = col === 'ac' ? 0.02 : 0.5;
+      if (!isNaN(val) && Math.abs(val - exp[col]) <= tol) {
+        inp.classList.add('correct');
+        correct++;
+      } else {
+        inp.classList.add('wrong');
+        hint.textContent = '→ ' + fmt(exp[col], col);
+      }
+    });
+  });
+  const out = document.getElementById('score-out');
+  if (blanks === total) {
+    out.textContent = 'Fill in some answers first.';
+    return;
+  }
+  out.textContent = correct + ' / ' + total + ' correct' + (blanks ? ' (' + blanks + ' blank)' : '');
+  if (correct === total) playBell(); else playHorn();
+}
+
+function revealAll() {
+  document.querySelectorAll('#practice-body tr').forEach(row => {
+    const units = parseInt(row.dataset.units);
+    const exp = expectedFor(units);
+    ['tc', 'ac', 'vc'].forEach(col => {
+      const inp = row.querySelector(`input[data-col="${col}"]`);
+      const hint = row.querySelector(`span.corr-hint[data-col="${col}"]`);
+      inp.value = fmt(exp[col], col);
+      inp.classList.remove('wrong');
+      inp.classList.add('correct');
+      hint.textContent = '';
+    });
+  });
+  document.getElementById('score-out').textContent = 'Answers revealed';
+}
+
+function resetAll() {
+  document.querySelectorAll('#practice-body input').forEach(inp => {
+    inp.value = '';
+    inp.classList.remove('correct', 'wrong');
+  });
+  document.querySelectorAll('#practice-body .corr-hint').forEach(h => h.textContent = '');
+  document.getElementById('score-out').textContent = '';
+}
+
+/* ───────── QR Code ───────── */
+let qrGenerated = false;
+function showQR() {
+  document.getElementById('qr-overlay').classList.add('show');
+  if (!qrGenerated) {
+    const url = window.location.href;
+    document.getElementById('qr-url').textContent = url;
+    new QRCode(document.getElementById('qr-code'), {
+      text: url, width: 180, height: 180,
+      colorDark: '#1a2744', colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+    qrGenerated = true;
+  }
+}
+function hideQR(e) {
+  if (!e || e.target === document.getElementById('qr-overlay')) {
+    document.getElementById('qr-overlay').classList.remove('show');
+  }
+}
+</script>
+</body>
+</html>
