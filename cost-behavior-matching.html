@@ -171,9 +171,6 @@
   .ax-lbl { font-size: 5px; fill: #94a3b8; font-family: system-ui, sans-serif; }
   .axis-note { font-size: 12px; color: #64748b; background: #f8f6f0; border: 1px solid #dde3ef; border-radius: 8px; padding: 8px 12px; margin-bottom: 10px; line-height: 1.6; }
   .axis-note strong { color: #1a2744; font-weight: 600; }
-  .ax-lbl { font-size: 5px; fill: #94a3b8; font-family: system-ui, sans-serif; }
-  .axis-note { font-size: 12px; color: #64748b; background: #f8f6f0; border: 1px solid #dde3ef; border-radius: 8px; padding: 8px 12px; margin-bottom: 10px; line-height: 1.6; }
-  .axis-note strong { color: #1a2744; font-weight: 600; }
 
   /* Selection tip */
   .sel-tip {
@@ -452,80 +449,6 @@
             <text class="ax-lbl" x="40" y="70" text-anchor="middle">Activity</text>
             <text class="ax-lbl" x="3" y="34" text-anchor="middle" transform="rotate(-90,3,34)">Cost ($)</text>
             <polyline class="cl" points="10,60 42,46 70,10"/>
-          </svg>
-          <div class="g-num">7</div>
-        </div>
-
-      </div>
-
-        <!-- Graph 2: Horizontal flat -->
-        <div class="g-card" id="gc-2" onclick="clickGraph(2)">
-          <svg class="g-svg" viewBox="0 0 80 68" xmlns="http://www.w3.org/2000/svg">
-            <line class="ax" x1="8" y1="60" x2="73" y2="60"/>
-            <line class="ax" x1="8" y1="60" x2="8" y2="6"/>
-            <line class="ax" x1="73" y1="60" x2="70" y2="57"/><line class="ax" x1="73" y1="60" x2="70" y2="63"/>
-            <line class="ax" x1="8" y1="6" x2="5" y2="9"/><line class="ax" x1="8" y1="6" x2="11" y2="9"/>
-            <line class="cl" x1="8" y1="36" x2="70" y2="36"/>
-          </svg>
-          <div class="g-num">2</div>
-        </div>
-
-        <!-- Graph 3: Capped (rises then flat) -->
-        <div class="g-card" id="gc-3" onclick="clickGraph(3)">
-          <svg class="g-svg" viewBox="0 0 80 68" xmlns="http://www.w3.org/2000/svg">
-            <line class="ax" x1="8" y1="60" x2="73" y2="60"/>
-            <line class="ax" x1="8" y1="60" x2="8" y2="6"/>
-            <line class="ax" x1="73" y1="60" x2="70" y2="57"/><line class="ax" x1="73" y1="60" x2="70" y2="63"/>
-            <line class="ax" x1="8" y1="6" x2="5" y2="9"/><line class="ax" x1="8" y1="6" x2="11" y2="9"/>
-            <polyline class="cl" points="8,60 35,22 70,22"/>
-          </svg>
-          <div class="g-num">3</div>
-        </div>
-
-        <!-- Graph 4: Declining curve (AFC) -->
-        <div class="g-card" id="gc-4" onclick="clickGraph(4)">
-          <svg class="g-svg" viewBox="0 0 80 68" xmlns="http://www.w3.org/2000/svg">
-            <line class="ax" x1="8" y1="60" x2="73" y2="60"/>
-            <line class="ax" x1="8" y1="60" x2="8" y2="6"/>
-            <line class="ax" x1="73" y1="60" x2="70" y2="57"/><line class="ax" x1="73" y1="60" x2="70" y2="63"/>
-            <line class="ax" x1="8" y1="6" x2="5" y2="9"/><line class="ax" x1="8" y1="6" x2="11" y2="9"/>
-            <path class="cl" d="M10,10 Q16,13 24,21 T44,38 T70,53"/>
-          </svg>
-          <div class="g-num">4</div>
-        </div>
-
-        <!-- Graph 5: Step function -->
-        <div class="g-card" id="gc-5" onclick="clickGraph(5)">
-          <svg class="g-svg" viewBox="0 0 80 68" xmlns="http://www.w3.org/2000/svg">
-            <line class="ax" x1="8" y1="60" x2="73" y2="60"/>
-            <line class="ax" x1="8" y1="60" x2="8" y2="6"/>
-            <line class="ax" x1="73" y1="60" x2="70" y2="57"/><line class="ax" x1="73" y1="60" x2="70" y2="63"/>
-            <line class="ax" x1="8" y1="6" x2="5" y2="9"/><line class="ax" x1="8" y1="6" x2="11" y2="9"/>
-            <polyline class="cl" points="8,55 28,55 28,40 48,40 48,25 68,25"/>
-          </svg>
-          <div class="g-num">5</div>
-        </div>
-
-        <!-- Graph 6: Hockey stick (flat then rising) -->
-        <div class="g-card" id="gc-6" onclick="clickGraph(6)">
-          <svg class="g-svg" viewBox="0 0 80 68" xmlns="http://www.w3.org/2000/svg">
-            <line class="ax" x1="8" y1="60" x2="73" y2="60"/>
-            <line class="ax" x1="8" y1="60" x2="8" y2="6"/>
-            <line class="ax" x1="73" y1="60" x2="70" y2="57"/><line class="ax" x1="73" y1="60" x2="70" y2="63"/>
-            <line class="ax" x1="8" y1="6" x2="5" y2="9"/><line class="ax" x1="8" y1="6" x2="11" y2="9"/>
-            <polyline class="cl" points="8,42 38,42 70,12"/>
-          </svg>
-          <div class="g-num">6</div>
-        </div>
-
-        <!-- Graph 7: Kinked (steeper slope after threshold) -->
-        <div class="g-card" id="gc-7" onclick="clickGraph(7)">
-          <svg class="g-svg" viewBox="0 0 80 68" xmlns="http://www.w3.org/2000/svg">
-            <line class="ax" x1="8" y1="60" x2="73" y2="60"/>
-            <line class="ax" x1="8" y1="60" x2="8" y2="6"/>
-            <line class="ax" x1="73" y1="60" x2="70" y2="57"/><line class="ax" x1="73" y1="60" x2="70" y2="63"/>
-            <line class="ax" x1="8" y1="6" x2="5" y2="9"/><line class="ax" x1="8" y1="6" x2="11" y2="9"/>
-            <polyline class="cl" points="8,60 42,46 70,10"/>
           </svg>
           <div class="g-num">7</div>
         </div>
