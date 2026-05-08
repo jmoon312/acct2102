@@ -1,0 +1,1165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sensitivity Analysis Practice</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  /* ── Reset & base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    background: #f4f0e8;
+    color: #1a2744;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    background: #1a2744;
+    color: #fff;
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .header-left h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+  .header-left p  { font-size: 13px; color: #a0aec0; margin-top: 2px; }
+
+  .qr-btn {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    transition: background .15s;
+  }
+  .qr-btn:hover { background: rgba(255,255,255,0.18); }
+
+  /* QR Modal */
+  .qr-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .qr-overlay.show { display: flex; }
+  .qr-modal {
+    background: #fff;
+    border-radius: 14px;
+    padding: 32px;
+    text-align: center;
+    max-width: 300px;
+    width: 90%;
+  }
+  .qr-modal h2 { font-size: 16px; font-weight: 600; color: #1a2744; margin-bottom: 6px; }
+  .qr-modal p  { font-size: 12px; color: #64748b; margin-bottom: 18px; line-height: 1.5; }
+  #qr-code { display: flex; justify-content: center; margin-bottom: 16px; }
+  #qr-url  { font-size: 11px; color: #94a3b8; word-break: break-all; margin-bottom: 18px; }
+  .qr-close {
+    background: #1a2744; color: #fff;
+    border: none; border-radius: 8px;
+    padding: 8px 24px; font-size: 13px;
+    cursor: pointer; font-family: inherit;
+  }
+
+  /* ── Main layout ── */
+  main {
+    max-width: 880px;
+    margin: 28px auto;
+    padding: 0 20px 48px;
+  }
+
+  .part {
+    background: #fff;
+    border: 1px solid #dde3ef;
+    border-radius: 12px;
+    padding: 22px 24px 24px;
+    margin-bottom: 22px;
+  }
+
+  .part-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .part-tag {
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    background: #1a2744;
+    padding: 3px 10px;
+    border-radius: 99px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+  .part-tag.practice { background: #D85A30; }
+  .part-tag.explore  { background: #3b7dd8; }
+  .part-tag.build    { background: #5a9e3a; }
+  .part-header h2 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -.01em;
+  }
+  .part-header .subtitle {
+    font-size: 13px;
+    color: #64748b;
+  }
+
+  .setup-box {
+    background: #f8f6f0;
+    border: 1px solid #e6dfd0;
+    border-radius: 9px;
+    padding: 14px 16px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: #334155;
+    margin-bottom: 16px;
+  }
+  .setup-box strong { color: #1a2744; }
+  .setup-box p + p { margin-top: 6px; }
+
+  /* ── Income statement ── */
+  .income-stmt {
+    width: 320px;
+    max-width: 100%;
+    margin: 14px auto 4px;
+    border-collapse: collapse;
+    font-size: 13.5px;
+    color: #1a2744;
+    background: #fff;
+    border: 1px solid #dde3ef;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .income-stmt th {
+    background: #e9eef7;
+    font-size: 12.5px;
+    font-weight: 700;
+    text-align: right;
+    padding: 7px 14px;
+    border-bottom: 1px solid #dde3ef;
+  }
+  .income-stmt th:first-child { text-align: left; }
+  .income-stmt td {
+    padding: 6px 14px;
+    border-bottom: 1px solid #f0f3f8;
+  }
+  .income-stmt td.amount {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  .income-stmt tr.subtotal td { font-weight: 600; }
+  .income-stmt tr.subtotal td.amount {
+    border-top: 1px solid #cbd5e1;
+  }
+  .income-stmt tr.total td {
+    font-weight: 700;
+    border-top: 2px solid #1a2744;
+    border-bottom: 3px double #1a2744;
+  }
+
+  /* ── Practice grid (Step 1) ── */
+  .prompt {
+    font-size: 14px;
+    color: #1a2744;
+    margin-bottom: 12px;
+    line-height: 1.55;
+  }
+  .prompt strong { font-weight: 700; }
+
+  .grid {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-bottom: 6px;
+  }
+  .grid thead th {
+    background: #fde9c8;
+    color: #1a2744;
+    font-size: 12.5px;
+    font-weight: 700;
+    text-align: center;
+    padding: 10px 8px;
+    border-bottom: 2px solid #f0c674;
+  }
+  .grid thead th:first-child { border-top-left-radius: 8px; }
+  .grid thead th:last-child  { border-top-right-radius: 8px; }
+  .grid tbody td {
+    background: #f0f5fa;
+    padding: 9px 8px;
+    text-align: center;
+    border-bottom: 1px solid #e1eaf3;
+  }
+  .grid tbody tr:last-child td:first-child { border-bottom-left-radius: 8px; }
+  .grid tbody tr:last-child td:last-child  { border-bottom-right-radius: 8px; }
+
+  .grid input {
+    width: 100%;
+    max-width: 130px;
+    padding: 7px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    transition: border-color .12s, background .12s;
+  }
+  .grid input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .grid input.correct {
+    border-color: #5a9e3a;
+    background: #f0f9e8;
+    color: #2d6a1f;
+    font-weight: 600;
+  }
+  .grid input.wrong {
+    border-color: #c94040;
+    background: #fff1f1;
+    color: #9b2020;
+  }
+  .corr-hint {
+    display: block;
+    font-size: 11px;
+    color: #5a9e3a;
+    font-weight: 600;
+    margin-top: 3px;
+    min-height: 14px;
+  }
+
+  .footer {
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .check-btn {
+    background: #1a2744; color: #fff;
+    border: none; border-radius: 9px;
+    padding: 10px 24px; font-size: 14px;
+    cursor: pointer; font-family: inherit;
+    font-weight: 500;
+    transition: background .15s;
+  }
+  .check-btn:hover { background: #243660; }
+  .reset-btn {
+    font-size: 13px; color: #64748b;
+    background: none; border: none;
+    cursor: pointer; text-decoration: underline;
+    font-family: inherit;
+  }
+  .reveal-link {
+    margin-left: auto;
+    font-size: 12.5px;
+    color: #64748b;
+    background: none; border: none;
+    cursor: pointer; text-decoration: underline;
+    font-family: inherit;
+  }
+  .reveal-link:hover { color: #1a2744; }
+  .score-out {
+    font-size: 14px; font-weight: 600;
+    color: #1a2744;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 6px 14px;
+  }
+  .score-out:empty { display: none; }
+
+  /* ── Step 2 reveal ── */
+  .reveal {
+    display: none;
+    animation: slideIn 0.4s ease-out;
+  }
+  .reveal.show { display: block; }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Scenarios (Step 2) ── */
+  .scenario {
+    display: grid;
+    grid-template-columns: 36px 1fr 200px;
+    gap: 14px;
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #e1eaf3;
+    border-radius: 9px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+  .scenario .letter {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: #1a2744;
+    color: #fff;
+    font-weight: 700;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .scenario .desc {
+    font-size: 13.5px;
+    color: #1a2744;
+    line-height: 1.5;
+  }
+  .scenario .desc strong { font-weight: 700; }
+  .scenario .desc small {
+    display: block;
+    font-size: 11.5px;
+    color: #64748b;
+    margin-top: 2px;
+  }
+  .scenario .answer {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .scenario .answer label {
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 4px;
+  }
+  .scenario .answer input {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    transition: border-color .12s, background .12s;
+  }
+  .scenario .answer input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .scenario .answer input.correct {
+    border-color: #5a9e3a;
+    background: #f0f9e8;
+    color: #2d6a1f;
+    font-weight: 600;
+  }
+  .scenario .answer input.wrong {
+    border-color: #c94040;
+    background: #fff1f1;
+    color: #9b2020;
+  }
+  .scenario .answer .corr-hint {
+    text-align: center;
+    margin-top: 3px;
+  }
+
+  /* ── Build-your-own (Step 3) ── */
+  .build-prompt {
+    font-size: 14px;
+    color: #1a2744;
+    margin-bottom: 14px;
+    line-height: 1.55;
+  }
+
+  .inputs-card {
+    background: #f8f6f0;
+    border: 1px solid #e6dfd0;
+    border-radius: 9px;
+    padding: 16px 18px;
+    margin-bottom: 14px;
+  }
+  .inputs-card h3 {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: #64748b;
+    margin-bottom: 10px;
+  }
+  .input-row {
+    display: grid;
+    grid-template-columns: 1fr 140px;
+    gap: 10px;
+    align-items: center;
+    padding: 7px 0;
+    border-bottom: 1px dashed #e6dfd0;
+  }
+  .input-row:last-child { border-bottom: none; }
+  .input-row label {
+    font-size: 13.5px;
+    color: #1a2744;
+    font-weight: 500;
+  }
+  .input-row label small {
+    display: block;
+    font-size: 11.5px;
+    color: #64748b;
+    font-weight: 400;
+    margin-top: 1px;
+  }
+  .input-row .var-input {
+    padding: 7px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-variant-numeric: tabular-nums;
+  }
+  .input-row .var-input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .input-row .var-input.changed {
+    border-color: #D85A30;
+    background: #fff7f0;
+  }
+
+  .solve-card {
+    background: #fff;
+    border: 1px solid #dde3ef;
+    border-radius: 9px;
+    padding: 16px 18px;
+    margin-bottom: 12px;
+    display: grid;
+    grid-template-columns: 1fr 200px;
+    gap: 14px;
+    align-items: center;
+  }
+  .solve-card .solve-label {
+    font-size: 14px;
+    color: #1a2744;
+    font-weight: 600;
+  }
+  .solve-card .solve-label small {
+    display: block;
+    font-size: 12px;
+    color: #64748b;
+    font-weight: 400;
+    margin-top: 2px;
+  }
+  .solve-card input {
+    padding: 9px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 15px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-weight: 600;
+  }
+  .solve-card input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .solve-card input.correct {
+    border-color: #5a9e3a;
+    background: #f0f9e8;
+    color: #2d6a1f;
+  }
+  .solve-card input.wrong {
+    border-color: #c94040;
+    background: #fff1f1;
+    color: #9b2020;
+  }
+
+  .insight {
+    margin-top: 8px;
+    background: #eff6ff;
+    border: 1px solid #c7dcf5;
+    border-left: 4px solid #3b7dd8;
+    border-radius: 0 8px 8px 0;
+    padding: 11px 14px;
+    font-size: 13px;
+    line-height: 1.55;
+    color: #1a2744;
+  }
+  .insight strong { color: #1e40af; }
+  .insight.success {
+    background: #f0f9e8;
+    border-color: #c4e0a3;
+    border-left-color: #5a9e3a;
+  }
+  .insight.success strong { color: #2d6a1f; }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    header { padding: 14px 16px; }
+    main { padding: 0 12px 40px; }
+    .part { padding: 18px 14px 18px; }
+    .grid thead th, .grid tbody td { font-size: 12px; padding: 7px 4px; }
+    .grid input { font-size: 13px; padding: 6px 4px; }
+    .scenario {
+      grid-template-columns: 32px 1fr;
+      gap: 10px;
+    }
+    .scenario .answer {
+      grid-column: 1 / -1;
+      margin-top: 4px;
+    }
+    .input-row {
+      grid-template-columns: 1fr;
+      gap: 4px;
+    }
+    .solve-card {
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="header-left">
+    <h1>Sensitivity Analysis Practice</h1>
+  </div>
+  <button class="qr-btn" onclick="showQR()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="2" height="2"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="19" width="3" height="2"/><rect x="19" y="19" width="2" height="2"/></svg>
+    Share with students
+  </button>
+</header>
+
+<!-- QR Modal -->
+<div class="qr-overlay" id="qr-overlay" onclick="hideQR(event)">
+  <div class="qr-modal">
+    <h2>Scan to open on your device</h2>
+    <p>Students can scan this QR code or type the URL to open the activity on their phone or laptop.</p>
+    <div id="qr-code"></div>
+    <div id="qr-url"></div>
+    <button class="qr-close" onclick="hideQR()">Close</button>
+  </div>
+</div>
+
+<!-- Main -->
+<main>
+
+  <!-- ───────── STEP 1 — Per-unit metrics ───────── -->
+  <section class="part">
+    <div class="part-header">
+      <span class="part-tag practice">Step 1</span>
+      <h2>Jeni's per-bar economics</h2>
+      <span class="subtitle">unit price, CM per bar, CM ratio</span>
+    </div>
+
+    <div class="setup-box">
+      <p>Last month, Jeni's sold <strong>6,950 ice cream bars</strong>. The contribution-margin income statement looks like this:</p>
+
+      <table class="income-stmt">
+        <thead>
+          <tr><th></th><th>Total</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Sales (6,950 units)</td><td class="amount">$10,425</td></tr>
+          <tr><td>Variable costs</td><td class="amount">(7,645)</td></tr>
+          <tr class="subtotal"><td>Contribution margin</td><td class="amount">2,780</td></tr>
+          <tr><td>Fixed costs</td><td class="amount">(1,780)</td></tr>
+          <tr class="total"><td>Profit</td><td class="amount">$1,000</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="prompt">Use the totals above to fill in each per-bar metric:</p>
+
+    <table class="grid">
+      <thead>
+        <tr>
+          <th>Sales price per bar</th>
+          <th>CM per bar</th>
+          <th>CM ratio</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <input type="text" id="in-sp" inputmode="decimal" placeholder="$">
+            <span class="corr-hint" id="hint-sp"></span>
+          </td>
+          <td>
+            <input type="text" id="in-cmu" inputmode="decimal" placeholder="$">
+            <span class="corr-hint" id="hint-cmu"></span>
+          </td>
+          <td>
+            <input type="text" id="in-cmr" inputmode="decimal" placeholder="%">
+            <span class="corr-hint" id="hint-cmr"></span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep1()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep1()">Reset</button>
+      <span id="score1-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep2(true)" id="reveal-step2-btn">Skip ahead to scenarios →</button>
+    </div>
+  </section>
+
+  <!-- ───────── STEP 2 — Scenarios ───────── -->
+  <section class="part reveal" id="step2">
+    <div class="part-header">
+      <span class="part-tag explore">Step 2</span>
+      <h2>What happens to profit when…?</h2>
+      <span class="subtitle">enter the change in profit (use a minus sign for a decrease)</span>
+    </div>
+
+    <p class="prompt">Each scenario starts from the original numbers above. Fill in the requested value for each row:</p>
+
+    <!-- A -->
+    <div class="scenario">
+      <div class="letter">A</div>
+      <div class="desc">
+        Sales volume <strong>increases by 100 bars</strong>.
+        <small>Selling price, variable cost per bar, and fixed costs are unchanged.</small>
+      </div>
+      <div class="answer">
+        <label>Change in profit</label>
+        <input type="text" id="in-A" inputmode="decimal" placeholder="$">
+        <span class="corr-hint" id="hint-A"></span>
+      </div>
+    </div>
+
+    <!-- B -->
+    <div class="scenario">
+      <div class="letter">B</div>
+      <div class="desc">
+        Total sales revenue <strong>decreases by $1,500</strong>.
+        <small>Selling price, variable cost per bar, and fixed costs are unchanged.</small>
+      </div>
+      <div class="answer">
+        <label>Change in profit</label>
+        <input type="text" id="in-B" inputmode="decimal" placeholder="$">
+        <span class="corr-hint" id="hint-B"></span>
+      </div>
+    </div>
+
+    <!-- C -->
+    <div class="scenario">
+      <div class="letter">C</div>
+      <div class="desc">
+        Variable cost per bar <strong>decreases by $0.05</strong>.
+        <small>Selling price, volume (6,950 bars), and fixed costs are unchanged.</small>
+      </div>
+      <div class="answer">
+        <label>Change in profit</label>
+        <input type="text" id="in-C" inputmode="decimal" placeholder="$">
+        <span class="corr-hint" id="hint-C"></span>
+      </div>
+    </div>
+
+    <!-- D -->
+    <div class="scenario">
+      <div class="letter">D</div>
+      <div class="desc">
+        Selling price <strong>and</strong> variable cost per bar <strong>both increase by 10%</strong>.
+        <small>Volume (6,950 bars) and fixed costs are unchanged.</small>
+      </div>
+      <div class="answer">
+        <label>Change in profit</label>
+        <input type="text" id="in-D" inputmode="decimal" placeholder="$">
+        <span class="corr-hint" id="hint-D"></span>
+      </div>
+    </div>
+
+    <!-- E -->
+    <div class="scenario">
+      <div class="letter">E</div>
+      <div class="desc">
+        Volume drops to <strong>4,450 bars</strong>.
+        <small>Selling price, variable cost per bar, and fixed costs are unchanged. <em>This time, give us total profit at this volume.</em></small>
+      </div>
+      <div class="answer">
+        <label>Total profit</label>
+        <input type="text" id="in-E" inputmode="decimal" placeholder="$">
+        <span class="corr-hint" id="hint-E"></span>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep2()">Check all</button>
+      <button class="reset-btn" onclick="resetStep2()">Reset</button>
+      <span id="score2-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep3(true)" id="reveal-step3-btn">Skip ahead to build-your-own →</button>
+    </div>
+
+    <div id="step2-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 3 — Build your own ───────── -->
+  <section class="part reveal" id="step3">
+    <div class="part-header">
+      <span class="part-tag build">Step 3</span>
+      <h2>Build your own scenario</h2>
+      <span class="subtitle">change any of the four inputs and predict the resulting profit</span>
+    </div>
+
+    <p class="build-prompt">The four inputs below start at Jeni's original numbers. Edit any of them, predict the new profit, and click <strong>Check</strong>.</p>
+
+    <div class="inputs-card">
+      <h3>Inputs</h3>
+      <div class="input-row">
+        <label>Units sold (bars) <small>How many bars are sold this month</small></label>
+        <input type="text" class="var-input" id="bv-q" inputmode="decimal" value="6,950">
+      </div>
+      <div class="input-row">
+        <label>Selling price per bar <small>Revenue per bar sold</small></label>
+        <input type="text" class="var-input" id="bv-sp" inputmode="decimal" value="$1.50">
+      </div>
+      <div class="input-row">
+        <label>Variable cost per bar <small>Cost that scales with each bar</small></label>
+        <input type="text" class="var-input" id="bv-vc" inputmode="decimal" value="$1.10">
+      </div>
+      <div class="input-row">
+        <label>Fixed costs <small>Total monthly costs that don't change with volume</small></label>
+        <input type="text" class="var-input" id="bv-fc" inputmode="decimal" value="$1,780">
+      </div>
+    </div>
+
+    <div class="solve-card">
+      <div class="solve-label">
+        Your predicted profit
+        <small>Profit = (Price − VC per bar) × Units − Fixed costs</small>
+      </div>
+      <input type="text" id="bv-profit" inputmode="decimal" placeholder="$">
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep3()">Check</button>
+      <button class="reset-btn" onclick="resetStep3()">Reset to original</button>
+      <span id="score3-out" class="score-out"></span>
+    </div>
+
+    <div id="step3-feedback"></div>
+  </section>
+
+</main>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   ORIGINAL DATA — Jeni's
+═══════════════════════════════════════════════════════════════ */
+const ORIG = {
+  Q:  6950,
+  SP: 1.50,
+  VC: 1.10,
+  FC: 1780
+};
+const ORIG_PROFIT = ORIG.Q * (ORIG.SP - ORIG.VC) - ORIG.FC; // 1000
+const ORIG_CM_UNIT  = ORIG.SP - ORIG.VC;                   // 0.40
+const ORIG_CM_RATIO = ORIG_CM_UNIT / ORIG.SP;              // 0.26666...
+
+/* ═══════════════════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════════════════ */
+function parseNum(s) {
+  if (typeof s !== 'string') return NaN;
+  // strip $, commas, percent, spaces
+  return parseFloat(s.replace(/[\$,\s%]/g, ''));
+}
+function parsePercent(s) {
+  if (typeof s !== 'string') return NaN;
+  const stripped = s.replace(/[\$,\s%]/g, '');
+  const v = parseFloat(stripped);
+  if (isNaN(v)) return NaN;
+  // Heuristic: if value <= 1, it's likely already a decimal (0.2667).
+  // If > 1, treat as percentage (26.67).
+  return v <= 1 ? v : v / 100;
+}
+function fmtMoney(v, decimals) {
+  const d = (decimals === undefined) ? 0 : decimals;
+  // round to cents first to avoid float artifacts like 1780.0000000000009
+  const rounded = Math.round(v * 100) / 100;
+  const sign = rounded < 0 ? '-$' : '$';
+  return sign + Math.abs(rounded).toLocaleString('en-US', {
+    minimumFractionDigits: d,
+    maximumFractionDigits: d
+  });
+}
+function fmtMoneySigned(v) {
+  // For "change in profit" answers — explicit + or − sign
+  // round to cents first to make whole-number answers display cleanly
+  const rounded = Math.round(v * 100) / 100;
+  if (Math.abs(rounded) < 0.005) return '$0';
+  const sign = rounded < 0 ? '−' : '+';
+  const abs = Math.abs(rounded);
+  const decimals = (abs % 1 === 0) ? 0 : 2;
+  return sign + '$' + abs.toLocaleString('en-US', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals
+  });
+}
+function fmtPct(v) {
+  return (v * 100).toFixed(2) + '%';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   AUDIO
+═══════════════════════════════════════════════════════════════ */
+let audioCtx = null;
+function getAudio() {
+  if (!audioCtx) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (AC) audioCtx = new AC();
+  }
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+function playBell() {
+  const ctx = getAudio(); if (!ctx) return;
+  const now = ctx.currentTime;
+  [523.25, 659.25, 783.99].forEach(f => {
+    const osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = 'sine'; osc.frequency.value = f;
+    osc.connect(g).connect(ctx.destination);
+    g.gain.setValueAtTime(0, now);
+    g.gain.linearRampToValueAtTime(0.15, now + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 1.6);
+    osc.start(now); osc.stop(now + 1.7);
+  });
+}
+function playHorn() {
+  const ctx = getAudio(); if (!ctx) return;
+  const now = ctx.currentTime;
+  const notes = [
+    { f: 466.16, t: 0.00, d: 0.18 },
+    { f: 440.00, t: 0.20, d: 0.18 },
+    { f: 415.30, t: 0.40, d: 0.55 }
+  ];
+  notes.forEach(({ f, t, d }) => {
+    const osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(f, now + t);
+    if (d > 0.3) osc.frequency.exponentialRampToValueAtTime(f * 0.88, now + t + d);
+    osc.connect(g).connect(ctx.destination);
+    g.gain.setValueAtTime(0, now + t);
+    g.gain.linearRampToValueAtTime(0.12, now + t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, now + t + d);
+    osc.start(now + t); osc.stop(now + t + d + 0.05);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 1 — Per-unit metrics
+═══════════════════════════════════════════════════════════════ */
+const STEP1_FIELDS = [
+  { key: 'sp',  expected: ORIG.SP,        kind: 'money',   tol: 0.005, displayDecimals: 2 },
+  { key: 'cmu', expected: ORIG_CM_UNIT,   kind: 'money',   tol: 0.005, displayDecimals: 2 },
+  { key: 'cmr', expected: ORIG_CM_RATIO,  kind: 'percent', tol: 0.0006 } // ±0.06% absolute
+];
+
+function checkStep1() {
+  let correct = 0, total = 0, blanks = 0;
+  STEP1_FIELDS.forEach(f => {
+    const inp  = document.getElementById('in-' + f.key);
+    const hint = document.getElementById('hint-' + f.key);
+    inp.classList.remove('correct', 'wrong');
+    hint.textContent = '';
+    total++;
+    if (inp.value.trim() === '') { blanks++; return; }
+    const val = (f.kind === 'percent') ? parsePercent(inp.value) : parseNum(inp.value);
+    const exp = f.expected;
+    if (!isNaN(val) && Math.abs(val - exp) <= f.tol) {
+      inp.classList.add('correct');
+      correct++;
+    } else {
+      inp.classList.add('wrong');
+      hint.textContent = '→ ' + (f.kind === 'percent' ? fmtPct(exp) : fmtMoney(exp, f.displayDecimals));
+    }
+  });
+  const out = document.getElementById('score1-out');
+  if (blanks === total) {
+    out.textContent = 'Fill in some answers first.';
+    return;
+  }
+  out.textContent = correct + ' / ' + total + ' correct' + (blanks ? ' (' + blanks + ' blank)' : '');
+  if (correct === total) {
+    playBell();
+    revealStep2(false);
+  } else {
+    playHorn();
+  }
+}
+
+function resetStep1() {
+  STEP1_FIELDS.forEach(f => {
+    const inp = document.getElementById('in-' + f.key);
+    const hint = document.getElementById('hint-' + f.key);
+    inp.value = '';
+    inp.classList.remove('correct', 'wrong');
+    hint.textContent = '';
+  });
+  document.getElementById('score1-out').textContent = '';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 2 — Scenarios A / B / C / D / E
+═══════════════════════════════════════════════════════════════ */
+// All five answers are derived from ORIG so they self-update if data changes.
+
+// A: Sales volume up 100 bars
+const ANS_A = 100 * ORIG_CM_UNIT;                                    // +40
+// B: Sales revenue down $1,500 (1,000 fewer bars)
+// Compute via volume change to avoid 4/15 float drift: ΔQ = -$1,500 / $1.50 = -1,000 bars
+const ANS_B = -(1500 / ORIG.SP) * ORIG_CM_UNIT;                      // -1,000 × $0.40 = -$400
+// C: VC per bar down $0.05
+const ANS_C = ORIG.Q * 0.05;                                         // +347.50
+// D: Both SP and VC up 10% → CM/bar up 10%
+const ANS_D = ORIG.Q * (ORIG_CM_UNIT * 0.10);                        // +278
+// E: Q = 4,450 → total profit
+const ANS_E = 4450 * ORIG_CM_UNIT - ORIG.FC;                         // 0
+
+const STEP2_FIELDS = [
+  { key: 'A', expected: ANS_A, signed: true,  decimals: 0 },
+  { key: 'B', expected: ANS_B, signed: true,  decimals: 0 },
+  { key: 'C', expected: ANS_C, signed: true,  decimals: 2 },
+  { key: 'D', expected: ANS_D, signed: true,  decimals: 0 },
+  { key: 'E', expected: ANS_E, signed: false, decimals: 0 }
+];
+
+function checkStep2() {
+  let correct = 0, total = 0, blanks = 0;
+  STEP2_FIELDS.forEach(f => {
+    const inp  = document.getElementById('in-' + f.key);
+    const hint = document.getElementById('hint-' + f.key);
+    inp.classList.remove('correct', 'wrong');
+    hint.textContent = '';
+    total++;
+    if (inp.value.trim() === '') { blanks++; return; }
+    const val = parseNum(inp.value);
+    const exp = f.expected;
+    // Tolerance: $0.50 for whole-dollar answers, $0.05 for cents-precision answers
+    const tol = (f.decimals >= 2) ? 0.05 : 0.5;
+    if (!isNaN(val) && Math.abs(val - exp) <= tol) {
+      inp.classList.add('correct');
+      correct++;
+    } else {
+      inp.classList.add('wrong');
+      const display = f.signed
+        ? fmtMoneySigned(exp)
+        : fmtMoney(exp, f.decimals);
+      hint.textContent = '→ ' + display;
+    }
+  });
+  const out = document.getElementById('score2-out');
+  if (blanks === total) {
+    out.textContent = 'Fill in some answers first.';
+    return;
+  }
+  out.textContent = correct + ' / ' + total + ' correct' + (blanks ? ' (' + blanks + ' blank)' : '');
+  if (correct === total) {
+    playBell();
+    showStep2Insight();
+    revealStep3(false);
+  } else {
+    playHorn();
+  }
+}
+
+function resetStep2() {
+  STEP2_FIELDS.forEach(f => {
+    const inp = document.getElementById('in-' + f.key);
+    const hint = document.getElementById('hint-' + f.key);
+    inp.value = '';
+    inp.classList.remove('correct', 'wrong');
+    hint.textContent = '';
+  });
+  document.getElementById('score2-out').textContent = '';
+  document.getElementById('step2-insight').innerHTML = '';
+}
+
+function showStep2Insight() {
+  const el = document.getElementById('step2-insight');
+  el.innerHTML = `
+    <div class="insight success">
+      Notice scenario <strong>E</strong>: at <strong>4,450 bars</strong>, the contribution margin (4,450 × $0.40 = $1,780) <em>exactly</em> covers fixed costs, so profit lands on $0. Hold on to this idea — we'll come back to it.
+    </div>
+  `;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 3 — Build your own
+═══════════════════════════════════════════════════════════════ */
+const BV_INPUTS = [
+  { id: 'bv-q',  orig: ORIG.Q,  display: v => v.toLocaleString('en-US', {maximumFractionDigits: 0}) },
+  { id: 'bv-sp', orig: ORIG.SP, display: v => '$' + v.toFixed(2) },
+  { id: 'bv-vc', orig: ORIG.VC, display: v => '$' + v.toFixed(2) },
+  { id: 'bv-fc', orig: ORIG.FC, display: v => '$' + v.toLocaleString('en-US', {maximumFractionDigits: 0}) }
+];
+
+// Mark inputs as "changed" (orange border) when they differ from defaults
+function refreshChangedFlags() {
+  BV_INPUTS.forEach(spec => {
+    const el = document.getElementById(spec.id);
+    const val = parseNum(el.value);
+    if (!isNaN(val) && Math.abs(val - spec.orig) > 0.001) {
+      el.classList.add('changed');
+    } else {
+      el.classList.remove('changed');
+    }
+  });
+}
+
+BV_INPUTS.forEach(spec => {
+  document.addEventListener('DOMContentLoaded', () => {
+    const el = document.getElementById(spec.id);
+    el.addEventListener('input', () => {
+      refreshChangedFlags();
+      // If user edits an input, clear stale check feedback
+      const profitEl = document.getElementById('bv-profit');
+      profitEl.classList.remove('correct', 'wrong');
+      document.getElementById('score3-out').textContent = '';
+      document.getElementById('step3-feedback').innerHTML = '';
+    });
+  });
+});
+
+function checkStep3() {
+  // Parse the four inputs
+  const Q  = parseNum(document.getElementById('bv-q').value);
+  const SP = parseNum(document.getElementById('bv-sp').value);
+  const VC = parseNum(document.getElementById('bv-vc').value);
+  const FC = parseNum(document.getElementById('bv-fc').value);
+  const guess = parseNum(document.getElementById('bv-profit').value);
+
+  const fb  = document.getElementById('step3-feedback');
+  const out = document.getElementById('score3-out');
+  const profitEl = document.getElementById('bv-profit');
+
+  fb.innerHTML = '';
+  profitEl.classList.remove('correct', 'wrong');
+  out.textContent = '';
+
+  // Validate inputs
+  if ([Q, SP, VC, FC].some(isNaN)) {
+    fb.innerHTML = `<div class="insight">Make sure all four inputs (units, price, VC per bar, fixed costs) have valid numbers.</div>`;
+    return;
+  }
+  if (isNaN(guess)) {
+    fb.innerHTML = `<div class="insight">Enter your predicted profit before checking.</div>`;
+    return;
+  }
+
+  const actual = Q * (SP - VC) - FC;
+  const tol = Math.max(0.5, Math.abs(actual) * 0.001);  // be generous on rounding
+
+  if (Math.abs(guess - actual) <= tol) {
+    profitEl.classList.add('correct');
+    out.textContent = 'Correct!';
+    fb.innerHTML = `
+      <div class="insight success">
+        With <strong>${Q.toLocaleString()} bars</strong>, a price of <strong>$${SP.toFixed(2)}</strong>, VC of <strong>$${VC.toFixed(2)}</strong>/bar, and fixed costs of <strong>$${FC.toLocaleString()}</strong>:<br>
+        Profit = (${SP.toFixed(2)} − ${VC.toFixed(2)}) × ${Q.toLocaleString()} − ${FC.toLocaleString()} = <strong>${fmtMoney(actual, Math.abs(actual) < 100 ? 2 : 0)}</strong>
+      </div>
+    `;
+    playBell();
+  } else {
+    profitEl.classList.add('wrong');
+    out.textContent = 'Not quite.';
+    fb.innerHTML = `
+      <div class="insight">
+        Your answer: <strong>${fmtMoney(guess, Math.abs(guess) < 100 ? 2 : 0)}</strong>. Actual profit at these inputs: <strong>${fmtMoney(actual, Math.abs(actual) < 100 ? 2 : 0)}</strong>.<br>
+        Profit = (Price − VC per bar) × Units − Fixed costs = (${SP.toFixed(2)} − ${VC.toFixed(2)}) × ${Q.toLocaleString()} − ${FC.toLocaleString()}
+      </div>
+    `;
+    playHorn();
+  }
+}
+
+function resetStep3() {
+  BV_INPUTS.forEach(spec => {
+    document.getElementById(spec.id).value = spec.display(spec.orig);
+  });
+  const profitEl = document.getElementById('bv-profit');
+  profitEl.value = '';
+  profitEl.classList.remove('correct', 'wrong');
+  document.getElementById('score3-out').textContent = '';
+  document.getElementById('step3-feedback').innerHTML = '';
+  refreshChangedFlags();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   REVEAL STEPS
+═══════════════════════════════════════════════════════════════ */
+let step2Shown = false, step3Shown = false;
+function revealStep2(scroll) {
+  const el = document.getElementById('step2');
+  if (!step2Shown) {
+    el.classList.add('show');
+    step2Shown = true;
+    document.getElementById('reveal-step2-btn').style.display = 'none';
+  }
+  if (scroll) {
+    setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+  }
+}
+function revealStep3(scroll) {
+  const el = document.getElementById('step3');
+  if (!step3Shown) {
+    el.classList.add('show');
+    step3Shown = true;
+    document.getElementById('reveal-step3-btn').style.display = 'none';
+  }
+  if (scroll) {
+    setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   QR / SHARE
+═══════════════════════════════════════════════════════════════ */
+function showQR() {
+  const url = location.href;
+  document.getElementById('qr-url').textContent = url;
+  const qrEl = document.getElementById('qr-code');
+  qrEl.innerHTML = '';
+  // qrcodejs lib
+  if (window.QRCode) {
+    new QRCode(qrEl, { text: url, width: 180, height: 180, colorDark: '#1a2744', colorLight: '#ffffff' });
+  }
+  document.getElementById('qr-overlay').classList.add('show');
+}
+function hideQR(ev) {
+  if (ev && ev.target.id !== 'qr-overlay' && ev.target.className !== 'qr-close') return;
+  document.getElementById('qr-overlay').classList.remove('show');
+}
+
+/* Initial wiring */
+document.addEventListener('DOMContentLoaded', () => {
+  refreshChangedFlags();
+});
+</script>
+
+</body>
+</html>
