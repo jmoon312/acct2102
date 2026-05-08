@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chapter 2: Profit Formula Practice</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  /* ── Reset & base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    background: #f4f0e8;
+    color: #1a2744;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    background: #1a2744;
+    color: #fff;
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .header-left h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+  .header-left p  { font-size: 13px; color: #a0aec0; margin-top: 2px; }
+
+  .qr-btn {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    transition: background .15s;
+  }
+  .qr-btn:hover { background: rgba(255,255,255,0.18); }
+
+  /* QR Modal */
+  .qr-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .qr-overlay.show { display: flex; }
+  .qr-modal {
+    background: #fff;
+    border-radius: 14px;
+    padding: 32px;
+    text-align: center;
+    max-width: 300px;
+    width: 90%;
+  }
+  .qr-modal h2 { font-size: 16px; font-weight: 600; color: #1a2744; margin-bottom: 6px; }
+  .qr-modal p  { font-size: 12px; color: #64748b; margin-bottom: 18px; line-height: 1.5; }
+  #qr-code { display: flex; justify-content: center; margin-bottom: 16px; }
+  #qr-url  { font-size: 11px; color: #94a3b8; word-break: break-all; margin-bottom: 18px; }
+  .qr-close {
+    background: #1a2744; color: #fff;
+    border: none; border-radius: 8px;
+    padding: 8px 24px; font-size: 13px;
+    cursor: pointer; font-family: inherit;
+  }
+
+  /* ── Main layout ── */
+  main {
+    max-width: 880px;
+    margin: 28px auto;
+    padding: 0 20px 48px;
+  }
+
+  .part {
+    background: #fff;
+    border: 1px solid #dde3ef;
+    border-radius: 12px;
+    padding: 22px 24px 24px;
+    margin-bottom: 22px;
+  }
+
+  .part-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .part-tag {
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    background: #1a2744;
+    padding: 3px 10px;
+    border-radius: 99px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+  .part-tag.practice { background: #D85A30; }
+  .part-tag.explore  { background: #3b7dd8; }
+  .part-header h2 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -.01em;
+  }
+  .part-header .subtitle {
+    font-size: 13px;
+    color: #64748b;
+  }
+
+  .setup-box {
+    background: #f8f6f0;
+    border: 1px solid #e6dfd0;
+    border-radius: 9px;
+    padding: 14px 16px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: #334155;
+    margin-bottom: 16px;
+  }
+  .setup-box strong { color: #1a2744; }
+  .setup-box p + p { margin-top: 6px; }
+
+  .formula-block {
+    background: #fff;
+    border: 1px solid #dde3ef;
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-top: 10px;
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: #1a2744;
+  }
+  .formula-block .lbl-rev   { color: #1a2744; font-weight: 700; }
+  .formula-block .lbl-vc    { color: #b04417; font-weight: 700; }
+  .formula-block .lbl-fc    { color: #b04417; font-weight: 700; }
+
+  /* ── Practice grid (Step 1) ── */
+  .prompt {
+    font-size: 14px;
+    color: #1a2744;
+    margin-bottom: 12px;
+    line-height: 1.55;
+  }
+  .prompt strong { font-weight: 700; }
+
+  .grid {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-bottom: 6px;
+  }
+  .grid thead th {
+    background: #fde9c8;
+    color: #1a2744;
+    font-size: 12.5px;
+    font-weight: 700;
+    text-align: center;
+    padding: 10px 8px;
+    border-bottom: 2px solid #f0c674;
+  }
+  .grid thead th:first-child { border-top-left-radius: 8px; }
+  .grid thead th:last-child  { border-top-right-radius: 8px; }
+  .grid tbody td {
+    background: #f0f5fa;
+    padding: 9px 8px;
+    text-align: center;
+    border-bottom: 1px solid #e1eaf3;
+    position: relative;
+  }
+  .grid tbody tr:last-child td:first-child { border-bottom-left-radius: 8px; }
+  .grid tbody tr:last-child td:last-child  { border-bottom-right-radius: 8px; }
+
+  .grid input {
+    width: 100%;
+    max-width: 130px;
+    padding: 7px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    transition: border-color .12s, background .12s;
+  }
+  .grid input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .grid input.correct {
+    border-color: #5a9e3a;
+    background: #f0f9e8;
+    color: #2d6a1f;
+    font-weight: 600;
+  }
+  .grid input.wrong {
+    border-color: #c94040;
+    background: #fff1f1;
+    color: #9b2020;
+  }
+  .corr-hint {
+    display: block;
+    font-size: 11px;
+    color: #5a9e3a;
+    font-weight: 600;
+    margin-top: 3px;
+    min-height: 14px;
+  }
+
+  .footer {
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .check-btn {
+    background: #1a2744; color: #fff;
+    border: none; border-radius: 9px;
+    padding: 10px 24px; font-size: 14px;
+    cursor: pointer; font-family: inherit;
+    font-weight: 500;
+    transition: background .15s;
+  }
+  .check-btn:hover { background: #243660; }
+  .reset-btn {
+    font-size: 13px; color: #64748b;
+    background: none; border: none;
+    cursor: pointer; text-decoration: underline;
+    font-family: inherit;
+  }
+  .reveal-link {
+    margin-left: auto;
+    font-size: 12.5px;
+    color: #64748b;
+    background: none; border: none;
+    cursor: pointer; text-decoration: underline;
+    font-family: inherit;
+  }
+  .reveal-link:hover { color: #1a2744; }
+  #score-out {
+    font-size: 14px; font-weight: 600;
+    color: #1a2744;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 6px 14px;
+  }
+  #score-out:empty { display: none; }
+
+  /* ── Step 2: Explorer ── */
+  .explorer {
+    display: none;
+    animation: slideIn 0.4s ease-out;
+  }
+  .explorer.show { display: block; }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .explorer-prompt {
+    font-size: 14px;
+    color: #1a2744;
+    margin-bottom: 14px;
+    line-height: 1.55;
+  }
+
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: #f8f6f0;
+    border: 1px solid #e6dfd0;
+    border-radius: 9px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .slider-row label {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #1a2744;
+    white-space: nowrap;
+  }
+  .slider-row input[type="range"] {
+    flex: 1;
+    min-width: 200px;
+    accent-color: #D85A30;
+    height: 4px;
+  }
+  .slider-row .units-readout {
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-size: 15px;
+    font-weight: 700;
+    color: #1a2744;
+    background: #fff;
+    border: 1px solid #dde3ef;
+    border-radius: 6px;
+    padding: 4px 10px;
+    min-width: 70px;
+    text-align: center;
+  }
+
+  .live-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .stat {
+    background: #f0f5fa;
+    border: 1px solid #dde3ef;
+    border-radius: 8px;
+    padding: 10px 12px;
+    text-align: center;
+  }
+  .stat .stat-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: #64748b;
+    margin-bottom: 4px;
+  }
+  .stat .stat-value {
+    font-size: 17px;
+    font-weight: 700;
+    color: #1a2744;
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  }
+  .stat.profit .stat-value.positive { color: #2d6a1f; }
+  .stat.profit .stat-value.negative { color: #9b2020; }
+
+  .chart-wrap {
+    background: #fff;
+    border: 1px solid #dde3ef;
+    border-radius: 9px;
+    padding: 14px 16px 8px;
+    margin-bottom: 14px;
+  }
+  .chart-svg {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  .chart-legend {
+    display: flex;
+    justify-content: center;
+    gap: 22px;
+    margin-top: 6px;
+    font-size: 12.5px;
+    color: #475569;
+    flex-wrap: wrap;
+  }
+  .chart-legend .swatch {
+    display: inline-block;
+    width: 24px; height: 3px;
+    margin-right: 6px;
+    vertical-align: middle;
+    border-radius: 2px;
+  }
+
+  .insight {
+    margin-top: 8px;
+    background: #eff6ff;
+    border: 1px solid #c7dcf5;
+    border-left: 4px solid #3b7dd8;
+    border-radius: 0 8px 8px 0;
+    padding: 11px 14px;
+    font-size: 13px;
+    line-height: 1.55;
+    color: #1a2744;
+  }
+  .insight strong { color: #1e40af; }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    header { padding: 14px 16px; }
+    main { padding: 0 12px 40px; }
+    .part { padding: 18px 14px 18px; }
+    .grid thead th, .grid tbody td { font-size: 12px; padding: 7px 4px; }
+    .grid input { font-size: 13px; padding: 6px 4px; }
+    .live-stats { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="header-left">
+    <h1>Profit Formula Practice</h1>
+  </div>
+  <button class="qr-btn" onclick="showQR()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="2" height="2"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="19" width="3" height="2"/><rect x="19" y="19" width="2" height="2"/></svg>
+    Share with students
+  </button>
+</header>
+
+<!-- QR Modal -->
+<div class="qr-overlay" id="qr-overlay" onclick="hideQR(event)">
+  <div class="qr-modal">
+    <h2>Scan to open on your device</h2>
+    <p>Students can scan this QR code or type the URL to open the activity on their phone or laptop.</p>
+    <div id="qr-code"></div>
+    <div id="qr-url"></div>
+    <button class="qr-close" onclick="hideQR()">Close</button>
+  </div>
+</div>
+
+<!-- Main -->
+<main>
+
+  <!-- ───────── STEP 1 — Solve the basics ───────── -->
+  <section class="part">
+    <div class="part-header">
+      <span class="part-tag practice">Step 1</span>
+      <h2>The sneaker company</h2>
+      <span class="subtitle">predict profit at a given volume</span>
+    </div>
+
+    <div class="setup-box">
+      <p>A sneaker company sells running shoes for <strong>$50 per pair</strong>. <strong>Fixed costs</strong> total <strong>$500 per month</strong> (rent, insurance). <strong>Variable costs</strong> are <strong>$10 per pair</strong> sold (materials, packaging).</p>
+
+      <div class="formula-block">
+        <div><span class="lbl-rev">Profit</span> = (Selling price &times; Unit sales) &minus; (Fixed costs + Variable cost per unit &times; Unit sales)</div>
+        <div style="margin-top:6px; color:#64748b; font-size:12.5px;">In other words: <span class="lbl-rev">Revenue</span> &minus; <span class="lbl-vc">Total Variable Costs</span> &minus; <span class="lbl-fc">Total Fixed Costs</span> = Profit</div>
+      </div>
+    </div>
+
+    <p class="prompt">If the company sells <strong>100 pairs</strong> this month, fill in each piece of the formula:</p>
+
+    <table class="grid">
+      <thead>
+        <tr>
+          <th>Revenue</th>
+          <th>Total Variable Cost</th>
+          <th>Total Fixed Cost</th>
+          <th>Profit</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <input type="text" id="in-rev" inputmode="decimal" placeholder="$">
+            <span class="corr-hint" id="hint-rev"></span>
+          </td>
+          <td>
+            <input type="text" id="in-tvc" inputmode="decimal" placeholder="$">
+            <span class="corr-hint" id="hint-tvc"></span>
+          </td>
+          <td>
+            <input type="text" id="in-tfc" inputmode="decimal" placeholder="$">
+            <span class="corr-hint" id="hint-tfc"></span>
+          </td>
+          <td>
+            <input type="text" id="in-profit" inputmode="decimal" placeholder="$">
+            <span class="corr-hint" id="hint-profit"></span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkAnswers()">Check answers</button>
+      <button class="reset-btn" onclick="resetAll()">Reset</button>
+      <span id="score-out"></span>
+      <button class="reveal-link" onclick="revealExplorer(true)" id="reveal-btn">Skip ahead to explorer →</button>
+    </div>
+  </section>
+
+  <!-- ───────── STEP 2 — Profit Explorer ───────── -->
+  <section class="part explorer" id="explorer">
+    <div class="part-header">
+      <span class="part-tag explore">Step 2</span>
+      <h2>How does volume change profit?</h2>
+      <span class="subtitle">drag the slider</span>
+    </div>
+
+    <p class="explorer-prompt">Same company, same prices. Move the slider to change the number of pairs sold this month and watch what happens to revenue, costs, and profit.</p>
+
+    <div class="slider-row">
+      <label for="qty-slider">Pairs sold:</label>
+      <input type="range" id="qty-slider" min="0" max="200" step="1" value="100">
+      <span class="units-readout" id="qty-readout">100</span>
+    </div>
+
+    <div class="live-stats">
+      <div class="stat">
+        <div class="stat-label">Revenue</div>
+        <div class="stat-value" id="live-rev">$5,000</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Total Var. Cost</div>
+        <div class="stat-value" id="live-tvc">$1,000</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Total Fixed Cost</div>
+        <div class="stat-value" id="live-tfc">$500</div>
+      </div>
+      <div class="stat profit">
+        <div class="stat-label">Profit</div>
+        <div class="stat-value positive" id="live-profit">$3,500</div>
+      </div>
+    </div>
+
+    <div class="chart-wrap">
+      <svg class="chart-svg" id="chart" viewBox="0 0 700 360" preserveAspectRatio="xMidYMid meet" aria-label="Revenue and total cost vs. units sold"></svg>
+      <div class="chart-legend">
+        <span><span class="swatch" style="background:#D85A30;"></span>Revenue</span>
+        <span><span class="swatch" style="background:#1a2744;"></span>Total Cost</span>
+        <span><span class="swatch" style="background:#5a9e3a; opacity:.55;"></span>Profit</span>
+        <span><span class="swatch" style="background:#c94040; opacity:.55;"></span>Loss</span>
+      </div>
+    </div>
+
+    <div class="insight">
+      Watch the gap between the orange revenue line and the navy total-cost line. That gap <em>is</em> profit. Try sliding all the way down — what's happening to the company at very low volume, and why?
+    </div>
+  </section>
+
+</main>
+
+<script>
+/* ───────── Sneaker baseline ───────── */
+const PRICE = 50;
+const VC_PER = 10;
+const FIXED  = 500;
+const TARGET_QTY = 100;
+
+const expected = {
+  rev:    PRICE * TARGET_QTY,                  // 5000
+  tvc:    VC_PER * TARGET_QTY,                 // 1000
+  tfc:    FIXED,                                // 500
+  profit: PRICE * TARGET_QTY - VC_PER * TARGET_QTY - FIXED  // 3500
+};
+
+/* ───────── Helpers ───────── */
+function parseNum(s) {
+  if (typeof s !== 'string') return NaN;
+  return parseFloat(s.replace(/[\$,\s]/g, ''));
+}
+function fmtMoney(v) {
+  const sign = v < 0 ? '-$' : '$';
+  return sign + Math.abs(v).toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+}
+
+/* ───────── Audio ───────── */
+let audioCtx = null;
+function getAudio() {
+  if (!audioCtx) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (AC) audioCtx = new AC();
+  }
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+function playBell() {
+  const ctx = getAudio(); if (!ctx) return;
+  const now = ctx.currentTime;
+  [523.25, 659.25, 783.99].forEach(f => {
+    const osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = 'sine'; osc.frequency.value = f;
+    osc.connect(g).connect(ctx.destination);
+    g.gain.setValueAtTime(0, now);
+    g.gain.linearRampToValueAtTime(0.15, now + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 1.6);
+    osc.start(now); osc.stop(now + 1.7);
+  });
+}
+function playHorn() {
+  const ctx = getAudio(); if (!ctx) return;
+  const now = ctx.currentTime;
+  const notes = [
+    { f: 466.16, t: 0.00, d: 0.18 },
+    { f: 440.00, t: 0.20, d: 0.18 },
+    { f: 415.30, t: 0.40, d: 0.55 }
+  ];
+  notes.forEach(({ f, t, d }) => {
+    const osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(f, now + t);
+    if (d > 0.3) osc.frequency.exponentialRampToValueAtTime(f * 0.88, now + t + d);
+    osc.connect(g).connect(ctx.destination);
+    g.gain.setValueAtTime(0, now + t);
+    g.gain.linearRampToValueAtTime(0.12, now + t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, now + t + d);
+    osc.start(now + t); osc.stop(now + t + d + 0.05);
+  });
+}
+
+/* ───────── Step 1 — Check / Reset ───────── */
+const FIELDS = [
+  { key: 'rev',    expKey: 'rev'    },
+  { key: 'tvc',    expKey: 'tvc'    },
+  { key: 'tfc',    expKey: 'tfc'    },
+  { key: 'profit', expKey: 'profit' }
+];
+
+function checkAnswers() {
+  let correct = 0, total = 0, blanks = 0;
+  FIELDS.forEach(f => {
+    const inp  = document.getElementById('in-' + f.key);
+    const hint = document.getElementById('hint-' + f.key);
+    inp.classList.remove('correct', 'wrong');
+    hint.textContent = '';
+    total++;
+    if (inp.value.trim() === '') { blanks++; return; }
+    const val = parseNum(inp.value);
+    const exp = expected[f.expKey];
+    if (!isNaN(val) && Math.abs(val - exp) <= 0.5) {
+      inp.classList.add('correct');
+      correct++;
+    } else {
+      inp.classList.add('wrong');
+      hint.textContent = '→ ' + fmtMoney(exp);
+    }
+  });
+  const out = document.getElementById('score-out');
+  if (blanks === total) {
+    out.textContent = 'Fill in some answers first.';
+    return;
+  }
+  out.textContent = correct + ' / ' + total + ' correct' + (blanks ? ' (' + blanks + ' blank)' : '');
+  if (correct === total) {
+    playBell();
+    revealExplorer(false);
+  } else {
+    playHorn();
+  }
+}
+
+function resetAll() {
+  FIELDS.forEach(f => {
+    const inp = document.getElementById('in-' + f.key);
+    const hint = document.getElementById('hint-' + f.key);
+    inp.value = '';
+    inp.classList.remove('correct', 'wrong');
+    hint.textContent = '';
+  });
+  document.getElementById('score-out').textContent = '';
+}
+
+/* ───────── Step 2 — Explorer reveal ───────── */
+let explorerShown = false;
+function revealExplorer(scroll) {
+  const el = document.getElementById('explorer');
+  if (!explorerShown) {
+    el.classList.add('show');
+    explorerShown = true;
+    document.getElementById('reveal-btn').style.display = 'none';
+  }
+  if (scroll) {
+    setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+  }
+}
+
+/* ───────── Step 2 — Slider, stats, chart ───────── */
+const slider   = document.getElementById('qty-slider');
+const readout  = document.getElementById('qty-readout');
+const lvRev    = document.getElementById('live-rev');
+const lvTvc    = document.getElementById('live-tvc');
+const lvTfc    = document.getElementById('live-tfc');
+const lvProfit = document.getElementById('live-profit');
+
+const SVG_W = 700, SVG_H = 360;
+const PAD_L = 60, PAD_R = 24, PAD_T = 24, PAD_B = 44;
+const PLOT_W = SVG_W - PAD_L - PAD_R;
+const PLOT_H = SVG_H - PAD_T - PAD_B;
+
+const X_MAX = 200;          // units
+const Y_MAX = PRICE * X_MAX;        // 10000
+const Y_MIN = -1000;        // give some headroom below zero so loss region is visible
+const Y_RANGE = Y_MAX - Y_MIN;
+
+function xScale(units) {
+  return PAD_L + (units / X_MAX) * PLOT_W;
+}
+function yScale(dollars) {
+  return PAD_T + (1 - (dollars - Y_MIN) / Y_RANGE) * PLOT_H;
+}
+
+function buildChart() {
+  const svg = document.getElementById('chart');
+  svg.innerHTML = '';
+
+  // Defs: clip path to constrain shading to plot area
+  const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+  defs.innerHTML = `
+    <clipPath id="plot-clip">
+      <rect x="${PAD_L}" y="${PAD_T}" width="${PLOT_W}" height="${PLOT_H}"></rect>
+    </clipPath>
+  `;
+  svg.appendChild(defs);
+
+  // Background
+  const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  bg.setAttribute('x', PAD_L);
+  bg.setAttribute('y', PAD_T);
+  bg.setAttribute('width', PLOT_W);
+  bg.setAttribute('height', PLOT_H);
+  bg.setAttribute('fill', '#fafbfd');
+  svg.appendChild(bg);
+
+  // Y gridlines
+  const yTicks = [0, 2500, 5000, 7500, 10000];
+  yTicks.forEach(yv => {
+    const y = yScale(yv);
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', PAD_L); line.setAttribute('x2', PAD_L + PLOT_W);
+    line.setAttribute('y1', y); line.setAttribute('y2', y);
+    line.setAttribute('stroke', '#e8edf4');
+    line.setAttribute('stroke-width', '1');
+    svg.appendChild(line);
+
+    const lbl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    lbl.setAttribute('x', PAD_L - 8);
+    lbl.setAttribute('y', y + 4);
+    lbl.setAttribute('text-anchor', 'end');
+    lbl.setAttribute('font-size', '11');
+    lbl.setAttribute('fill', '#64748b');
+    lbl.setAttribute('font-family', 'system-ui, sans-serif');
+    lbl.textContent = '$' + (yv / 1000) + 'k';
+    if (yv === 0) lbl.textContent = '$0';
+    svg.appendChild(lbl);
+  });
+
+  // X gridlines + labels
+  const xTicks = [0, 50, 100, 150, 200];
+  xTicks.forEach(xv => {
+    const x = xScale(xv);
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', x); line.setAttribute('x2', x);
+    line.setAttribute('y1', PAD_T); line.setAttribute('y2', PAD_T + PLOT_H);
+    line.setAttribute('stroke', '#e8edf4');
+    line.setAttribute('stroke-width', '1');
+    svg.appendChild(line);
+
+    const lbl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    lbl.setAttribute('x', x);
+    lbl.setAttribute('y', PAD_T + PLOT_H + 16);
+    lbl.setAttribute('text-anchor', 'middle');
+    lbl.setAttribute('font-size', '11');
+    lbl.setAttribute('fill', '#64748b');
+    lbl.setAttribute('font-family', 'system-ui, sans-serif');
+    lbl.textContent = xv;
+    svg.appendChild(lbl);
+  });
+
+  // Axis titles
+  const xTitle = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  xTitle.setAttribute('x', PAD_L + PLOT_W / 2);
+  xTitle.setAttribute('y', SVG_H - 8);
+  xTitle.setAttribute('text-anchor', 'middle');
+  xTitle.setAttribute('font-size', '12');
+  xTitle.setAttribute('fill', '#1a2744');
+  xTitle.setAttribute('font-weight', '600');
+  xTitle.setAttribute('font-family', 'system-ui, sans-serif');
+  xTitle.textContent = 'Pairs sold per month';
+  svg.appendChild(xTitle);
+
+  // Profit shading (green) — between revenue line and total-cost line, where rev > tc
+  // Loss shading (red)   — same area where tc > rev
+  // Compute breakeven for filling: (Price - VC) * Q = FC  →  Q* = FC / (Price - VC)
+  const breakeven = FIXED / (PRICE - VC_PER); // 12.5
+
+  // Profit area: from Q=breakeven to Q=X_MAX, between rev (top) and tc (bottom)
+  if (breakeven < X_MAX) {
+    const profitPoly = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+    const pts = [
+      [xScale(breakeven), yScale(PRICE * breakeven)],          // rev at breakeven
+      [xScale(X_MAX),     yScale(PRICE * X_MAX)],              // rev at X_MAX
+      [xScale(X_MAX),     yScale(FIXED + VC_PER * X_MAX)],     // tc at X_MAX
+      [xScale(breakeven), yScale(FIXED + VC_PER * breakeven)]  // tc at breakeven
+    ];
+    profitPoly.setAttribute('points', pts.map(p => p.join(',')).join(' '));
+    profitPoly.setAttribute('fill', '#5a9e3a');
+    profitPoly.setAttribute('opacity', '0.18');
+    profitPoly.setAttribute('clip-path', 'url(#plot-clip)');
+    svg.appendChild(profitPoly);
+  }
+  // Loss area: from Q=0 to Q=breakeven, between tc (top) and rev (bottom)
+  const lossPoly = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+  const lpts = [
+    [xScale(0),          yScale(FIXED)],                      // tc at 0
+    [xScale(breakeven),  yScale(FIXED + VC_PER * breakeven)], // tc at breakeven
+    [xScale(breakeven),  yScale(PRICE * breakeven)],          // rev at breakeven
+    [xScale(0),          yScale(0)]                            // rev at 0
+  ];
+  lossPoly.setAttribute('points', lpts.map(p => p.join(',')).join(' '));
+  lossPoly.setAttribute('fill', '#c94040');
+  lossPoly.setAttribute('opacity', '0.18');
+  lossPoly.setAttribute('clip-path', 'url(#plot-clip)');
+  svg.appendChild(lossPoly);
+
+  // Zero baseline (dashed)
+  const zeroLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+  zeroLine.setAttribute('x1', PAD_L); zeroLine.setAttribute('x2', PAD_L + PLOT_W);
+  zeroLine.setAttribute('y1', yScale(0)); zeroLine.setAttribute('y2', yScale(0));
+  zeroLine.setAttribute('stroke', '#94a3b8');
+  zeroLine.setAttribute('stroke-width', '1');
+  zeroLine.setAttribute('stroke-dasharray', '3,3');
+  svg.appendChild(zeroLine);
+
+  // Total cost line: from (0, FIXED) to (X_MAX, FIXED + VC_PER*X_MAX)
+  const tcLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+  tcLine.setAttribute('x1', xScale(0));
+  tcLine.setAttribute('y1', yScale(FIXED));
+  tcLine.setAttribute('x2', xScale(X_MAX));
+  tcLine.setAttribute('y2', yScale(FIXED + VC_PER * X_MAX));
+  tcLine.setAttribute('stroke', '#1a2744');
+  tcLine.setAttribute('stroke-width', '2.5');
+  tcLine.setAttribute('clip-path', 'url(#plot-clip)');
+  svg.appendChild(tcLine);
+
+  // Revenue line: from (0, 0) to (X_MAX, PRICE*X_MAX)
+  const rLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+  rLine.setAttribute('x1', xScale(0));
+  rLine.setAttribute('y1', yScale(0));
+  rLine.setAttribute('x2', xScale(X_MAX));
+  rLine.setAttribute('y2', yScale(PRICE * X_MAX));
+  rLine.setAttribute('stroke', '#D85A30');
+  rLine.setAttribute('stroke-width', '2.5');
+  rLine.setAttribute('clip-path', 'url(#plot-clip)');
+  svg.appendChild(rLine);
+
+  // Indicator group (vertical line + dots + label) — updated by updateIndicator
+  const ind = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  ind.setAttribute('id', 'indicator');
+  svg.appendChild(ind);
+}
+
+function updateIndicator(units) {
+  const ind = document.getElementById('indicator');
+  ind.innerHTML = '';
+  const x = xScale(units);
+  const yRev = yScale(PRICE * units);
+  const yTc  = yScale(FIXED + VC_PER * units);
+  const profit = PRICE * units - VC_PER * units - FIXED;
+
+  // Vertical guide
+  const v = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+  v.setAttribute('x1', x); v.setAttribute('x2', x);
+  v.setAttribute('y1', PAD_T); v.setAttribute('y2', PAD_T + PLOT_H);
+  v.setAttribute('stroke', '#64748b');
+  v.setAttribute('stroke-width', '1');
+  v.setAttribute('stroke-dasharray', '4,4');
+  ind.appendChild(v);
+
+  // Profit gap bracket: thicker segment between the two lines at this x
+  const gap = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+  gap.setAttribute('x1', x); gap.setAttribute('x2', x);
+  gap.setAttribute('y1', yRev); gap.setAttribute('y2', yTc);
+  gap.setAttribute('stroke', profit >= 0 ? '#5a9e3a' : '#c94040');
+  gap.setAttribute('stroke-width', '5');
+  gap.setAttribute('stroke-linecap', 'round');
+  gap.setAttribute('opacity', '0.85');
+  ind.appendChild(gap);
+
+  // Dots on the two lines
+  [{ y: yRev, fill: '#D85A30' }, { y: yTc, fill: '#1a2744' }].forEach(d => {
+    const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    c.setAttribute('cx', x); c.setAttribute('cy', d.y);
+    c.setAttribute('r', '5');
+    c.setAttribute('fill', d.fill);
+    c.setAttribute('stroke', '#fff');
+    c.setAttribute('stroke-width', '2');
+    ind.appendChild(c);
+  });
+
+  // Profit label box at the midpoint of the gap
+  const yMid = (yRev + yTc) / 2;
+  const labelText = (profit >= 0 ? '+' : '−') + '$' + Math.abs(profit).toLocaleString('en-US');
+  const labelX = x + 12;
+  // shift left if too close to right edge
+  const useLeft = labelX > PAD_L + PLOT_W - 90;
+
+  const tBg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  const labelW = 78;
+  const labelH = 22;
+  const lx = useLeft ? x - 12 - labelW : labelX;
+  tBg.setAttribute('x', lx);
+  tBg.setAttribute('y', yMid - labelH / 2);
+  tBg.setAttribute('width', labelW);
+  tBg.setAttribute('height', labelH);
+  tBg.setAttribute('rx', 5);
+  tBg.setAttribute('fill', profit >= 0 ? '#2d6a1f' : '#9b2020');
+  ind.appendChild(tBg);
+
+  const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  t.setAttribute('x', lx + labelW / 2);
+  t.setAttribute('y', yMid + 4);
+  t.setAttribute('text-anchor', 'middle');
+  t.setAttribute('font-size', '12');
+  t.setAttribute('font-weight', '700');
+  t.setAttribute('fill', '#fff');
+  t.setAttribute('font-family', 'ui-monospace, SF Mono, Menlo, monospace');
+  t.textContent = labelText;
+  ind.appendChild(t);
+}
+
+function updateLive(units) {
+  const rev = PRICE * units;
+  const tvc = VC_PER * units;
+  const tfc = FIXED;
+  const profit = rev - tvc - tfc;
+  readout.textContent = units;
+  lvRev.textContent    = fmtMoney(rev);
+  lvTvc.textContent    = fmtMoney(tvc);
+  lvTfc.textContent    = fmtMoney(tfc);
+  lvProfit.textContent = fmtMoney(profit);
+  lvProfit.classList.toggle('positive', profit >= 0);
+  lvProfit.classList.toggle('negative', profit < 0);
+  updateIndicator(units);
+}
+
+slider.addEventListener('input', () => {
+  updateLive(parseInt(slider.value, 10));
+});
+
+// Build chart on load and prime indicator at default 100
+buildChart();
+updateLive(parseInt(slider.value, 10));
+
+/* ───────── QR Code ───────── */
+let qrGenerated = false;
+function showQR() {
+  document.getElementById('qr-overlay').classList.add('show');
+  if (!qrGenerated) {
+    const url = window.location.href;
+    document.getElementById('qr-url').textContent = url;
+    new QRCode(document.getElementById('qr-code'), {
+      text: url, width: 180, height: 180,
+      colorDark: '#1a2744', colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+    qrGenerated = true;
+  }
+}
+function hideQR(e) {
+  if (!e || e.target === document.getElementById('qr-overlay')) {
+    document.getElementById('qr-overlay').classList.remove('show');
+  }
+}
+</script>
+</body>
+</html>
