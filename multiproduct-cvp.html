@@ -1,0 +1,1375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Multi-product CVP Practice</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  /* ── Reset & base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    background: #f4f0e8;
+    color: #1a2744;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    background: #1a2744;
+    color: #fff;
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .header-left h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+  .header-left p  { font-size: 13px; color: #a0aec0; margin-top: 2px; }
+
+  .qr-btn {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    transition: background .15s;
+  }
+  .qr-btn:hover { background: rgba(255,255,255,0.18); }
+
+  /* QR Modal */
+  .qr-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .qr-overlay.show { display: flex; }
+  .qr-modal {
+    background: #fff;
+    border-radius: 14px;
+    padding: 32px;
+    text-align: center;
+    max-width: 300px;
+    width: 90%;
+  }
+  .qr-modal h2 { font-size: 16px; font-weight: 600; color: #1a2744; margin-bottom: 6px; }
+  .qr-modal p  { font-size: 12px; color: #64748b; margin-bottom: 18px; line-height: 1.5; }
+  #qr-code { display: flex; justify-content: center; margin-bottom: 16px; }
+  #qr-url  { font-size: 11px; color: #94a3b8; word-break: break-all; margin-bottom: 18px; }
+  .qr-close {
+    background: #1a2744; color: #fff;
+    border: none; border-radius: 8px;
+    padding: 8px 24px; font-size: 13px;
+    cursor: pointer; font-family: inherit;
+  }
+
+  /* ── Main layout ── */
+  main {
+    max-width: 920px;
+    margin: 28px auto;
+    padding: 0 20px 48px;
+  }
+
+  .part {
+    background: #fff;
+    border: 1px solid #dde3ef;
+    border-radius: 12px;
+    padding: 22px 24px 24px;
+    margin-bottom: 22px;
+  }
+
+  .part-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .part-tag {
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    background: #1a2744;
+    padding: 3px 10px;
+    border-radius: 99px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+  .part-tag.practice { background: #D85A30; }
+  .part-tag.explore  { background: #3b7dd8; }
+  .part-tag.solve    { background: #7a5cb6; }
+  .part-tag.build    { background: #5a9e3a; }
+  .part-header h2 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -.01em;
+  }
+  .part-header .subtitle {
+    font-size: 13px;
+    color: #64748b;
+  }
+
+  .setup-box {
+    background: #f8f6f0;
+    border: 1px solid #e6dfd0;
+    border-radius: 9px;
+    padding: 14px 16px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: #334155;
+    margin-bottom: 16px;
+  }
+  .setup-box strong { color: #1a2744; }
+  .setup-box p + p { margin-top: 6px; }
+  .setup-box .formula {
+    display: block;
+    margin-top: 6px;
+    padding: 8px 10px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-size: 12.5px;
+  }
+
+  /* ── Per-product table (Step 1) ── */
+  .prompt {
+    font-size: 14px;
+    color: #1a2744;
+    margin-bottom: 12px;
+    line-height: 1.55;
+  }
+  .prompt strong { font-weight: 700; }
+
+  .prod-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-bottom: 6px;
+    font-variant-numeric: tabular-nums;
+  }
+  .prod-table thead th {
+    background: #fde9c8;
+    color: #1a2744;
+    font-size: 12.5px;
+    font-weight: 700;
+    text-align: center;
+    padding: 10px 8px;
+    border-bottom: 2px solid #f0c674;
+  }
+  .prod-table thead th:first-child {
+    border-top-left-radius: 8px;
+    text-align: left;
+    padding-left: 14px;
+  }
+  .prod-table thead th:last-child  { border-top-right-radius: 8px; }
+  .prod-table tbody td {
+    background: #f0f5fa;
+    padding: 9px 8px;
+    text-align: center;
+    border-bottom: 1px solid #e1eaf3;
+  }
+  .prod-table tbody td.prod-name {
+    text-align: left;
+    padding-left: 14px;
+    font-weight: 600;
+    color: #1a2744;
+  }
+  .prod-table tbody td.prod-name small {
+    display: block;
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 400;
+  }
+  .prod-table tbody tr:last-child td:first-child { border-bottom-left-radius: 8px; }
+  .prod-table tbody tr:last-child td:last-child  { border-bottom-right-radius: 8px; }
+
+  .prod-table input {
+    width: 100%;
+    max-width: 110px;
+    padding: 7px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    transition: border-color .12s, background .12s;
+    font-variant-numeric: tabular-nums;
+  }
+  .prod-table input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .prod-table input.correct {
+    border-color: #5a9e3a;
+    background: #f0f9e8;
+    color: #2d6a1f;
+    font-weight: 600;
+  }
+  .prod-table input.wrong {
+    border-color: #c94040;
+    background: #fff1f1;
+    color: #9b2020;
+  }
+  .corr-hint {
+    display: block;
+    font-size: 11px;
+    color: #5a9e3a;
+    font-weight: 600;
+    margin-top: 3px;
+    min-height: 14px;
+  }
+
+  /* Single-cell solve box (Steps 2/3/4) */
+  .single-solve {
+    display: grid;
+    grid-template-columns: 1fr 200px;
+    gap: 14px;
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #e1eaf3;
+    border-radius: 9px;
+    padding: 16px 18px;
+    margin-bottom: 8px;
+  }
+  .single-solve .solve-prompt {
+    font-size: 14px;
+    color: #1a2744;
+    line-height: 1.55;
+  }
+  .single-solve .solve-prompt strong { font-weight: 700; }
+  .single-solve .solve-prompt small {
+    display: block;
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 4px;
+  }
+  .single-solve .answer {
+    display: flex; flex-direction: column;
+  }
+  .single-solve .answer label {
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 4px;
+  }
+  .single-solve .answer input {
+    padding: 9px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 15px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .single-solve .answer input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .single-solve .answer input.correct {
+    border-color: #5a9e3a;
+    background: #f0f9e8;
+    color: #2d6a1f;
+  }
+  .single-solve .answer input.wrong {
+    border-color: #c94040;
+    background: #fff1f1;
+    color: #9b2020;
+  }
+
+  .footer {
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .check-btn {
+    background: #1a2744; color: #fff;
+    border: none; border-radius: 9px;
+    padding: 10px 24px; font-size: 14px;
+    cursor: pointer; font-family: inherit;
+    font-weight: 500;
+    transition: background .15s;
+  }
+  .check-btn:hover { background: #243660; }
+  .reset-btn {
+    font-size: 13px; color: #64748b;
+    background: none; border: none;
+    cursor: pointer; text-decoration: underline;
+    font-family: inherit;
+  }
+  .reveal-link {
+    margin-left: auto;
+    font-size: 12.5px;
+    color: #64748b;
+    background: none; border: none;
+    cursor: pointer; text-decoration: underline;
+    font-family: inherit;
+  }
+  .reveal-link:hover { color: #1a2744; }
+  .score-out {
+    font-size: 14px; font-weight: 600;
+    color: #1a2744;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 6px 14px;
+  }
+  .score-out:empty { display: none; }
+
+  /* Reveal animation */
+  .reveal {
+    display: none;
+    animation: slideIn 0.4s ease-out;
+  }
+  .reveal.show { display: block; }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Build-your-own (Step 5) ── */
+  .build-prompt {
+    font-size: 14px;
+    color: #1a2744;
+    margin-bottom: 14px;
+    line-height: 1.55;
+  }
+
+  .editable-prods {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-bottom: 12px;
+    font-variant-numeric: tabular-nums;
+  }
+  .editable-prods thead th {
+    background: #f1eee4;
+    color: #1a2744;
+    font-size: 12px;
+    font-weight: 700;
+    text-align: center;
+    padding: 9px 6px;
+    border-bottom: 1px solid #e6dfd0;
+  }
+  .editable-prods thead th:first-child {
+    text-align: left;
+    padding-left: 14px;
+    border-top-left-radius: 8px;
+  }
+  .editable-prods thead th:last-child {
+    border-top-right-radius: 8px;
+  }
+  .editable-prods tbody td {
+    background: #fff;
+    padding: 7px 6px;
+    border-bottom: 1px solid #f0f3f8;
+    text-align: center;
+  }
+  .editable-prods tbody td.prod-name {
+    text-align: left;
+    padding-left: 14px;
+    font-weight: 600;
+    color: #1a2744;
+  }
+  .editable-prods tbody tr:last-child td:first-child { border-bottom-left-radius: 8px; }
+  .editable-prods tbody tr:last-child td:last-child  { border-bottom-right-radius: 8px; }
+  .editable-prods .var-input {
+    width: 100%;
+    max-width: 110px;
+    padding: 6px 8px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 13.5px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-variant-numeric: tabular-nums;
+  }
+  .editable-prods .var-input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .editable-prods .var-input.changed {
+    border-color: #D85A30;
+    background: #fff7f0;
+  }
+  .editable-prods .computed {
+    color: #64748b;
+    font-style: italic;
+  }
+
+  .fc-row {
+    display: grid;
+    grid-template-columns: 1fr 140px;
+    gap: 10px;
+    align-items: center;
+    background: #f8f6f0;
+    border: 1px solid #e6dfd0;
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 16px;
+  }
+  .fc-row label {
+    font-size: 13.5px;
+    color: #1a2744;
+    font-weight: 500;
+  }
+  .fc-row label small {
+    display: block;
+    font-size: 11.5px;
+    color: #64748b;
+    font-weight: 400;
+    margin-top: 1px;
+  }
+  .fc-row input {
+    padding: 7px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-variant-numeric: tabular-nums;
+  }
+  .fc-row input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .fc-row input.changed {
+    border-color: #D85A30;
+    background: #fff7f0;
+  }
+
+  .build-solve {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .build-solve .solve-card {
+    background: #fff;
+    border: 1px solid #dde3ef;
+    border-radius: 9px;
+    padding: 12px 14px;
+  }
+  .build-solve .solve-card label {
+    display: block;
+    font-size: 12px;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 6px;
+  }
+  .build-solve .solve-card label small {
+    display: block;
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 400;
+    color: #94a3b8;
+    margin-top: 2px;
+  }
+  .build-solve .solve-card input {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 15px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .build-solve .solve-card input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .build-solve .solve-card input.correct {
+    border-color: #5a9e3a;
+    background: #f0f9e8;
+    color: #2d6a1f;
+  }
+  .build-solve .solve-card input.wrong {
+    border-color: #c94040;
+    background: #fff1f1;
+    color: #9b2020;
+  }
+
+  .insight {
+    margin-top: 8px;
+    background: #eff6ff;
+    border: 1px solid #c7dcf5;
+    border-left: 4px solid #3b7dd8;
+    border-radius: 0 8px 8px 0;
+    padding: 11px 14px;
+    font-size: 13px;
+    line-height: 1.55;
+    color: #1a2744;
+  }
+  .insight strong { color: #1e40af; }
+  .insight.success {
+    background: #f0f9e8;
+    border-color: #c4e0a3;
+    border-left-color: #5a9e3a;
+  }
+  .insight.success strong { color: #2d6a1f; }
+  .insight ul {
+    margin-top: 6px;
+    margin-left: 20px;
+  }
+  .insight li {
+    margin-bottom: 2px;
+  }
+
+  /* Responsive */
+  @media (max-width: 700px) {
+    header { padding: 14px 16px; }
+    main { padding: 0 12px 40px; }
+    .part { padding: 18px 14px 18px; }
+    .prod-table thead th, .prod-table tbody td { font-size: 11.5px; padding: 7px 4px; }
+    .prod-table input { font-size: 13px; padding: 6px 4px; }
+    .single-solve {
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+    .editable-prods thead th, .editable-prods tbody td { font-size: 11px; padding: 5px 3px; }
+    .editable-prods .var-input { font-size: 12px; padding: 5px 3px; }
+    .fc-row { grid-template-columns: 1fr; gap: 4px; }
+    .build-solve { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="header-left">
+    <h1>Multi-product CVP Practice</h1>
+  </div>
+  <button class="qr-btn" onclick="showQR()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="2" height="2"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="19" width="3" height="2"/><rect x="19" y="19" width="2" height="2"/></svg>
+    Share with students
+  </button>
+</header>
+
+<!-- QR Modal -->
+<div class="qr-overlay" id="qr-overlay" onclick="hideQR(event)">
+  <div class="qr-modal">
+    <h2>Scan to open on your device</h2>
+    <p>Students can scan this QR code or type the URL to open the activity on their phone or laptop.</p>
+    <div id="qr-code"></div>
+    <div id="qr-url"></div>
+    <button class="qr-close" onclick="hideQR()">Close</button>
+  </div>
+</div>
+
+<!-- Main -->
+<main>
+
+  <!-- ───────── STEP 1 — Per-product CM ───────── -->
+  <section class="part">
+    <div class="part-header">
+      <span class="part-tag practice">Step 1</span>
+      <h2>Jeni's product line</h2>
+      <span class="subtitle">contribution margin per unit, by product</span>
+    </div>
+
+    <div class="setup-box">
+      <p>Jeni's sells four products. Here's the forecast for the coming month — expected unit sales, selling price, and variable cost per unit:</p>
+    </div>
+
+    <p class="prompt">Fill in the <strong>contribution margin per unit</strong> (CM/unit) for each product:</p>
+
+    <table class="prod-table">
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Expected units</th>
+          <th>Selling price / unit</th>
+          <th>VC / unit</th>
+          <th>CM / unit</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="prod-name">Bars<small>chocolate-coated handheld</small></td>
+          <td>5,000</td>
+          <td>$1.50</td>
+          <td>$1.10</td>
+          <td>
+            <input type="text" id="cm-bars" inputmode="decimal" placeholder="$">
+            <span class="corr-hint" id="hint-cm-bars"></span>
+          </td>
+        </tr>
+        <tr>
+          <td class="prod-name">Sundaes<small>single-serve cups</small></td>
+          <td>2,500</td>
+          <td>$5.00</td>
+          <td>$3.00</td>
+          <td>
+            <input type="text" id="cm-sundaes" inputmode="decimal" placeholder="$">
+            <span class="corr-hint" id="hint-cm-sundaes"></span>
+          </td>
+        </tr>
+        <tr>
+          <td class="prod-name">Pints<small>the classic</small></td>
+          <td>2,000</td>
+          <td>$12.00</td>
+          <td>$7.00</td>
+          <td>
+            <input type="text" id="cm-pints" inputmode="decimal" placeholder="$">
+            <span class="corr-hint" id="hint-cm-pints"></span>
+          </td>
+        </tr>
+        <tr>
+          <td class="prod-name">Cakes<small>ice cream cakes</small></td>
+          <td>500</td>
+          <td>$40.00</td>
+          <td>$24.00</td>
+          <td>
+            <input type="text" id="cm-cakes" inputmode="decimal" placeholder="$">
+            <span class="corr-hint" id="hint-cm-cakes"></span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep1()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep1()">Reset</button>
+      <span id="score1-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep2(true)" id="reveal-step2-btn">Skip ahead →</button>
+    </div>
+  </section>
+
+  <!-- ───────── STEP 2 — WACM ───────── -->
+  <section class="part reveal" id="step2">
+    <div class="part-header">
+      <span class="part-tag explore">Step 2</span>
+      <h2>Weighted-average contribution margin</h2>
+      <span class="subtitle">one CM/unit number for the whole company</span>
+    </div>
+
+    <div class="setup-box">
+      <p>Across all four products, Jeni's expects to sell <strong>10,000 units total</strong>. Some of those units throw off only $0.40 of CM (bars), some throw off $16 (cakes). To talk about the company as one CVP problem, we collapse those into a <strong>weighted-average CM per unit</strong>, weighted by each product's share of total units (its <strong>sales mix</strong>).</p>
+      <span class="formula">WACM = Σ (CM<sub>i</sub> × sales mix<sub>i</sub>) &nbsp; or equivalently &nbsp; Total CM ÷ Total units</span>
+    </div>
+
+    <div class="single-solve">
+      <div class="solve-prompt">
+        What is the <strong>weighted-average CM per unit</strong> at the expected sales mix?
+        <small>Round to the nearest cent if needed.</small>
+      </div>
+      <div class="answer">
+        <label>WACM per unit</label>
+        <input type="text" id="wacm-input" inputmode="decimal" placeholder="$">
+        <span class="corr-hint" id="hint-wacm"></span>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep2()">Check answer</button>
+      <button class="reset-btn" onclick="resetStep2()">Reset</button>
+      <span id="score2-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep3(true)" id="reveal-step3-btn">Skip ahead →</button>
+    </div>
+  </section>
+
+  <!-- ───────── STEP 3 — Profit at expected sales ───────── -->
+  <section class="part reveal" id="step3">
+    <div class="part-header">
+      <span class="part-tag solve">Step 3</span>
+      <h2>Profit at the forecast volume</h2>
+      <span class="subtitle">put WACM to work</span>
+    </div>
+
+    <div class="setup-box">
+      <p>Jeni's monthly fixed costs (rent, salaries, equipment depreciation, insurance) total <strong>$30,000</strong>. The forecast above projects <strong>10,000 total units</strong> at the expected sales mix.</p>
+      <span class="formula">Profit = (WACM × Total units) − Fixed costs</span>
+    </div>
+
+    <div class="single-solve">
+      <div class="solve-prompt">
+        At <strong>10,000 expected units</strong>, what is the projected <strong>profit</strong>?
+        <small>Use a minus sign if it's a loss.</small>
+      </div>
+      <div class="answer">
+        <label>Projected profit</label>
+        <input type="text" id="profit-input" inputmode="decimal" placeholder="$">
+        <span class="corr-hint" id="hint-profit"></span>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep3()">Check answer</button>
+      <button class="reset-btn" onclick="resetStep3()">Reset</button>
+      <span id="score3-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep4(true)" id="reveal-step4-btn">Skip ahead →</button>
+    </div>
+
+    <div id="step3-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 4 — Breakeven units ───────── -->
+  <section class="part reveal" id="step4">
+    <div class="part-header">
+      <span class="part-tag solve">Step 4</span>
+      <h2>What volume covers fixed costs?</h2>
+      <span class="subtitle">find the volume where profit = $0</span>
+    </div>
+
+    <div class="setup-box">
+      <p>The forecast loses money. So a natural question: <strong>how many total units</strong> would Jeni's need to sell — at the same sales mix — to land on $0 profit instead?</p>
+      <span class="formula">Total units to break even = Fixed costs ÷ WACM</span>
+    </div>
+
+    <div class="single-solve">
+      <div class="solve-prompt">
+        How many <strong>total units</strong> (across all four products combined) does Jeni's need to sell to make profit = $0?
+        <small>Assume the 50% / 25% / 20% / 5% sales mix holds.</small>
+      </div>
+      <div class="answer">
+        <label>Total units</label>
+        <input type="text" id="be-input" inputmode="numeric" placeholder="units">
+        <span class="corr-hint" id="hint-be"></span>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep4()">Check answer</button>
+      <button class="reset-btn" onclick="resetStep4()">Reset</button>
+      <span id="score4-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep5(true)" id="reveal-step5-btn">Skip ahead →</button>
+    </div>
+
+    <div id="step4-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 5 — Build your own ───────── -->
+  <section class="part reveal" id="step5">
+    <div class="part-header">
+      <span class="part-tag build">Step 5</span>
+      <h2>Build your own scenario</h2>
+      <span class="subtitle">change any input and test yourself on profit, breakeven, or both</span>
+    </div>
+
+    <p class="build-prompt">Edit any cell in the table or the fixed-cost line below. Then predict <strong>profit at expected sales</strong>, <strong>breakeven units</strong>, or both — and click Check. (Leave a field blank if you don't want to be checked on it.)</p>
+
+    <table class="editable-prods">
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Expected units</th>
+          <th>Price / unit</th>
+          <th>VC / unit</th>
+          <th>CM / unit</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="prod-name">Bars</td>
+          <td><input type="text" class="var-input" id="bv-q-bars" inputmode="numeric" value="5,000"></td>
+          <td><input type="text" class="var-input" id="bv-sp-bars" inputmode="decimal" value="$1.50"></td>
+          <td><input type="text" class="var-input" id="bv-vc-bars" inputmode="decimal" value="$1.10"></td>
+          <td class="computed" id="bv-cm-bars">$0.40</td>
+        </tr>
+        <tr>
+          <td class="prod-name">Sundaes</td>
+          <td><input type="text" class="var-input" id="bv-q-sundaes" inputmode="numeric" value="2,500"></td>
+          <td><input type="text" class="var-input" id="bv-sp-sundaes" inputmode="decimal" value="$5.00"></td>
+          <td><input type="text" class="var-input" id="bv-vc-sundaes" inputmode="decimal" value="$3.00"></td>
+          <td class="computed" id="bv-cm-sundaes">$2.00</td>
+        </tr>
+        <tr>
+          <td class="prod-name">Pints</td>
+          <td><input type="text" class="var-input" id="bv-q-pints" inputmode="numeric" value="2,000"></td>
+          <td><input type="text" class="var-input" id="bv-sp-pints" inputmode="decimal" value="$12.00"></td>
+          <td><input type="text" class="var-input" id="bv-vc-pints" inputmode="decimal" value="$7.00"></td>
+          <td class="computed" id="bv-cm-pints">$5.00</td>
+        </tr>
+        <tr>
+          <td class="prod-name">Cakes</td>
+          <td><input type="text" class="var-input" id="bv-q-cakes" inputmode="numeric" value="500"></td>
+          <td><input type="text" class="var-input" id="bv-sp-cakes" inputmode="decimal" value="$40.00"></td>
+          <td><input type="text" class="var-input" id="bv-vc-cakes" inputmode="decimal" value="$24.00"></td>
+          <td class="computed" id="bv-cm-cakes">$16.00</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="fc-row">
+      <label>Fixed costs <small>monthly total</small></label>
+      <input type="text" class="var-input" id="bv-fc" inputmode="decimal" value="$30,000">
+    </div>
+
+    <div class="build-solve">
+      <div class="solve-card">
+        <label>
+          Profit at expected sales
+          <small>= (WACM × total units) − FC</small>
+        </label>
+        <input type="text" id="bv-profit" inputmode="decimal" placeholder="$">
+      </div>
+      <div class="solve-card">
+        <label>
+          Breakeven units (total)
+          <small>= FC ÷ WACM</small>
+        </label>
+        <input type="text" id="bv-be" inputmode="numeric" placeholder="units">
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep5()">Check</button>
+      <button class="reset-btn" onclick="resetStep5()">Reset to original</button>
+      <span id="score5-out" class="score-out"></span>
+    </div>
+
+    <div id="step5-feedback"></div>
+  </section>
+
+</main>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   ORIGINAL DATA — Jeni's multi-product
+═══════════════════════════════════════════════════════════════ */
+const PRODUCTS = [
+  { key: 'bars',    name: 'Bars',    Q: 5000, SP:  1.50, VC:  1.10 },
+  { key: 'sundaes', name: 'Sundaes', Q: 2500, SP:  5.00, VC:  3.00 },
+  { key: 'pints',   name: 'Pints',   Q: 2000, SP: 12.00, VC:  7.00 },
+  { key: 'cakes',   name: 'Cakes',   Q:  500, SP: 40.00, VC: 24.00 }
+];
+const FC = 30000;
+
+// Derived (original baseline)
+function totalUnits(prods) { return prods.reduce((s, p) => s + p.Q, 0); }
+function totalCM(prods)    { return prods.reduce((s, p) => s + p.Q * (p.SP - p.VC), 0); }
+function wacmOf(prods) {
+  const tu = totalUnits(prods);
+  return tu === 0 ? 0 : totalCM(prods) / tu;
+}
+
+const ORIG_TOTAL_UNITS = totalUnits(PRODUCTS);            // 10000
+const ORIG_TOTAL_CM    = totalCM(PRODUCTS);                // 25000
+const ORIG_WACM        = wacmOf(PRODUCTS);                 // 2.50
+const ORIG_PROFIT      = ORIG_TOTAL_CM - FC;               // -5000
+const ORIG_BE_UNITS    = FC / ORIG_WACM;                   // 12000
+
+/* ═══════════════════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════════════════ */
+function parseNum(s) {
+  if (typeof s !== 'string') return NaN;
+  return parseFloat(s.replace(/[\$,\s]/g, ''));
+}
+function fmtMoney(v, decimals) {
+  const d = (decimals === undefined) ? 0 : decimals;
+  const rounded = Math.round(v * 100) / 100;
+  const sign = rounded < 0 ? '-$' : '$';
+  return sign + Math.abs(rounded).toLocaleString('en-US', {
+    minimumFractionDigits: d,
+    maximumFractionDigits: d
+  });
+}
+function fmtMoneySigned(v) {
+  const rounded = Math.round(v * 100) / 100;
+  if (Math.abs(rounded) < 0.005) return '$0';
+  const sign = rounded < 0 ? '−' : '+';
+  const abs = Math.abs(rounded);
+  const decimals = (abs % 1 === 0) ? 0 : 2;
+  return sign + '$' + abs.toLocaleString('en-US', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals
+  });
+}
+function fmtUnits(v) {
+  return Math.round(v).toLocaleString('en-US');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   AUDIO
+═══════════════════════════════════════════════════════════════ */
+let audioCtx = null;
+function getAudio() {
+  if (!audioCtx) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (AC) audioCtx = new AC();
+  }
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+function playBell() {
+  const ctx = getAudio(); if (!ctx) return;
+  const now = ctx.currentTime;
+  [523.25, 659.25, 783.99].forEach(f => {
+    const osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = 'sine'; osc.frequency.value = f;
+    osc.connect(g).connect(ctx.destination);
+    g.gain.setValueAtTime(0, now);
+    g.gain.linearRampToValueAtTime(0.15, now + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 1.6);
+    osc.start(now); osc.stop(now + 1.7);
+  });
+}
+function playHorn() {
+  const ctx = getAudio(); if (!ctx) return;
+  const now = ctx.currentTime;
+  const notes = [
+    { f: 466.16, t: 0.00, d: 0.18 },
+    { f: 440.00, t: 0.20, d: 0.18 },
+    { f: 415.30, t: 0.40, d: 0.55 }
+  ];
+  notes.forEach(({ f, t, d }) => {
+    const osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(f, now + t);
+    if (d > 0.3) osc.frequency.exponentialRampToValueAtTime(f * 0.88, now + t + d);
+    osc.connect(g).connect(ctx.destination);
+    g.gain.setValueAtTime(0, now + t);
+    g.gain.linearRampToValueAtTime(0.12, now + t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, now + t + d);
+    osc.start(now + t); osc.stop(now + t + d + 0.05);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 1 — Per-product CM
+═══════════════════════════════════════════════════════════════ */
+function checkStep1() {
+  let correct = 0, total = 0, blanks = 0;
+  PRODUCTS.forEach(p => {
+    const inp  = document.getElementById('cm-' + p.key);
+    const hint = document.getElementById('hint-cm-' + p.key);
+    inp.classList.remove('correct', 'wrong');
+    hint.textContent = '';
+    total++;
+    if (inp.value.trim() === '') { blanks++; return; }
+    const val = parseNum(inp.value);
+    const exp = p.SP - p.VC;
+    if (!isNaN(val) && Math.abs(val - exp) <= 0.005) {
+      inp.classList.add('correct');
+      correct++;
+    } else {
+      inp.classList.add('wrong');
+      hint.textContent = '→ ' + fmtMoney(exp, 2);
+    }
+  });
+  const out = document.getElementById('score1-out');
+  if (blanks === total) {
+    out.textContent = 'Fill in some answers first.';
+    return;
+  }
+  out.textContent = correct + ' / ' + total + ' correct' + (blanks ? ' (' + blanks + ' blank)' : '');
+  if (correct === total) {
+    playBell();
+    revealStep2(false);
+  } else {
+    playHorn();
+  }
+}
+
+function resetStep1() {
+  PRODUCTS.forEach(p => {
+    const inp = document.getElementById('cm-' + p.key);
+    const hint = document.getElementById('hint-cm-' + p.key);
+    inp.value = '';
+    inp.classList.remove('correct', 'wrong');
+    hint.textContent = '';
+  });
+  document.getElementById('score1-out').textContent = '';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 2 — WACM
+═══════════════════════════════════════════════════════════════ */
+function checkStep2() {
+  const inp  = document.getElementById('wacm-input');
+  const hint = document.getElementById('hint-wacm');
+  const out  = document.getElementById('score2-out');
+  inp.classList.remove('correct', 'wrong');
+  hint.textContent = '';
+  out.textContent = '';
+
+  if (inp.value.trim() === '') {
+    out.textContent = 'Enter a value first.';
+    return;
+  }
+  const val = parseNum(inp.value);
+  const exp = ORIG_WACM;  // 2.50
+  if (!isNaN(val) && Math.abs(val - exp) <= 0.01) {
+    inp.classList.add('correct');
+    out.textContent = 'Correct!';
+    playBell();
+    revealStep3(false);
+  } else {
+    inp.classList.add('wrong');
+    hint.textContent = '→ ' + fmtMoney(exp, 2);
+    out.textContent = 'Not quite.';
+    playHorn();
+  }
+}
+
+function resetStep2() {
+  const inp = document.getElementById('wacm-input');
+  inp.value = '';
+  inp.classList.remove('correct', 'wrong');
+  document.getElementById('hint-wacm').textContent = '';
+  document.getElementById('score2-out').textContent = '';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 3 — Profit at expected sales
+═══════════════════════════════════════════════════════════════ */
+function checkStep3() {
+  const inp  = document.getElementById('profit-input');
+  const hint = document.getElementById('hint-profit');
+  const out  = document.getElementById('score3-out');
+  const fb   = document.getElementById('step3-insight');
+  inp.classList.remove('correct', 'wrong');
+  hint.textContent = '';
+  out.textContent = '';
+  fb.innerHTML = '';
+
+  if (inp.value.trim() === '') {
+    out.textContent = 'Enter a value first.';
+    return;
+  }
+  const val = parseNum(inp.value);
+  const exp = ORIG_PROFIT;  // -5000
+  if (!isNaN(val) && Math.abs(val - exp) <= 0.5) {
+    inp.classList.add('correct');
+    out.textContent = 'Correct!';
+    fb.innerHTML = `
+      <div class="insight success">
+        Plugging in: ($2.50 × 10,000) − $30,000 = $25,000 − $30,000 = <strong>−$5,000</strong>. The forecast as it stands loses money — total CM doesn't cover fixed costs.
+      </div>
+    `;
+    playBell();
+    revealStep4(false);
+  } else {
+    inp.classList.add('wrong');
+    hint.textContent = '→ ' + fmtMoneySigned(exp);
+    out.textContent = 'Not quite.';
+    playHorn();
+  }
+}
+
+function resetStep3() {
+  const inp = document.getElementById('profit-input');
+  inp.value = '';
+  inp.classList.remove('correct', 'wrong');
+  document.getElementById('hint-profit').textContent = '';
+  document.getElementById('score3-out').textContent = '';
+  document.getElementById('step3-insight').innerHTML = '';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 4 — Breakeven units
+═══════════════════════════════════════════════════════════════ */
+function checkStep4() {
+  const inp  = document.getElementById('be-input');
+  const hint = document.getElementById('hint-be');
+  const out  = document.getElementById('score4-out');
+  const fb   = document.getElementById('step4-insight');
+  inp.classList.remove('correct', 'wrong');
+  hint.textContent = '';
+  out.textContent = '';
+  fb.innerHTML = '';
+
+  if (inp.value.trim() === '') {
+    out.textContent = 'Enter a value first.';
+    return;
+  }
+  const val = parseNum(inp.value);
+  const exp = ORIG_BE_UNITS;  // 12,000
+  if (!isNaN(val) && Math.abs(val - exp) <= 1) {
+    inp.classList.add('correct');
+    out.textContent = 'Correct!';
+    fb.innerHTML = `
+      <div class="insight success">
+        At <strong>12,000 total units</strong>, total CM = 12,000 × $2.50 = $30,000 = fixed costs, so profit = $0. At the assumed sales mix (50% / 25% / 20% / 5%), that breaks down to:
+        <ul>
+          <li><strong>6,000</strong> bars (50%)</li>
+          <li><strong>3,000</strong> sundaes (25%)</li>
+          <li><strong>2,400</strong> pints (20%)</li>
+          <li><strong>600</strong> cakes (5%)</li>
+        </ul>
+        Change the mix and the breakeven volume changes too — try it in Step 5.
+      </div>
+    `;
+    playBell();
+    revealStep5(false);
+  } else {
+    inp.classList.add('wrong');
+    hint.textContent = '→ ' + fmtUnits(exp) + ' units';
+    out.textContent = 'Not quite.';
+    playHorn();
+  }
+}
+
+function resetStep4() {
+  const inp = document.getElementById('be-input');
+  inp.value = '';
+  inp.classList.remove('correct', 'wrong');
+  document.getElementById('hint-be').textContent = '';
+  document.getElementById('score4-out').textContent = '';
+  document.getElementById('step4-insight').innerHTML = '';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 5 — Build your own
+═══════════════════════════════════════════════════════════════ */
+const BV_PRODUCTS_DEFAULTS = PRODUCTS.map(p => ({
+  key: p.key, name: p.name,
+  Q:  p.Q,  SP: p.SP,  VC: p.VC
+}));
+const BV_FC_DEFAULT = FC;
+
+function readBVProducts() {
+  return BV_PRODUCTS_DEFAULTS.map(p => {
+    const Q  = parseNum(document.getElementById('bv-q-'  + p.key).value);
+    const SP = parseNum(document.getElementById('bv-sp-' + p.key).value);
+    const VC = parseNum(document.getElementById('bv-vc-' + p.key).value);
+    return { key: p.key, name: p.name, Q, SP, VC };
+  });
+}
+function readBVFC() {
+  return parseNum(document.getElementById('bv-fc').value);
+}
+
+function refreshBVComputed() {
+  // Update CM column + flag changed inputs
+  const prods = readBVProducts();
+  prods.forEach((p, i) => {
+    const cmCell = document.getElementById('bv-cm-' + p.key);
+    if (!isNaN(p.SP) && !isNaN(p.VC)) {
+      cmCell.textContent = fmtMoney(p.SP - p.VC, 2);
+    } else {
+      cmCell.textContent = '—';
+    }
+    // Changed-style on inputs that differ from defaults
+    const def = BV_PRODUCTS_DEFAULTS[i];
+    [
+      { el: document.getElementById('bv-q-'  + p.key), cur: p.Q,  ref: def.Q,  digits: 0 },
+      { el: document.getElementById('bv-sp-' + p.key), cur: p.SP, ref: def.SP, digits: 2 },
+      { el: document.getElementById('bv-vc-' + p.key), cur: p.VC, ref: def.VC, digits: 2 }
+    ].forEach(({ el, cur, ref }) => {
+      if (!isNaN(cur) && Math.abs(cur - ref) > 0.001) el.classList.add('changed');
+      else el.classList.remove('changed');
+    });
+  });
+  // Fixed cost
+  const fcEl = document.getElementById('bv-fc');
+  const fcVal = readBVFC();
+  if (!isNaN(fcVal) && Math.abs(fcVal - BV_FC_DEFAULT) > 0.001) fcEl.classList.add('changed');
+  else fcEl.classList.remove('changed');
+}
+
+function checkStep5() {
+  const prods = readBVProducts();
+  const fc = readBVFC();
+
+  const profitEl = document.getElementById('bv-profit');
+  const beEl     = document.getElementById('bv-be');
+  const out      = document.getElementById('score5-out');
+  const fb       = document.getElementById('step5-feedback');
+
+  profitEl.classList.remove('correct', 'wrong');
+  beEl.classList.remove('correct', 'wrong');
+  out.textContent = '';
+  fb.innerHTML = '';
+
+  // Validate inputs
+  const badProd = prods.some(p => isNaN(p.Q) || isNaN(p.SP) || isNaN(p.VC));
+  if (badProd || isNaN(fc)) {
+    fb.innerHTML = `<div class="insight">Make sure every row in the table — and the fixed-cost line — has a valid number.</div>`;
+    return;
+  }
+  const tu = totalUnits(prods);
+  const tc = totalCM(prods);
+  if (tu <= 0) {
+    fb.innerHTML = `<div class="insight">Total expected units must be greater than zero to compute WACM.</div>`;
+    return;
+  }
+  const wacm   = tc / tu;                          // weighted average CM/unit
+  const profit = tc - fc;                          // total CM minus FC
+  const beUnits = wacm > 0 ? fc / wacm : NaN;      // requires positive WACM
+
+  // Read student answers
+  const profitGuessRaw = profitEl.value.trim();
+  const beGuessRaw     = beEl.value.trim();
+
+  if (!profitGuessRaw && !beGuessRaw) {
+    fb.innerHTML = `<div class="insight">Enter at least one of <strong>profit</strong> or <strong>breakeven units</strong> before checking.</div>`;
+    return;
+  }
+
+  const profitGuess = parseNum(profitGuessRaw);
+  const beGuess     = parseNum(beGuessRaw);
+
+  let allCorrect = true;
+  const lines = [];
+
+  // Profit check
+  if (profitGuessRaw) {
+    const tol = Math.max(0.5, Math.abs(profit) * 0.001);
+    if (!isNaN(profitGuess) && Math.abs(profitGuess - profit) <= tol) {
+      profitEl.classList.add('correct');
+      lines.push('✔ profit');
+    } else {
+      profitEl.classList.add('wrong');
+      lines.push('✘ profit (actual: ' + fmtMoneySigned(profit) + ')');
+      allCorrect = false;
+    }
+  }
+
+  // Breakeven check
+  if (beGuessRaw) {
+    if (isNaN(beUnits) || !isFinite(beUnits)) {
+      beEl.classList.add('wrong');
+      lines.push('✘ breakeven (WACM ≤ 0 — no positive breakeven volume exists)');
+      allCorrect = false;
+    } else {
+      const tol = Math.max(1, Math.abs(beUnits) * 0.001);
+      if (!isNaN(beGuess) && Math.abs(beGuess - beUnits) <= tol) {
+        beEl.classList.add('correct');
+        lines.push('✔ breakeven');
+      } else {
+        beEl.classList.add('wrong');
+        lines.push('✘ breakeven (actual: ' + fmtUnits(beUnits) + ' units)');
+        allCorrect = false;
+      }
+    }
+  }
+
+  out.textContent = lines.join('  ·  ');
+
+  // Detailed feedback
+  const totalsLine = `Total units: <strong>${fmtUnits(tu)}</strong> &nbsp;·&nbsp; Total CM: <strong>${fmtMoney(tc, 0)}</strong> &nbsp;·&nbsp; WACM: <strong>${fmtMoney(wacm, 2)}</strong>/unit &nbsp;·&nbsp; FC: <strong>${fmtMoney(fc, 0)}</strong>`;
+  if (allCorrect) {
+    fb.innerHTML = `<div class="insight success">${totalsLine}<br>Profit = ${fmtMoney(tc, 0)} − ${fmtMoney(fc, 0)} = <strong>${fmtMoneySigned(profit)}</strong>${isFinite(beUnits) ? ` &nbsp;·&nbsp; Breakeven = ${fmtMoney(fc, 0)} ÷ ${fmtMoney(wacm, 2)} = <strong>${fmtUnits(beUnits)} units</strong>` : ''}</div>`;
+    playBell();
+  } else {
+    fb.innerHTML = `<div class="insight">${totalsLine}<br>Profit = (WACM × Total units) − FC = ${fmtMoney(wacm, 2)} × ${fmtUnits(tu)} − ${fmtMoney(fc, 0)} = <strong>${fmtMoneySigned(profit)}</strong>${isFinite(beUnits) ? ` &nbsp;·&nbsp; Breakeven units = ${fmtMoney(fc, 0)} ÷ ${fmtMoney(wacm, 2)} = <strong>${fmtUnits(beUnits)}</strong>` : ''}</div>`;
+    playHorn();
+  }
+}
+
+function resetStep5() {
+  // Reset inputs to original values (formatted)
+  BV_PRODUCTS_DEFAULTS.forEach(p => {
+    document.getElementById('bv-q-'  + p.key).value = p.Q.toLocaleString('en-US');
+    document.getElementById('bv-sp-' + p.key).value = '$' + p.SP.toFixed(2);
+    document.getElementById('bv-vc-' + p.key).value = '$' + p.VC.toFixed(2);
+  });
+  document.getElementById('bv-fc').value = '$' + BV_FC_DEFAULT.toLocaleString('en-US');
+  document.getElementById('bv-profit').value = '';
+  document.getElementById('bv-be').value = '';
+  document.getElementById('bv-profit').classList.remove('correct', 'wrong');
+  document.getElementById('bv-be').classList.remove('correct', 'wrong');
+  document.getElementById('score5-out').textContent = '';
+  document.getElementById('step5-feedback').innerHTML = '';
+  refreshBVComputed();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   REVEAL STEPS
+═══════════════════════════════════════════════════════════════ */
+const revealedSteps = new Set();
+function revealStep(stepNum, scroll) {
+  const el = document.getElementById('step' + stepNum);
+  if (!revealedSteps.has(stepNum)) {
+    el.classList.add('show');
+    revealedSteps.add(stepNum);
+    const btn = document.getElementById('reveal-step' + stepNum + '-btn');
+    if (btn) btn.style.display = 'none';
+  }
+  if (scroll) {
+    setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+  }
+}
+function revealStep2(scroll) { revealStep(2, scroll); }
+function revealStep3(scroll) { revealStep(3, scroll); }
+function revealStep4(scroll) { revealStep(4, scroll); }
+function revealStep5(scroll) { revealStep(5, scroll); }
+
+/* ═══════════════════════════════════════════════════════════════
+   QR / SHARE
+═══════════════════════════════════════════════════════════════ */
+function showQR() {
+  const url = location.href;
+  document.getElementById('qr-url').textContent = url;
+  const qrEl = document.getElementById('qr-code');
+  qrEl.innerHTML = '';
+  if (window.QRCode) {
+    new QRCode(qrEl, { text: url, width: 180, height: 180, colorDark: '#1a2744', colorLight: '#ffffff' });
+  }
+  document.getElementById('qr-overlay').classList.add('show');
+}
+function hideQR(ev) {
+  if (ev && ev.target.id !== 'qr-overlay' && ev.target.className !== 'qr-close') return;
+  document.getElementById('qr-overlay').classList.remove('show');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   INIT — wire input listeners on Step 5
+═══════════════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+  // Wire Step 5 inputs
+  PRODUCTS.forEach(p => {
+    ['q', 'sp', 'vc'].forEach(field => {
+      const el = document.getElementById('bv-' + field + '-' + p.key);
+      if (el) el.addEventListener('input', () => {
+        refreshBVComputed();
+        // clear stale check feedback
+        document.getElementById('bv-profit').classList.remove('correct', 'wrong');
+        document.getElementById('bv-be').classList.remove('correct', 'wrong');
+        document.getElementById('score5-out').textContent = '';
+        document.getElementById('step5-feedback').innerHTML = '';
+      });
+    });
+  });
+  document.getElementById('bv-fc').addEventListener('input', () => {
+    refreshBVComputed();
+    document.getElementById('bv-profit').classList.remove('correct', 'wrong');
+    document.getElementById('bv-be').classList.remove('correct', 'wrong');
+    document.getElementById('score5-out').textContent = '';
+    document.getElementById('step5-feedback').innerHTML = '';
+  });
+  refreshBVComputed();
+});
+</script>
+
+</body>
+</html>
