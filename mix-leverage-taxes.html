@@ -1,0 +1,1618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mix, Leverage & Taxes</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  /* ── Reset & base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    background: #f4f0e8;
+    color: #1a2744;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    background: #1a2744;
+    color: #fff;
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .header-left h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+  .header-left p  { font-size: 13px; color: #a0aec0; margin-top: 2px; }
+
+  .qr-btn {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    transition: background .15s;
+  }
+  .qr-btn:hover { background: rgba(255,255,255,0.18); }
+
+  /* QR Modal */
+  .qr-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .qr-overlay.show { display: flex; }
+  .qr-modal {
+    background: #fff;
+    border-radius: 14px;
+    padding: 32px;
+    text-align: center;
+    max-width: 300px;
+    width: 90%;
+  }
+  .qr-modal h2 { font-size: 16px; font-weight: 600; color: #1a2744; margin-bottom: 6px; }
+  .qr-modal p  { font-size: 12px; color: #64748b; margin-bottom: 18px; line-height: 1.5; }
+  #qr-code { display: flex; justify-content: center; margin-bottom: 16px; }
+  #qr-url  { font-size: 11px; color: #94a3b8; word-break: break-all; margin-bottom: 18px; }
+  .qr-close {
+    background: #1a2744; color: #fff;
+    border: none; border-radius: 8px;
+    padding: 8px 24px; font-size: 13px;
+    cursor: pointer; font-family: inherit;
+  }
+
+  /* ── Main layout ── */
+  main {
+    max-width: 920px;
+    margin: 28px auto;
+    padding: 0 20px 48px;
+  }
+
+  .part {
+    background: #fff;
+    border: 1px solid #dde3ef;
+    border-radius: 12px;
+    padding: 22px 24px 24px;
+    margin-bottom: 22px;
+  }
+
+  .part-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .part-tag {
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    background: #1a2744;
+    padding: 3px 10px;
+    border-radius: 99px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+  .part-tag.practice { background: #D85A30; }
+  .part-tag.explore  { background: #3b7dd8; }
+  .part-tag.solve    { background: #7a5cb6; }
+  .part-tag.build    { background: #5a9e3a; }
+  .part-header h2 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -.01em;
+  }
+  .part-header .subtitle {
+    font-size: 13px;
+    color: #64748b;
+  }
+
+  .setup-box {
+    background: #f8f6f0;
+    border: 1px solid #e6dfd0;
+    border-radius: 9px;
+    padding: 14px 16px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: #334155;
+    margin-bottom: 16px;
+  }
+  .setup-box strong { color: #1a2744; }
+  .setup-box p + p { margin-top: 6px; }
+  .setup-box .meta-line {
+    margin-top: 10px;
+    font-size: 13px;
+    color: #475569;
+  }
+  .setup-box .meta-line strong { color: #1a2744; }
+
+  /* ── Read-only product table (Step 1) ── */
+  .prompt {
+    font-size: 14px;
+    color: #1a2744;
+    margin-bottom: 12px;
+    line-height: 1.55;
+  }
+  .prompt strong { font-weight: 700; }
+
+  .prod-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-bottom: 6px;
+    font-variant-numeric: tabular-nums;
+  }
+  .prod-table thead th {
+    background: #fde9c8;
+    color: #1a2744;
+    font-size: 12.5px;
+    font-weight: 700;
+    text-align: center;
+    padding: 10px 8px;
+    border-bottom: 2px solid #f0c674;
+  }
+  .prod-table thead th:first-child {
+    border-top-left-radius: 8px;
+    text-align: left;
+    padding-left: 14px;
+  }
+  .prod-table thead th:last-child  { border-top-right-radius: 8px; }
+  .prod-table tbody td {
+    background: #f0f5fa;
+    padding: 9px 8px;
+    text-align: center;
+    border-bottom: 1px solid #e1eaf3;
+  }
+  .prod-table tbody td.prod-name {
+    text-align: left;
+    padding-left: 14px;
+    font-weight: 600;
+    color: #1a2744;
+  }
+  .prod-table tbody tr:last-child td:first-child { border-bottom-left-radius: 8px; }
+  .prod-table tbody tr:last-child td:last-child  { border-bottom-right-radius: 8px; }
+
+  .prod-table input {
+    width: 100%;
+    max-width: 110px;
+    padding: 7px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-variant-numeric: tabular-nums;
+    transition: border-color .12s, background .12s;
+  }
+  .prod-table input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .prod-table input.correct {
+    border-color: #5a9e3a;
+    background: #f0f9e8;
+    color: #2d6a1f;
+    font-weight: 600;
+  }
+  .prod-table input.wrong {
+    border-color: #c94040;
+    background: #fff1f1;
+    color: #9b2020;
+  }
+  .corr-hint {
+    display: block;
+    font-size: 11px;
+    color: #5a9e3a;
+    font-weight: 600;
+    margin-top: 3px;
+    min-height: 14px;
+  }
+
+  /* ── Per-question stacked layout ── */
+  .qa-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 4px; }
+  .qa-row {
+    display: grid;
+    grid-template-columns: 1fr 200px;
+    gap: 14px;
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #e1eaf3;
+    border-radius: 9px;
+    padding: 13px 16px;
+  }
+  .qa-row .qa-prompt {
+    font-size: 13.5px;
+    color: #1a2744;
+    line-height: 1.5;
+  }
+  .qa-row .qa-prompt strong { font-weight: 700; }
+  .qa-row .qa-prompt small {
+    display: block;
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 3px;
+  }
+  .qa-row .answer { display: flex; flex-direction: column; }
+  .qa-row .answer label {
+    font-size: 10.5px;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 4px;
+  }
+  .qa-row .answer input {
+    padding: 8px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .qa-row .answer input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .qa-row .answer input.correct {
+    border-color: #5a9e3a;
+    background: #f0f9e8;
+    color: #2d6a1f;
+  }
+  .qa-row .answer input.wrong {
+    border-color: #c94040;
+    background: #fff1f1;
+    color: #9b2020;
+  }
+  .qa-row .answer .corr-hint { text-align: center; margin-top: 3px; }
+
+  /* ── Intuition buttons (Step 3) ── */
+  .intuition-box {
+    background: #f8fafc;
+    border: 1px solid #e1eaf3;
+    border-radius: 9px;
+    padding: 16px 18px;
+    margin-bottom: 14px;
+  }
+  .intuition-box .intuition-q {
+    font-size: 14px;
+    color: #1a2744;
+    margin-bottom: 12px;
+    line-height: 1.55;
+  }
+  .intuition-box .intuition-q strong { font-weight: 700; }
+  .intuition-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .intuition-buttons button {
+    flex: 1;
+    min-width: 130px;
+    background: #fff;
+    border: 1.5px solid #cbd5e1;
+    color: #1a2744;
+    padding: 12px 16px;
+    border-radius: 9px;
+    font-size: 14px;
+    font-family: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .intuition-buttons button:hover {
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .intuition-buttons button.selected {
+    background: #1a2744;
+    color: #fff;
+    border-color: #1a2744;
+  }
+  .intuition-buttons button.selected .arrow { color: #fff; }
+  .intuition-buttons .arrow {
+    font-size: 16px;
+    line-height: 1;
+  }
+
+  /* Reveal animation */
+  .reveal {
+    display: none;
+    animation: slideIn 0.4s ease-out;
+  }
+  .reveal.show { display: block; }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Single-cell solve (Step 4) */
+  .single-solve {
+    display: grid;
+    grid-template-columns: 1fr 200px;
+    gap: 14px;
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #e1eaf3;
+    border-radius: 9px;
+    padding: 16px 18px;
+    margin-bottom: 10px;
+  }
+  .single-solve .solve-prompt {
+    font-size: 14px;
+    color: #1a2744;
+    line-height: 1.55;
+  }
+  .single-solve .solve-prompt strong { font-weight: 700; }
+  .single-solve .solve-prompt small {
+    display: block;
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 4px;
+  }
+  .single-solve .answer { display: flex; flex-direction: column; }
+  .single-solve .answer label {
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 4px;
+  }
+  .single-solve .answer input {
+    padding: 9px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 15px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .single-solve .answer input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .single-solve .answer input.correct {
+    border-color: #5a9e3a;
+    background: #f0f9e8;
+    color: #2d6a1f;
+  }
+  .single-solve .answer input.wrong {
+    border-color: #c94040;
+    background: #fff1f1;
+    color: #9b2020;
+  }
+
+  /* Auto-populating breakdown table (Step 4) */
+  .auto-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-top: 4px;
+    margin-bottom: 8px;
+    font-variant-numeric: tabular-nums;
+  }
+  .auto-table thead th {
+    background: #f1eee4;
+    color: #475569;
+    font-size: 11.5px;
+    font-weight: 700;
+    text-align: center;
+    padding: 8px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    border-bottom: 1px solid #e6dfd0;
+  }
+  .auto-table thead th:first-child {
+    border-top-left-radius: 8px;
+    text-align: left;
+    padding-left: 14px;
+  }
+  .auto-table thead th:last-child  { border-top-right-radius: 8px; }
+  .auto-table tbody td {
+    background: #fff;
+    padding: 8px;
+    text-align: center;
+    border-bottom: 1px solid #f0f3f8;
+    font-size: 13.5px;
+    color: #1a2744;
+  }
+  .auto-table tbody td.prod-name {
+    text-align: left;
+    padding-left: 14px;
+    font-weight: 600;
+  }
+  .auto-table tbody td.computed {
+    font-weight: 600;
+    color: #1a2744;
+    font-variant-numeric: tabular-nums;
+  }
+  .auto-table tbody td.computed.empty {
+    color: #cbd5e1;
+    font-weight: 400;
+  }
+  .auto-table tbody tr:last-child td:first-child { border-bottom-left-radius: 8px; }
+  .auto-table tbody tr:last-child td:last-child  { border-bottom-right-radius: 8px; }
+
+  .footer {
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .check-btn {
+    background: #1a2744; color: #fff;
+    border: none; border-radius: 9px;
+    padding: 10px 24px; font-size: 14px;
+    cursor: pointer; font-family: inherit;
+    font-weight: 500;
+    transition: background .15s;
+  }
+  .check-btn:hover { background: #243660; }
+  .reset-btn {
+    font-size: 13px; color: #64748b;
+    background: none; border: none;
+    cursor: pointer; text-decoration: underline;
+    font-family: inherit;
+  }
+  .reveal-link {
+    margin-left: auto;
+    font-size: 12.5px;
+    color: #64748b;
+    background: none; border: none;
+    cursor: pointer; text-decoration: underline;
+    font-family: inherit;
+  }
+  .reveal-link:hover { color: #1a2744; }
+  .score-out {
+    font-size: 14px; font-weight: 600;
+    color: #1a2744;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 6px 14px;
+  }
+  .score-out:empty { display: none; }
+
+  /* ── Build-your-own (Step 5) ── */
+  .build-prompt {
+    font-size: 14px;
+    color: #1a2744;
+    margin-bottom: 14px;
+    line-height: 1.55;
+  }
+  .editable-prods {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-bottom: 12px;
+    font-variant-numeric: tabular-nums;
+  }
+  .editable-prods thead th {
+    background: #f1eee4;
+    color: #1a2744;
+    font-size: 12px;
+    font-weight: 700;
+    text-align: center;
+    padding: 9px 6px;
+    border-bottom: 1px solid #e6dfd0;
+  }
+  .editable-prods thead th:first-child {
+    text-align: left;
+    padding-left: 14px;
+    border-top-left-radius: 8px;
+  }
+  .editable-prods thead th:last-child { border-top-right-radius: 8px; }
+  .editable-prods tbody td {
+    background: #fff;
+    padding: 7px 6px;
+    border-bottom: 1px solid #f0f3f8;
+    text-align: center;
+  }
+  .editable-prods tbody td.prod-name {
+    text-align: left;
+    padding-left: 14px;
+    font-weight: 600;
+    color: #1a2744;
+  }
+  .editable-prods tbody tr:last-child td:first-child { border-bottom-left-radius: 8px; }
+  .editable-prods tbody tr:last-child td:last-child  { border-bottom-right-radius: 8px; }
+  .editable-prods .var-input {
+    width: 100%;
+    max-width: 110px;
+    padding: 6px 8px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 13.5px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-variant-numeric: tabular-nums;
+  }
+  .editable-prods .var-input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .editable-prods .var-input.changed {
+    border-color: #D85A30;
+    background: #fff7f0;
+  }
+  .editable-prods .computed {
+    color: #64748b;
+    font-style: italic;
+  }
+
+  .params-card {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .params-card .param-row {
+    display: grid;
+    grid-template-columns: 1fr 140px;
+    gap: 10px;
+    align-items: center;
+    background: #f8f6f0;
+    border: 1px solid #e6dfd0;
+    border-radius: 8px;
+    padding: 10px 14px;
+  }
+  .params-card .param-row label {
+    font-size: 13.5px;
+    color: #1a2744;
+    font-weight: 500;
+  }
+  .params-card .param-row label small {
+    display: block;
+    font-size: 11.5px;
+    color: #64748b;
+    font-weight: 400;
+    margin-top: 1px;
+  }
+  .params-card .param-row input {
+    padding: 7px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-variant-numeric: tabular-nums;
+  }
+  .params-card .param-row input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .params-card .param-row input.changed {
+    border-color: #D85A30;
+    background: #fff7f0;
+  }
+
+  .build-solve {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .build-solve .solve-card {
+    background: #fff;
+    border: 1px solid #dde3ef;
+    border-radius: 9px;
+    padding: 12px 14px;
+  }
+  .build-solve .solve-card label {
+    display: block;
+    font-size: 12px;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 6px;
+  }
+  .build-solve .solve-card label small {
+    display: block;
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 400;
+    color: #94a3b8;
+    margin-top: 2px;
+  }
+  .build-solve .solve-card input {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 15px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .build-solve .solve-card input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .build-solve .solve-card input.correct {
+    border-color: #5a9e3a;
+    background: #f0f9e8;
+    color: #2d6a1f;
+  }
+  .build-solve .solve-card input.wrong {
+    border-color: #c94040;
+    background: #fff1f1;
+    color: #9b2020;
+  }
+
+  .insight {
+    margin-top: 8px;
+    background: #eff6ff;
+    border: 1px solid #c7dcf5;
+    border-left: 4px solid #3b7dd8;
+    border-radius: 0 8px 8px 0;
+    padding: 11px 14px;
+    font-size: 13px;
+    line-height: 1.55;
+    color: #1a2744;
+  }
+  .insight strong { color: #1e40af; }
+  .insight.success {
+    background: #f0f9e8;
+    border-color: #c4e0a3;
+    border-left-color: #5a9e3a;
+  }
+  .insight.success strong { color: #2d6a1f; }
+
+  /* Responsive */
+  @media (max-width: 700px) {
+    header { padding: 14px 16px; }
+    main { padding: 0 12px 40px; }
+    .part { padding: 18px 14px 18px; }
+    .prod-table thead th, .prod-table tbody td { font-size: 11.5px; padding: 7px 4px; }
+    .qa-row { grid-template-columns: 1fr; gap: 8px; }
+    .single-solve { grid-template-columns: 1fr; gap: 8px; }
+    .editable-prods thead th, .editable-prods tbody td { font-size: 11px; padding: 5px 3px; }
+    .editable-prods .var-input { font-size: 12px; padding: 5px 3px; }
+    .params-card { grid-template-columns: 1fr; }
+    .build-solve { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="header-left">
+    <h1>Mix, Leverage &amp; Taxes</h1>
+  </div>
+  <button class="qr-btn" onclick="showQR()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="2" height="2"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="19" width="3" height="2"/><rect x="19" y="19" width="2" height="2"/></svg>
+    Share with students
+  </button>
+</header>
+
+<!-- QR Modal -->
+<div class="qr-overlay" id="qr-overlay" onclick="hideQR(event)">
+  <div class="qr-modal">
+    <h2>Scan to open on your device</h2>
+    <p>Students can scan this QR code or type the URL to open the activity on their phone or laptop.</p>
+    <div id="qr-code"></div>
+    <div id="qr-url"></div>
+    <button class="qr-close" onclick="hideQR()">Close</button>
+  </div>
+</div>
+
+<!-- Main -->
+<main>
+
+  <!-- ───────── STEP 1 — Baseline ───────── -->
+  <section class="part">
+    <div class="part-header">
+      <span class="part-tag practice">Step 1</span>
+      <h2>Jeni's next-month forecast</h2>
+      <span class="subtitle">fill in the bottom line</span>
+    </div>
+
+    <div class="setup-box">
+      <p>Jeni's expects the following sales for the coming month:</p>
+      <p class="meta-line"><strong>Fixed costs:</strong> $30,000 / month &nbsp;·&nbsp; <strong>Tax rate:</strong> 25%</p>
+    </div>
+
+    <table class="prod-table">
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Expected units</th>
+          <th>Price / unit</th>
+          <th>VC / unit</th>
+          <th>CM / unit</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="prod-name">Bars</td>    <td>10,000</td><td>$1.50</td>  <td>$1.10</td><td>$0.40</td></tr>
+        <tr><td class="prod-name">Sundaes</td> <td>5,000</td> <td>$5.00</td>  <td>$3.00</td><td>$2.00</td></tr>
+        <tr><td class="prod-name">Pints</td>   <td>4,000</td> <td>$12.00</td> <td>$7.00</td><td>$5.00</td></tr>
+        <tr><td class="prod-name">Cakes</td>   <td>1,000</td> <td>$40.00</td> <td>$24.00</td><td>$16.00</td></tr>
+      </tbody>
+    </table>
+
+    <p class="prompt" style="margin-top:14px;">For Jeni's forecast above, fill in:</p>
+
+    <div class="qa-list">
+      <div class="qa-row">
+        <div class="qa-prompt">Total <strong>contribution margin</strong></div>
+        <div class="answer">
+          <label>Total CM</label>
+          <input type="text" id="s1-cm" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s1-cm"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Operating income</strong></div>
+        <div class="answer">
+          <label>OI</label>
+          <input type="text" id="s1-oi" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s1-oi"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Net income</strong> (after tax)</div>
+        <div class="answer">
+          <label>NI</label>
+          <input type="text" id="s1-ni" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s1-ni"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep1()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep1()">Reset</button>
+      <span id="score1-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep2(true)" id="reveal-step2-btn">Skip ahead →</button>
+    </div>
+  </section>
+
+  <!-- ───────── STEP 2 — Operating leverage ───────── -->
+  <section class="part reveal" id="step2">
+    <div class="part-header">
+      <span class="part-tag explore">Step 2</span>
+      <h2>Operating leverage</h2>
+      <span class="subtitle">how much profit moves when sales move</span>
+    </div>
+
+    <div class="setup-box">
+      <p>Same Jeni's forecast as above — same products, same prices, same fixed costs, same 25% tax rate.</p>
+    </div>
+
+    <div class="qa-list">
+      <div class="qa-row">
+        <div class="qa-prompt">What is Jeni's <strong>degree of operating leverage</strong>?</div>
+        <div class="answer">
+          <label>DOL</label>
+          <input type="text" id="s2-dol" inputmode="decimal" placeholder="">
+          <span class="corr-hint" id="hint-s2-dol"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt">If unit sales rise <strong>20%</strong> (mix held constant), by what percent does operating income change?</div>
+        <div class="answer">
+          <label>% change in OI</label>
+          <input type="text" id="s2-pct" inputmode="decimal" placeholder="%">
+          <span class="corr-hint" id="hint-s2-pct"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt">Resulting <strong>net income</strong> at that 20% sales increase</div>
+        <div class="answer">
+          <label>New NI</label>
+          <input type="text" id="s2-ni" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s2-ni"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep2()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep2()">Reset</button>
+      <span id="score2-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep3(true)" id="reveal-step3-btn">Skip ahead →</button>
+    </div>
+  </section>
+
+  <!-- ───────── STEP 3 — Sales mix shift ───────── -->
+  <section class="part reveal" id="step3">
+    <div class="part-header">
+      <span class="part-tag solve">Step 3</span>
+      <h2>A different sales mix</h2>
+      <span class="subtitle">intuition first, math second</span>
+    </div>
+
+    <div class="setup-box">
+      <p>Marketing proposes a campaign that pushes more cakes and fewer bars. Updated next-month forecast:</p>
+      <table class="prod-table" style="margin-top:8px;">
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>New units</th>
+            <th>Change vs. baseline</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="prod-name">Bars</td>    <td>9,000</td>  <td style="color:#9b2020;">−1,000</td></tr>
+          <tr><td class="prod-name">Sundaes</td> <td>5,000</td>  <td style="color:#64748b;">no change</td></tr>
+          <tr><td class="prod-name">Pints</td>   <td>4,000</td>  <td style="color:#64748b;">no change</td></tr>
+          <tr><td class="prod-name">Cakes</td>   <td>2,000</td>  <td style="color:#2d6a1f;">+1,000</td></tr>
+        </tbody>
+      </table>
+      <p class="meta-line">Total volume stays at 20,000 units. Prices, variable costs, fixed costs, and tax rate are unchanged.</p>
+    </div>
+
+    <div class="intuition-box">
+      <div class="intuition-q">Before computing anything: do you think this shift will <strong>increase</strong> or <strong>decrease</strong> profitability?</div>
+      <div class="intuition-buttons">
+        <button id="intuition-up" onclick="pickIntuition('up')">
+          <span class="arrow">▲</span> Profitability increases
+        </button>
+        <button id="intuition-down" onclick="pickIntuition('down')">
+          <span class="arrow">▼</span> Profitability decreases
+        </button>
+      </div>
+    </div>
+
+    <!-- Math (revealed after intuition pick) -->
+    <div id="step3-math" class="reveal">
+      <p class="prompt">OK, now compute the new numbers under this mix:</p>
+
+      <div class="qa-list">
+        <div class="qa-row">
+          <div class="qa-prompt">New <strong>total contribution margin</strong></div>
+          <div class="answer">
+            <label>New Total CM</label>
+            <input type="text" id="s3-cm" inputmode="decimal" placeholder="$">
+            <span class="corr-hint" id="hint-s3-cm"></span>
+          </div>
+        </div>
+        <div class="qa-row">
+          <div class="qa-prompt">New <strong>operating income</strong></div>
+          <div class="answer">
+            <label>New OI</label>
+            <input type="text" id="s3-oi" inputmode="decimal" placeholder="$">
+            <span class="corr-hint" id="hint-s3-oi"></span>
+          </div>
+        </div>
+        <div class="qa-row">
+          <div class="qa-prompt">New <strong>net income</strong> (after tax)</div>
+          <div class="answer">
+            <label>New NI</label>
+            <input type="text" id="s3-ni" inputmode="decimal" placeholder="$">
+            <span class="corr-hint" id="hint-s3-ni"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <button class="check-btn" onclick="checkStep3()">Check answers</button>
+        <button class="reset-btn" onclick="resetStep3()">Reset</button>
+        <span id="score3-out" class="score-out"></span>
+        <button class="reveal-link" onclick="revealStep4(true)" id="reveal-step4-btn">Skip ahead →</button>
+      </div>
+
+      <div id="step3-insight"></div>
+    </div>
+  </section>
+
+  <!-- ───────── STEP 4 — Target net income ───────── -->
+  <section class="part reveal" id="step4">
+    <div class="part-header">
+      <span class="part-tag solve">Step 4</span>
+      <h2>Hitting a target</h2>
+      <span class="subtitle">work backward from net income</span>
+    </div>
+
+    <div class="setup-box">
+      <p>Suppose Jeni's wants to deliver <strong>$22,500 of after-tax net income</strong> next month, assuming the <strong>original</strong> 50% / 25% / 20% / 5% sales mix (back to baseline — ignore Step 3's mix shift). Fixed costs, prices, variable costs, and the 25% tax rate are unchanged.</p>
+    </div>
+
+    <div class="single-solve">
+      <div class="solve-prompt">
+        How many <strong>total units</strong> across all four products does Jeni's need to sell to hit that target?
+        <small>The per-product split below will update as you type.</small>
+      </div>
+      <div class="answer">
+        <label>Total units</label>
+        <input type="text" id="s4-total" inputmode="numeric" placeholder="units">
+        <span class="corr-hint" id="hint-s4-total"></span>
+      </div>
+    </div>
+
+    <table class="auto-table">
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Sales mix</th>
+          <th>Units at that mix</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="prod-name">Bars</td>    <td>50%</td> <td class="computed empty" id="s4-bars">—</td></tr>
+        <tr><td class="prod-name">Sundaes</td> <td>25%</td> <td class="computed empty" id="s4-sundaes">—</td></tr>
+        <tr><td class="prod-name">Pints</td>   <td>20%</td> <td class="computed empty" id="s4-pints">—</td></tr>
+        <tr><td class="prod-name">Cakes</td>   <td>5%</td>  <td class="computed empty" id="s4-cakes">—</td></tr>
+      </tbody>
+    </table>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep4()">Check answer</button>
+      <button class="reset-btn" onclick="resetStep4()">Reset</button>
+      <span id="score4-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep5(true)" id="reveal-step5-btn">Skip ahead →</button>
+    </div>
+
+    <div id="step4-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 5 — Build your own ───────── -->
+  <section class="part reveal" id="step5">
+    <div class="part-header">
+      <span class="part-tag build">Step 5</span>
+      <h2>Build your own scenario</h2>
+      <span class="subtitle">change any input and test yourself on OI, DOL, or NI</span>
+    </div>
+
+    <p class="build-prompt">Edit any product row, the fixed costs, or the tax rate. Then enter your predictions for <strong>OI</strong>, <strong>DOL</strong>, and/or <strong>NI</strong>, and click Check. (Leave a field blank to skip the check.)</p>
+
+    <table class="editable-prods">
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Expected units</th>
+          <th>Price / unit</th>
+          <th>VC / unit</th>
+          <th>CM / unit</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="prod-name">Bars</td>
+          <td><input type="text" class="var-input" id="bv-q-bars" inputmode="numeric" value="10,000"></td>
+          <td><input type="text" class="var-input" id="bv-sp-bars" inputmode="decimal" value="$1.50"></td>
+          <td><input type="text" class="var-input" id="bv-vc-bars" inputmode="decimal" value="$1.10"></td>
+          <td class="computed" id="bv-cm-bars">$0.40</td>
+        </tr>
+        <tr>
+          <td class="prod-name">Sundaes</td>
+          <td><input type="text" class="var-input" id="bv-q-sundaes" inputmode="numeric" value="5,000"></td>
+          <td><input type="text" class="var-input" id="bv-sp-sundaes" inputmode="decimal" value="$5.00"></td>
+          <td><input type="text" class="var-input" id="bv-vc-sundaes" inputmode="decimal" value="$3.00"></td>
+          <td class="computed" id="bv-cm-sundaes">$2.00</td>
+        </tr>
+        <tr>
+          <td class="prod-name">Pints</td>
+          <td><input type="text" class="var-input" id="bv-q-pints" inputmode="numeric" value="4,000"></td>
+          <td><input type="text" class="var-input" id="bv-sp-pints" inputmode="decimal" value="$12.00"></td>
+          <td><input type="text" class="var-input" id="bv-vc-pints" inputmode="decimal" value="$7.00"></td>
+          <td class="computed" id="bv-cm-pints">$5.00</td>
+        </tr>
+        <tr>
+          <td class="prod-name">Cakes</td>
+          <td><input type="text" class="var-input" id="bv-q-cakes" inputmode="numeric" value="1,000"></td>
+          <td><input type="text" class="var-input" id="bv-sp-cakes" inputmode="decimal" value="$40.00"></td>
+          <td><input type="text" class="var-input" id="bv-vc-cakes" inputmode="decimal" value="$24.00"></td>
+          <td class="computed" id="bv-cm-cakes">$16.00</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="params-card">
+      <div class="param-row">
+        <label>Fixed costs <small>per month</small></label>
+        <input type="text" class="var-input" id="bv-fc" inputmode="decimal" value="$30,000">
+      </div>
+      <div class="param-row">
+        <label>Tax rate <small>as a percentage</small></label>
+        <input type="text" class="var-input" id="bv-tax" inputmode="decimal" value="25%">
+      </div>
+    </div>
+
+    <div class="build-solve">
+      <div class="solve-card">
+        <label>Operating income</label>
+        <input type="text" id="bv-oi" inputmode="decimal" placeholder="$">
+      </div>
+      <div class="solve-card">
+        <label>Degree of operating leverage</label>
+        <input type="text" id="bv-dol" inputmode="decimal" placeholder="">
+      </div>
+      <div class="solve-card">
+        <label>Net income</label>
+        <input type="text" id="bv-ni" inputmode="decimal" placeholder="$">
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep5()">Check</button>
+      <button class="reset-btn" onclick="resetStep5()">Reset to original</button>
+      <span id="score5-out" class="score-out"></span>
+    </div>
+
+    <div id="step5-feedback"></div>
+  </section>
+
+</main>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   ORIGINAL DATA — Jeni's expanded forecast
+═══════════════════════════════════════════════════════════════ */
+const PRODUCTS = [
+  { key: 'bars',    name: 'Bars',    Q: 10000, SP:  1.50, VC:  1.10 },
+  { key: 'sundaes', name: 'Sundaes', Q:  5000, SP:  5.00, VC:  3.00 },
+  { key: 'pints',   name: 'Pints',   Q:  4000, SP: 12.00, VC:  7.00 },
+  { key: 'cakes',   name: 'Cakes',   Q:  1000, SP: 40.00, VC: 24.00 }
+];
+const FC = 30000;
+const TAX_RATE = 0.25;
+
+// Derived baseline metrics
+function totalUnits(prods) { return prods.reduce((s,p) => s + p.Q, 0); }
+function totalCM(prods)    { return prods.reduce((s,p) => s + p.Q * (p.SP - p.VC), 0); }
+const ORIG_TOTAL_UNITS = totalUnits(PRODUCTS);              // 20,000
+const ORIG_TOTAL_CM    = totalCM(PRODUCTS);                 // 50,000
+const ORIG_WACM        = ORIG_TOTAL_CM / ORIG_TOTAL_UNITS;  // 2.50
+const ORIG_OI          = ORIG_TOTAL_CM - FC;                // 20,000
+const ORIG_DOL         = ORIG_TOTAL_CM / ORIG_OI;           // 2.5
+const ORIG_NI          = ORIG_OI * (1 - TAX_RATE);          // 15,000
+
+// Step 2: 20% increase in unit sales
+const S2_SALES_PCT     = 0.20;
+const S2_OI_PCT        = ORIG_DOL * S2_SALES_PCT;           // 0.50 (= 50%)
+const S2_NEW_OI        = ORIG_OI * (1 + S2_OI_PCT);         // 30,000
+const S2_NEW_NI        = S2_NEW_OI * (1 - TAX_RATE);        // 22,500
+
+// Step 3: mix shift
+const MIX_SHIFT = [
+  { key: 'bars',    Q: 9000 },
+  { key: 'sundaes', Q: 5000 },
+  { key: 'pints',   Q: 4000 },
+  { key: 'cakes',   Q: 2000 }
+];
+const STEP3_PRODS = MIX_SHIFT.map(m => {
+  const base = PRODUCTS.find(p => p.key === m.key);
+  return { ...base, Q: m.Q };
+});
+const STEP3_CM = totalCM(STEP3_PRODS);             // 65,600
+const STEP3_OI = STEP3_CM - FC;                    // 35,600
+const STEP3_NI = STEP3_OI * (1 - TAX_RATE);        // 26,700
+
+// Step 4: target NI = $22,500
+const STEP4_TARGET_NI    = 22500;
+const STEP4_REQ_OI       = STEP4_TARGET_NI / (1 - TAX_RATE);      // 30,000
+const STEP4_REQ_CM       = STEP4_REQ_OI + FC;                     // 60,000
+const STEP4_REQ_UNITS    = STEP4_REQ_CM / ORIG_WACM;              // 24,000
+
+/* ═══════════════════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════════════════ */
+function parseNum(s) {
+  if (typeof s !== 'string') return NaN;
+  return parseFloat(s.replace(/[\$,\s%]/g, ''));
+}
+function parsePct(s) {
+  // Returns the percent value as a number (e.g., 50 for 50% or 0.5)
+  if (typeof s !== 'string') return NaN;
+  const v = parseFloat(s.replace(/[\$,\s%]/g, ''));
+  if (isNaN(v)) return NaN;
+  return v <= 1 ? v * 100 : v;
+}
+function fmtMoney(v, decimals) {
+  const d = (decimals === undefined) ? 0 : decimals;
+  const rounded = Math.round(v * 100) / 100;
+  const sign = rounded < 0 ? '-$' : '$';
+  return sign + Math.abs(rounded).toLocaleString('en-US', {
+    minimumFractionDigits: d,
+    maximumFractionDigits: d
+  });
+}
+function fmtUnits(v) {
+  return Math.round(v).toLocaleString('en-US');
+}
+function fmtPct(v) {
+  // v is the percent value (50 = 50%)
+  return v.toFixed(1).replace(/\.0$/, '') + '%';
+}
+function fmtDol(v) {
+  // For DOL — typically 1-5 range, allow up to 2 decimals
+  return (Math.round(v * 100) / 100).toString();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   AUDIO
+═══════════════════════════════════════════════════════════════ */
+let audioCtx = null;
+function getAudio() {
+  if (!audioCtx) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (AC) audioCtx = new AC();
+  }
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+function playBell() {
+  const ctx = getAudio(); if (!ctx) return;
+  const now = ctx.currentTime;
+  [523.25, 659.25, 783.99].forEach(f => {
+    const osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = 'sine'; osc.frequency.value = f;
+    osc.connect(g).connect(ctx.destination);
+    g.gain.setValueAtTime(0, now);
+    g.gain.linearRampToValueAtTime(0.15, now + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 1.6);
+    osc.start(now); osc.stop(now + 1.7);
+  });
+}
+function playHorn() {
+  const ctx = getAudio(); if (!ctx) return;
+  const now = ctx.currentTime;
+  const notes = [
+    { f: 466.16, t: 0.00, d: 0.18 },
+    { f: 440.00, t: 0.20, d: 0.18 },
+    { f: 415.30, t: 0.40, d: 0.55 }
+  ];
+  notes.forEach(({ f, t, d }) => {
+    const osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(f, now + t);
+    if (d > 0.3) osc.frequency.exponentialRampToValueAtTime(f * 0.88, now + t + d);
+    osc.connect(g).connect(ctx.destination);
+    g.gain.setValueAtTime(0, now + t);
+    g.gain.linearRampToValueAtTime(0.12, now + t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, now + t + d);
+    osc.start(now + t); osc.stop(now + t + d + 0.05);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   GENERIC CHECKER for stacked qa-row groups
+═══════════════════════════════════════════════════════════════ */
+function checkGroup(spec, scoreId, allCorrectFn) {
+  let correct = 0, total = 0, blanks = 0;
+  spec.forEach(f => {
+    const inp  = document.getElementById(f.inputId);
+    const hint = document.getElementById(f.hintId);
+    inp.classList.remove('correct', 'wrong');
+    hint.textContent = '';
+    total++;
+    if (inp.value.trim() === '') { blanks++; return; }
+    const val = (f.kind === 'pct') ? parsePct(inp.value) : parseNum(inp.value);
+    const exp = f.expected;
+    const tol = f.tol;
+    if (!isNaN(val) && Math.abs(val - exp) <= tol) {
+      inp.classList.add('correct');
+      correct++;
+    } else {
+      inp.classList.add('wrong');
+      hint.textContent = '→ ' + f.fmt(exp);
+    }
+  });
+  const out = document.getElementById(scoreId);
+  if (blanks === total) {
+    out.textContent = 'Fill in some answers first.';
+    return false;
+  }
+  out.textContent = correct + ' / ' + total + ' correct' + (blanks ? ' (' + blanks + ' blank)' : '');
+  if (correct === total) {
+    playBell();
+    if (allCorrectFn) allCorrectFn();
+    return true;
+  } else {
+    playHorn();
+    return false;
+  }
+}
+
+function resetGroup(spec, scoreId, extraResetFn) {
+  spec.forEach(f => {
+    const inp = document.getElementById(f.inputId);
+    const hint = document.getElementById(f.hintId);
+    inp.value = '';
+    inp.classList.remove('correct', 'wrong');
+    hint.textContent = '';
+  });
+  document.getElementById(scoreId).textContent = '';
+  if (extraResetFn) extraResetFn();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 1
+═══════════════════════════════════════════════════════════════ */
+const STEP1_SPEC = [
+  { inputId: 's1-cm', hintId: 'hint-s1-cm', expected: ORIG_TOTAL_CM, tol: 0.5, kind: 'money', fmt: v => fmtMoney(v, 0) },
+  { inputId: 's1-oi', hintId: 'hint-s1-oi', expected: ORIG_OI,       tol: 0.5, kind: 'money', fmt: v => fmtMoney(v, 0) },
+  { inputId: 's1-ni', hintId: 'hint-s1-ni', expected: ORIG_NI,       tol: 0.5, kind: 'money', fmt: v => fmtMoney(v, 0) }
+];
+function checkStep1() {
+  checkGroup(STEP1_SPEC, 'score1-out', () => revealStep2(false));
+}
+function resetStep1() {
+  resetGroup(STEP1_SPEC, 'score1-out');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 2
+═══════════════════════════════════════════════════════════════ */
+const STEP2_SPEC = [
+  { inputId: 's2-dol', hintId: 'hint-s2-dol', expected: ORIG_DOL,        tol: 0.05, kind: 'money',  fmt: v => fmtDol(v) },
+  { inputId: 's2-pct', hintId: 'hint-s2-pct', expected: S2_OI_PCT * 100, tol: 0.5,  kind: 'pct',    fmt: v => fmtPct(v) },
+  { inputId: 's2-ni',  hintId: 'hint-s2-ni',  expected: S2_NEW_NI,       tol: 0.5,  kind: 'money',  fmt: v => fmtMoney(v, 0) }
+];
+function checkStep2() {
+  checkGroup(STEP2_SPEC, 'score2-out', () => revealStep3(false));
+}
+function resetStep2() {
+  resetGroup(STEP2_SPEC, 'score2-out');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 3 — Intuition + Math
+═══════════════════════════════════════════════════════════════ */
+let step3Intuition = null;  // 'up' or 'down'
+function pickIntuition(choice) {
+  step3Intuition = choice;
+  document.getElementById('intuition-up').classList.toggle('selected',   choice === 'up');
+  document.getElementById('intuition-down').classList.toggle('selected', choice === 'down');
+  // Reveal math section
+  const math = document.getElementById('step3-math');
+  if (!math.classList.contains('show')) {
+    math.classList.add('show');
+  }
+}
+
+const STEP3_SPEC = [
+  { inputId: 's3-cm', hintId: 'hint-s3-cm', expected: STEP3_CM, tol: 0.5, kind: 'money', fmt: v => fmtMoney(v, 0) },
+  { inputId: 's3-oi', hintId: 'hint-s3-oi', expected: STEP3_OI, tol: 0.5, kind: 'money', fmt: v => fmtMoney(v, 0) },
+  { inputId: 's3-ni', hintId: 'hint-s3-ni', expected: STEP3_NI, tol: 0.5, kind: 'money', fmt: v => fmtMoney(v, 0) }
+];
+function checkStep3() {
+  const fb = document.getElementById('step3-insight');
+  fb.innerHTML = '';
+  const ok = checkGroup(STEP3_SPEC, 'score3-out', () => {
+    revealStep4(false);
+    // Acknowledge intuition
+    const wentUp = (STEP3_NI > ORIG_NI);
+    const calledIt = (step3Intuition === 'up' && wentUp) || (step3Intuition === 'down' && !wentUp);
+    let msg;
+    if (calledIt) {
+      msg = `<strong>You called it.</strong> Net income climbed from ${fmtMoney(ORIG_NI, 0)} to ${fmtMoney(STEP3_NI, 0)} on a swap of 1,000 bars for 1,000 cakes — even though total volume didn't change.`;
+    } else {
+      msg = `<strong>Worth a second look.</strong> Net income actually rose from ${fmtMoney(ORIG_NI, 0)} to ${fmtMoney(STEP3_NI, 0)}. Each bar contributes $0.40; each cake contributes $16 — at the same volume, the swap toward cakes is a big lift.`;
+    }
+    fb.innerHTML = `<div class="insight success">${msg}</div>`;
+  });
+}
+function resetStep3() {
+  resetGroup(STEP3_SPEC, 'score3-out', () => {
+    document.getElementById('step3-insight').innerHTML = '';
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 4 — Target NI
+═══════════════════════════════════════════════════════════════ */
+function updateStep4Autofill() {
+  const raw = document.getElementById('s4-total').value.trim();
+  const tu = parseNum(raw);
+  PRODUCTS.forEach(p => {
+    const el = document.getElementById('s4-' + p.key);
+    if (!raw || isNaN(tu)) {
+      el.textContent = '—';
+      el.classList.add('empty');
+      return;
+    }
+    const share = p.Q / ORIG_TOTAL_UNITS;
+    const n = tu * share;
+    el.textContent = fmtUnits(n);
+    el.classList.remove('empty');
+  });
+}
+
+function checkStep4() {
+  const inp  = document.getElementById('s4-total');
+  const hint = document.getElementById('hint-s4-total');
+  const out  = document.getElementById('score4-out');
+  const fb   = document.getElementById('step4-insight');
+  inp.classList.remove('correct', 'wrong');
+  hint.textContent = '';
+  out.textContent = '';
+  fb.innerHTML = '';
+
+  if (inp.value.trim() === '') {
+    out.textContent = 'Enter a value first.';
+    return;
+  }
+  const val = parseNum(inp.value);
+  const exp = STEP4_REQ_UNITS;
+  if (!isNaN(val) && Math.abs(val - exp) <= 1) {
+    inp.classList.add('correct');
+    out.textContent = 'Correct!';
+    fb.innerHTML = `
+      <div class="insight success">
+        <strong>${fmtUnits(exp)} total units</strong> at the original mix — those per-product volumes generate $60,000 of contribution margin, which after $30,000 of fixed costs and 25% tax lands at <strong>$22,500</strong> of net income.
+      </div>
+    `;
+    playBell();
+    revealStep5(false);
+  } else {
+    inp.classList.add('wrong');
+    hint.textContent = '→ ' + fmtUnits(exp) + ' units';
+    out.textContent = 'Not quite.';
+    playHorn();
+  }
+}
+
+function resetStep4() {
+  const inp = document.getElementById('s4-total');
+  inp.value = '';
+  inp.classList.remove('correct', 'wrong');
+  document.getElementById('hint-s4-total').textContent = '';
+  document.getElementById('score4-out').textContent = '';
+  document.getElementById('step4-insight').innerHTML = '';
+  updateStep4Autofill();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 5 — Build your own
+═══════════════════════════════════════════════════════════════ */
+const BV_DEFAULTS = {
+  prods: PRODUCTS.map(p => ({ key: p.key, Q: p.Q, SP: p.SP, VC: p.VC })),
+  fc: FC,
+  tax: TAX_RATE
+};
+
+function readBVProducts() {
+  return BV_DEFAULTS.prods.map(d => {
+    const Q  = parseNum(document.getElementById('bv-q-'  + d.key).value);
+    const SP = parseNum(document.getElementById('bv-sp-' + d.key).value);
+    const VC = parseNum(document.getElementById('bv-vc-' + d.key).value);
+    return { key: d.key, Q, SP, VC };
+  });
+}
+function readBVFC() { return parseNum(document.getElementById('bv-fc').value); }
+function readBVTax() {
+  // tax rate input: parse a percentage. 25 → 0.25; 0.25 → 0.25.
+  const raw = document.getElementById('bv-tax').value;
+  const v = parseFloat(String(raw).replace(/[\$,\s%]/g, ''));
+  if (isNaN(v)) return NaN;
+  return v > 1 ? v / 100 : v;
+}
+
+function refreshBVComputed() {
+  const prods = readBVProducts();
+  prods.forEach((p, i) => {
+    const cmCell = document.getElementById('bv-cm-' + p.key);
+    if (!isNaN(p.SP) && !isNaN(p.VC)) cmCell.textContent = fmtMoney(p.SP - p.VC, 2);
+    else cmCell.textContent = '—';
+    const def = BV_DEFAULTS.prods[i];
+    [
+      { el: document.getElementById('bv-q-'  + p.key), cur: p.Q,  ref: def.Q  },
+      { el: document.getElementById('bv-sp-' + p.key), cur: p.SP, ref: def.SP },
+      { el: document.getElementById('bv-vc-' + p.key), cur: p.VC, ref: def.VC }
+    ].forEach(({ el, cur, ref }) => {
+      if (!isNaN(cur) && Math.abs(cur - ref) > 0.001) el.classList.add('changed');
+      else el.classList.remove('changed');
+    });
+  });
+  const fcEl = document.getElementById('bv-fc');
+  const fcVal = readBVFC();
+  if (!isNaN(fcVal) && Math.abs(fcVal - BV_DEFAULTS.fc) > 0.001) fcEl.classList.add('changed');
+  else fcEl.classList.remove('changed');
+  const taxEl = document.getElementById('bv-tax');
+  const taxVal = readBVTax();
+  if (!isNaN(taxVal) && Math.abs(taxVal - BV_DEFAULTS.tax) > 0.0001) taxEl.classList.add('changed');
+  else taxEl.classList.remove('changed');
+}
+
+function checkStep5() {
+  const prods = readBVProducts();
+  const fc  = readBVFC();
+  const tax = readBVTax();
+  const oiEl  = document.getElementById('bv-oi');
+  const dolEl = document.getElementById('bv-dol');
+  const niEl  = document.getElementById('bv-ni');
+  const out   = document.getElementById('score5-out');
+  const fb    = document.getElementById('step5-feedback');
+  oiEl.classList.remove('correct', 'wrong');
+  dolEl.classList.remove('correct', 'wrong');
+  niEl.classList.remove('correct', 'wrong');
+  out.textContent = '';
+  fb.innerHTML = '';
+
+  // Validate
+  if (prods.some(p => isNaN(p.Q) || isNaN(p.SP) || isNaN(p.VC)) || isNaN(fc) || isNaN(tax)) {
+    fb.innerHTML = `<div class="insight">Make sure every product cell, fixed costs, and tax rate has a valid number.</div>`;
+    return;
+  }
+
+  const tcm = totalCM(prods);
+  const oi  = tcm - fc;
+  const dol = oi !== 0 ? tcm / oi : NaN;
+  const ni  = oi * (1 - tax);
+
+  const oiGuess  = oiEl.value.trim();
+  const dolGuess = dolEl.value.trim();
+  const niGuess  = niEl.value.trim();
+  if (!oiGuess && !dolGuess && !niGuess) {
+    fb.innerHTML = `<div class="insight">Enter at least one of OI / DOL / NI before checking.</div>`;
+    return;
+  }
+
+  let allCorrect = true;
+  const parts = [];
+  if (oiGuess) {
+    const v = parseNum(oiGuess);
+    const tol = Math.max(0.5, Math.abs(oi) * 0.001);
+    if (!isNaN(v) && Math.abs(v - oi) <= tol) {
+      oiEl.classList.add('correct'); parts.push('✔ OI');
+    } else {
+      oiEl.classList.add('wrong'); parts.push('✘ OI (actual: ' + fmtMoney(oi, 0) + ')'); allCorrect = false;
+    }
+  }
+  if (dolGuess) {
+    if (isNaN(dol) || !isFinite(dol)) {
+      dolEl.classList.add('wrong'); parts.push('✘ DOL (OI = 0 — undefined)'); allCorrect = false;
+    } else {
+      const v = parseNum(dolGuess);
+      const tol = Math.max(0.05, Math.abs(dol) * 0.01);
+      if (!isNaN(v) && Math.abs(v - dol) <= tol) {
+        dolEl.classList.add('correct'); parts.push('✔ DOL');
+      } else {
+        dolEl.classList.add('wrong'); parts.push('✘ DOL (actual: ' + fmtDol(dol) + ')'); allCorrect = false;
+      }
+    }
+  }
+  if (niGuess) {
+    const v = parseNum(niGuess);
+    const tol = Math.max(0.5, Math.abs(ni) * 0.001);
+    if (!isNaN(v) && Math.abs(v - ni) <= tol) {
+      niEl.classList.add('correct'); parts.push('✔ NI');
+    } else {
+      niEl.classList.add('wrong'); parts.push('✘ NI (actual: ' + fmtMoney(ni, 0) + ')'); allCorrect = false;
+    }
+  }
+  out.textContent = parts.join('  ·  ');
+
+  const totalsLine = `Total CM: <strong>${fmtMoney(tcm, 0)}</strong> &nbsp;·&nbsp; OI: <strong>${fmtMoney(oi, 0)}</strong> &nbsp;·&nbsp; DOL: <strong>${isFinite(dol) ? fmtDol(dol) : '—'}</strong> &nbsp;·&nbsp; NI (tax ${(tax*100).toFixed(2).replace(/\.?0+$/, '')}%): <strong>${fmtMoney(ni, 0)}</strong>`;
+  if (allCorrect) {
+    fb.innerHTML = `<div class="insight success">${totalsLine}</div>`;
+    playBell();
+  } else {
+    fb.innerHTML = `<div class="insight">${totalsLine}</div>`;
+    playHorn();
+  }
+}
+
+function resetStep5() {
+  BV_DEFAULTS.prods.forEach(p => {
+    document.getElementById('bv-q-'  + p.key).value = p.Q.toLocaleString('en-US');
+    document.getElementById('bv-sp-' + p.key).value = '$' + p.SP.toFixed(2);
+    document.getElementById('bv-vc-' + p.key).value = '$' + p.VC.toFixed(2);
+  });
+  document.getElementById('bv-fc').value  = '$' + BV_DEFAULTS.fc.toLocaleString('en-US');
+  document.getElementById('bv-tax').value = (BV_DEFAULTS.tax * 100) + '%';
+  ['bv-oi','bv-dol','bv-ni'].forEach(id => {
+    const el = document.getElementById(id);
+    el.value = '';
+    el.classList.remove('correct', 'wrong');
+  });
+  document.getElementById('score5-out').textContent = '';
+  document.getElementById('step5-feedback').innerHTML = '';
+  refreshBVComputed();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   REVEAL STEPS
+═══════════════════════════════════════════════════════════════ */
+const revealedSteps = new Set();
+function revealStep(stepNum, scroll) {
+  const el = document.getElementById('step' + stepNum);
+  if (!revealedSteps.has(stepNum)) {
+    el.classList.add('show');
+    revealedSteps.add(stepNum);
+    const btn = document.getElementById('reveal-step' + stepNum + '-btn');
+    if (btn) btn.style.display = 'none';
+  }
+  if (scroll) setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+}
+function revealStep2(scroll) { revealStep(2, scroll); }
+function revealStep3(scroll) { revealStep(3, scroll); }
+function revealStep4(scroll) { revealStep(4, scroll); }
+function revealStep5(scroll) { revealStep(5, scroll); }
+
+/* ═══════════════════════════════════════════════════════════════
+   QR / SHARE
+═══════════════════════════════════════════════════════════════ */
+function showQR() {
+  const url = location.href;
+  document.getElementById('qr-url').textContent = url;
+  const qrEl = document.getElementById('qr-code');
+  qrEl.innerHTML = '';
+  if (window.QRCode) {
+    new QRCode(qrEl, { text: url, width: 180, height: 180, colorDark: '#1a2744', colorLight: '#ffffff' });
+  }
+  document.getElementById('qr-overlay').classList.add('show');
+}
+function hideQR(ev) {
+  if (ev && ev.target.id !== 'qr-overlay' && ev.target.className !== 'qr-close') return;
+  document.getElementById('qr-overlay').classList.remove('show');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+  // Step 4 auto-fill: type → recompute per-product cells
+  document.getElementById('s4-total').addEventListener('input', updateStep4Autofill);
+
+  // Step 5 inputs
+  PRODUCTS.forEach(p => {
+    ['q', 'sp', 'vc'].forEach(field => {
+      const el = document.getElementById('bv-' + field + '-' + p.key);
+      if (el) el.addEventListener('input', () => {
+        refreshBVComputed();
+        ['bv-oi','bv-dol','bv-ni'].forEach(id => document.getElementById(id).classList.remove('correct','wrong'));
+        document.getElementById('score5-out').textContent = '';
+        document.getElementById('step5-feedback').innerHTML = '';
+      });
+    });
+  });
+  ['bv-fc', 'bv-tax'].forEach(id => {
+    document.getElementById(id).addEventListener('input', () => {
+      refreshBVComputed();
+      ['bv-oi','bv-dol','bv-ni'].forEach(x => document.getElementById(x).classList.remove('correct','wrong'));
+      document.getElementById('score5-out').textContent = '';
+      document.getElementById('step5-feedback').innerHTML = '';
+    });
+  });
+  refreshBVComputed();
+});
+</script>
+
+</body>
+</html>
