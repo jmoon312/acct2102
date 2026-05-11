@@ -681,13 +681,12 @@
     </div>
 
     <div class="setup-box">
-      <p>Across all four products, Jeni's expects to sell <strong>10,000 units total</strong>. Some of those units throw off only $0.40 of CM (bars), some throw off $16 (cakes). To talk about the company as one CVP problem, we collapse those into a <strong>weighted-average CM per unit</strong>, weighted by each product's share of total units (its <strong>sales mix</strong>).</p>
-      <span class="formula">WACM = Σ (CM<sub>i</sub> × sales mix<sub>i</sub>) &nbsp; or equivalently &nbsp; Total CM ÷ Total units</span>
+      <p>Some of Jeni's units throw off only $0.40 of CM (bars), some throw off $16 (cakes). To talk about the company as one CVP problem, we need a single CM per unit that reflects the product mix — the <strong>weighted-average contribution margin</strong> (WACM).</p>
     </div>
 
     <div class="single-solve">
       <div class="solve-prompt">
-        What is the <strong>weighted-average CM per unit</strong> at the expected sales mix?
+        Given the <strong>sales mix above</strong>, what is the weighted-average contribution margin per unit?
         <small>Round to the nearest cent if needed.</small>
       </div>
       <div class="answer">
@@ -715,7 +714,6 @@
 
     <div class="setup-box">
       <p>Jeni's monthly fixed costs (rent, salaries, equipment depreciation, insurance) total <strong>$30,000</strong>. The forecast above projects <strong>10,000 total units</strong> at the expected sales mix.</p>
-      <span class="formula">Profit = (WACM × Total units) − Fixed costs</span>
     </div>
 
     <div class="single-solve">
@@ -740,33 +738,64 @@
     <div id="step3-insight"></div>
   </section>
 
-  <!-- ───────── STEP 4 — Breakeven units ───────── -->
+  <!-- ───────── STEP 4 — Break even ───────── -->
   <section class="part reveal" id="step4">
     <div class="part-header">
       <span class="part-tag solve">Step 4</span>
-      <h2>What volume covers fixed costs?</h2>
-      <span class="subtitle">find the volume where profit = $0</span>
+      <h2>Break even</h2>
+      <span class="subtitle">per-product volumes at the current sales mix</span>
     </div>
 
     <div class="setup-box">
-      <p>The forecast loses money. So a natural question: <strong>how many total units</strong> would Jeni's need to sell — at the same sales mix — to land on $0 profit instead?</p>
-      <span class="formula">Total units to break even = Fixed costs ÷ WACM</span>
+      <p>Assuming Jeni's holds the current sales mix constant, fill in the number of each product that needs to be sold to <strong>break even</strong>.</p>
     </div>
 
-    <div class="single-solve">
-      <div class="solve-prompt">
-        How many <strong>total units</strong> (across all four products combined) does Jeni's need to sell to make profit = $0?
-        <small>Assume the 50% / 25% / 20% / 5% sales mix holds.</small>
-      </div>
-      <div class="answer">
-        <label>Total units</label>
-        <input type="text" id="be-input" inputmode="numeric" placeholder="units">
-        <span class="corr-hint" id="hint-be"></span>
-      </div>
-    </div>
+    <table class="prod-table">
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Sales mix</th>
+          <th>Break-even units</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="prod-name">Bars</td>
+          <td>50%</td>
+          <td>
+            <input type="text" id="be-bars" inputmode="numeric" placeholder="units">
+            <span class="corr-hint" id="hint-be-bars"></span>
+          </td>
+        </tr>
+        <tr>
+          <td class="prod-name">Sundaes</td>
+          <td>25%</td>
+          <td>
+            <input type="text" id="be-sundaes" inputmode="numeric" placeholder="units">
+            <span class="corr-hint" id="hint-be-sundaes"></span>
+          </td>
+        </tr>
+        <tr>
+          <td class="prod-name">Pints</td>
+          <td>20%</td>
+          <td>
+            <input type="text" id="be-pints" inputmode="numeric" placeholder="units">
+            <span class="corr-hint" id="hint-be-pints"></span>
+          </td>
+        </tr>
+        <tr>
+          <td class="prod-name">Cakes</td>
+          <td>5%</td>
+          <td>
+            <input type="text" id="be-cakes" inputmode="numeric" placeholder="units">
+            <span class="corr-hint" id="hint-be-cakes"></span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
 
     <div class="footer">
-      <button class="check-btn" onclick="checkStep4()">Check answer</button>
+      <button class="check-btn" onclick="checkStep4()">Check answers</button>
       <button class="reset-btn" onclick="resetStep4()">Reset</button>
       <span id="score4-out" class="score-out"></span>
       <button class="reveal-link" onclick="revealStep5(true)" id="reveal-step5-btn">Skip ahead →</button>
@@ -1095,54 +1124,62 @@ function resetStep3() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   STEP 4 — Breakeven units
+   STEP 4 — Break-even units per product
 ═══════════════════════════════════════════════════════════════ */
-function checkStep4() {
-  const inp  = document.getElementById('be-input');
-  const hint = document.getElementById('hint-be');
-  const out  = document.getElementById('score4-out');
-  const fb   = document.getElementById('step4-insight');
-  inp.classList.remove('correct', 'wrong');
-  hint.textContent = '';
-  out.textContent = '';
-  fb.innerHTML = '';
+// Expected per-product break-even units: total BE × sales mix
+const STEP4_EXPECTED = PRODUCTS.map(p => ({
+  key: p.key,
+  expected: ORIG_BE_UNITS * (p.Q / ORIG_TOTAL_UNITS)
+}));
+// 6000 / 3000 / 2400 / 600
 
-  if (inp.value.trim() === '') {
-    out.textContent = 'Enter a value first.';
+function checkStep4() {
+  let correct = 0, total = 0, blanks = 0;
+  STEP4_EXPECTED.forEach(item => {
+    const inp  = document.getElementById('be-' + item.key);
+    const hint = document.getElementById('hint-be-' + item.key);
+    inp.classList.remove('correct', 'wrong');
+    hint.textContent = '';
+    total++;
+    if (inp.value.trim() === '') { blanks++; return; }
+    const val = parseNum(inp.value);
+    if (!isNaN(val) && Math.abs(val - item.expected) <= 1) {
+      inp.classList.add('correct');
+      correct++;
+    } else {
+      inp.classList.add('wrong');
+      hint.textContent = '→ ' + fmtUnits(item.expected);
+    }
+  });
+  const out = document.getElementById('score4-out');
+  const fb  = document.getElementById('step4-insight');
+  fb.innerHTML = '';
+  if (blanks === total) {
+    out.textContent = 'Fill in some answers first.';
     return;
   }
-  const val = parseNum(inp.value);
-  const exp = ORIG_BE_UNITS;  // 12,000
-  if (!isNaN(val) && Math.abs(val - exp) <= 1) {
-    inp.classList.add('correct');
-    out.textContent = 'Correct!';
+  out.textContent = correct + ' / ' + total + ' correct' + (blanks ? ' (' + blanks + ' blank)' : '');
+  if (correct === total) {
     fb.innerHTML = `
       <div class="insight success">
-        At <strong>12,000 total units</strong>, total CM = 12,000 × $2.50 = $30,000 = fixed costs, so profit = $0. At the assumed sales mix (50% / 25% / 20% / 5%), that breaks down to:
-        <ul>
-          <li><strong>6,000</strong> bars (50%)</li>
-          <li><strong>3,000</strong> sundaes (25%)</li>
-          <li><strong>2,400</strong> pints (20%)</li>
-          <li><strong>600</strong> cakes (5%)</li>
-        </ul>
-        Change the mix and the breakeven volume changes too — try it in Step 5.
+        At these volumes, Jeni's contribution margin works out to $30,000 — matching its fixed costs and putting the company at the break-even point. The volumes are exactly the 50% / 25% / 20% / 5% sales mix applied to <strong>12,000 total units</strong>. Change the mix in Step 5 to see how the break-even volumes shift.
       </div>
     `;
     playBell();
     revealStep5(false);
   } else {
-    inp.classList.add('wrong');
-    hint.textContent = '→ ' + fmtUnits(exp) + ' units';
-    out.textContent = 'Not quite.';
     playHorn();
   }
 }
 
 function resetStep4() {
-  const inp = document.getElementById('be-input');
-  inp.value = '';
-  inp.classList.remove('correct', 'wrong');
-  document.getElementById('hint-be').textContent = '';
+  STEP4_EXPECTED.forEach(item => {
+    const inp  = document.getElementById('be-' + item.key);
+    const hint = document.getElementById('hint-be-' + item.key);
+    inp.value = '';
+    inp.classList.remove('correct', 'wrong');
+    hint.textContent = '';
+  });
   document.getElementById('score4-out').textContent = '';
   document.getElementById('step4-insight').innerHTML = '';
 }
