@@ -1,0 +1,1450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Differential Analysis</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  /* ── Reset & base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    background: #f4f0e8;
+    color: #1a2744;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    background: #1a2744;
+    color: #fff;
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .header-left h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+  .header-left p  { font-size: 13px; color: #a0aec0; margin-top: 2px; }
+
+  .qr-btn {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    transition: background .15s;
+  }
+  .qr-btn:hover { background: rgba(255,255,255,0.18); }
+
+  /* QR Modal */
+  .qr-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .qr-overlay.show { display: flex; }
+  .qr-modal {
+    background: #fff;
+    border-radius: 14px;
+    padding: 32px;
+    text-align: center;
+    max-width: 300px;
+    width: 90%;
+  }
+  .qr-modal h2 { font-size: 16px; font-weight: 600; color: #1a2744; margin-bottom: 6px; }
+  .qr-modal p  { font-size: 12px; color: #64748b; margin-bottom: 18px; line-height: 1.5; }
+  #qr-code { display: flex; justify-content: center; margin-bottom: 16px; }
+  #qr-url  { font-size: 11px; color: #94a3b8; word-break: break-all; margin-bottom: 18px; }
+  .qr-close {
+    background: #1a2744; color: #fff;
+    border: none; border-radius: 8px;
+    padding: 8px 24px; font-size: 13px;
+    cursor: pointer; font-family: inherit;
+  }
+
+  /* ── Main layout ── */
+  main {
+    max-width: 920px;
+    margin: 28px auto;
+    padding: 0 20px 48px;
+  }
+
+  .part {
+    background: #fff;
+    border: 1px solid #dde3ef;
+    border-radius: 12px;
+    padding: 22px 24px 24px;
+    margin-bottom: 22px;
+  }
+
+  .part-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .part-tag {
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    background: #1a2744;
+    padding: 3px 10px;
+    border-radius: 99px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+  .part-tag.practice { background: #D85A30; }
+  .part-tag.explore  { background: #3b7dd8; }
+  .part-tag.solve    { background: #7a5cb6; }
+  .part-tag.build    { background: #5a9e3a; }
+  .part-header h2 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -.01em;
+  }
+  .part-header .subtitle {
+    font-size: 13px;
+    color: #64748b;
+  }
+
+  .setup-box {
+    background: #f8f6f0;
+    border: 1px solid #e6dfd0;
+    border-radius: 9px;
+    padding: 14px 16px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: #334155;
+    margin-bottom: 16px;
+  }
+  .setup-box strong { color: #1a2744; }
+  .setup-box p + p { margin-top: 6px; }
+
+  /* ── Segment income statement (inside setup-box) ── */
+  .segment-stmt {
+    width: 100%;
+    border-collapse: collapse;
+    font-variant-numeric: tabular-nums;
+    margin: 10px 0;
+    font-size: 13px;
+  }
+  .segment-stmt th {
+    text-align: right;
+    font-size: 11.5px;
+    color: #64748b;
+    font-weight: 600;
+    padding: 5px 10px;
+    border-bottom: 1px solid #e6dfd0;
+  }
+  .segment-stmt th:first-child { text-align: left; }
+  .segment-stmt td {
+    padding: 4px 10px;
+    text-align: right;
+    color: #334155;
+    font-size: 13px;
+  }
+  .segment-stmt td:first-child {
+    text-align: left;
+    color: #1a2744;
+    padding-left: 8px;
+  }
+  .segment-stmt td.indent { padding-left: 20px; }
+  .segment-stmt tr.subtotal td {
+    border-top: 1px solid #e6dfd0;
+    font-weight: 600;
+    color: #1a2744;
+  }
+  .segment-stmt tr.total td {
+    border-top: 2px solid #1a2744;
+    font-weight: 700;
+    color: #1a2744;
+  }
+  .segment-stmt .loss { color: #9b2020; }
+
+  /* ── Prompt ── */
+  .prompt {
+    font-size: 14px;
+    color: #1a2744;
+    margin-bottom: 12px;
+    line-height: 1.55;
+  }
+  .prompt strong { font-weight: 700; }
+
+  /* ── Step 1: Relevance toggle rows ── */
+  .rel-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 4px; }
+  .rel-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 14px;
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #e1eaf3;
+    border-radius: 9px;
+    padding: 11px 14px;
+    transition: border-color .15s, background .15s;
+  }
+  .rel-row .rel-item {}
+  .rel-row .rel-label {
+    font-size: 13.5px;
+    color: #1a2744;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+  .rel-row .rel-detail {
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 2px;
+  }
+  .rel-toggle {
+    display: flex;
+    gap: 6px;
+  }
+  .rel-toggle button {
+    padding: 6px 14px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 12.5px;
+    font-family: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    background: #fff;
+    color: #64748b;
+    transition: all .15s;
+    white-space: nowrap;
+  }
+  .rel-toggle button:hover {
+    border-color: #3b7dd8;
+    color: #1a2744;
+  }
+  .rel-toggle button.selected {
+    background: #1a2744;
+    color: #fff;
+    border-color: #1a2744;
+  }
+  .rel-row.row-correct {
+    border-color: #5a9e3a;
+    background: #f8fcf4;
+  }
+  .rel-row.row-correct .rel-toggle button.selected {
+    background: #5a9e3a;
+    border-color: #5a9e3a;
+  }
+  .rel-row.row-wrong {
+    border-color: #c94040;
+    background: #fffaf9;
+  }
+  .rel-row.row-wrong .rel-toggle button.selected {
+    background: #c94040;
+    border-color: #c94040;
+  }
+  .rel-row .corr-tag {
+    font-size: 11px;
+    font-weight: 600;
+    margin-top: 3px;
+    min-height: 14px;
+  }
+  .rel-row .corr-tag.show-yes { color: #2d6a1f; }
+  .rel-row .corr-tag.show-no  { color: #9b2020; }
+
+  /* ── Step 2: Differential input rows ── */
+  .diff-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 4px; }
+  .diff-row {
+    display: grid;
+    grid-template-columns: 1fr 180px;
+    gap: 14px;
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #e1eaf3;
+    border-radius: 9px;
+    padding: 11px 14px;
+  }
+  .diff-row .diff-label {
+    font-size: 13.5px;
+    color: #1a2744;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+  .diff-row .diff-detail {
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 2px;
+  }
+  .diff-row .answer { display: flex; flex-direction: column; }
+  .diff-row .answer label {
+    font-size: 10.5px;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 4px;
+  }
+  .diff-row .answer input {
+    padding: 8px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .diff-row .answer input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .diff-row .answer input.correct {
+    border-color: #5a9e3a;
+    background: #f0f9e8;
+    color: #2d6a1f;
+  }
+  .diff-row .answer input.wrong {
+    border-color: #c94040;
+    background: #fff1f1;
+    color: #9b2020;
+  }
+  .diff-row .answer .corr-hint {
+    display: block;
+    font-size: 11px;
+    color: #5a9e3a;
+    font-weight: 600;
+    margin-top: 3px;
+    min-height: 14px;
+    text-align: center;
+  }
+  .diff-row.irrelevant {
+    opacity: 0.45;
+    background: #f3f3f0;
+    border-color: #e6e4de;
+  }
+  .diff-row.irrelevant .diff-label { color: #94a3b8; }
+  .diff-row .na-label {
+    font-size: 12px;
+    color: #94a3b8;
+    font-style: italic;
+    text-align: center;
+  }
+
+  /* ── Single-cell solve (Step 3) ── */
+  .single-solve {
+    display: grid;
+    grid-template-columns: 1fr 200px;
+    gap: 14px;
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #e1eaf3;
+    border-radius: 9px;
+    padding: 16px 18px;
+    margin-bottom: 10px;
+  }
+  .single-solve .solve-prompt {
+    font-size: 14px;
+    color: #1a2744;
+    line-height: 1.55;
+  }
+  .single-solve .solve-prompt strong { font-weight: 700; }
+  .single-solve .solve-prompt small {
+    display: block;
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 4px;
+  }
+  .single-solve .answer { display: flex; flex-direction: column; }
+  .single-solve .answer label {
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 4px;
+  }
+  .single-solve .answer input {
+    padding: 9px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 15px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .single-solve .answer input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .single-solve .answer input.correct {
+    border-color: #5a9e3a;
+    background: #f0f9e8;
+    color: #2d6a1f;
+  }
+  .single-solve .answer input.wrong {
+    border-color: #c94040;
+    background: #fff1f1;
+    color: #9b2020;
+  }
+
+  /* ── Decision buttons (Step 3 & 4) ── */
+  .decision-box {
+    background: #f8fafc;
+    border: 1px solid #e1eaf3;
+    border-radius: 9px;
+    padding: 16px 18px;
+    margin-bottom: 10px;
+  }
+  .decision-box .decision-q {
+    font-size: 14px;
+    color: #1a2744;
+    margin-bottom: 12px;
+    line-height: 1.55;
+  }
+  .decision-box .decision-q strong { font-weight: 700; }
+  .decision-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .decision-buttons button {
+    flex: 1;
+    min-width: 130px;
+    background: #fff;
+    border: 1.5px solid #cbd5e1;
+    color: #1a2744;
+    padding: 12px 16px;
+    border-radius: 9px;
+    font-size: 14px;
+    font-family: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .decision-buttons button:hover {
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .decision-buttons button.selected {
+    background: #1a2744;
+    color: #fff;
+    border-color: #1a2744;
+  }
+
+  /* Reveal animation */
+  .reveal {
+    display: none;
+    animation: slideIn 0.4s ease-out;
+  }
+  .reveal.show { display: block; }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Build-your-own (Step 4) ── */
+  .build-prompt {
+    font-size: 14px;
+    color: #1a2744;
+    margin-bottom: 14px;
+    line-height: 1.55;
+  }
+  .params-card {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .params-group-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #64748b;
+    margin-bottom: 6px;
+    padding-left: 2px;
+  }
+  .params-group { display: flex; flex-direction: column; gap: 8px; }
+  .param-row {
+    display: grid;
+    grid-template-columns: 1fr 130px;
+    gap: 10px;
+    align-items: center;
+    background: #f8f6f0;
+    border: 1px solid #e6dfd0;
+    border-radius: 8px;
+    padding: 10px 14px;
+  }
+  .param-row label {
+    font-size: 13px;
+    color: #1a2744;
+    font-weight: 500;
+  }
+  .param-row label small {
+    display: block;
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 400;
+    margin-top: 1px;
+  }
+  .param-row input {
+    padding: 7px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-variant-numeric: tabular-nums;
+  }
+  .param-row input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .param-row input.changed {
+    border-color: #D85A30;
+    background: #fff7f0;
+  }
+  .param-row.irrelevant-param {
+    opacity: 0.5;
+    border-style: dashed;
+  }
+  .param-row.irrelevant-param label small { color: #94a3b8; }
+
+  .build-solve {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .build-solve .solve-card {
+    background: #fff;
+    border: 1px solid #dde3ef;
+    border-radius: 9px;
+    padding: 12px 14px;
+  }
+  .build-solve .solve-card label {
+    display: block;
+    font-size: 12px;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 6px;
+  }
+  .build-solve .solve-card label small {
+    display: block;
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 400;
+    color: #94a3b8;
+    margin-top: 2px;
+  }
+  .build-solve .solve-card input {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 15px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .build-solve .solve-card input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .build-solve .solve-card input.correct {
+    border-color: #5a9e3a;
+    background: #f0f9e8;
+    color: #2d6a1f;
+  }
+  .build-solve .solve-card input.wrong {
+    border-color: #c94040;
+    background: #fff1f1;
+    color: #9b2020;
+  }
+  .build-decision {
+    margin-bottom: 12px;
+  }
+  .build-decision .decision-label {
+    font-size: 12px;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 6px;
+  }
+
+  .corr-hint {
+    display: block;
+    font-size: 11px;
+    color: #5a9e3a;
+    font-weight: 600;
+    margin-top: 3px;
+    min-height: 14px;
+  }
+
+  /* ── Insight ── */
+  .insight {
+    margin-top: 8px;
+    background: #eff6ff;
+    border: 1px solid #c7dcf5;
+    border-left: 4px solid #3b7dd8;
+    border-radius: 0 8px 8px 0;
+    padding: 11px 14px;
+    font-size: 13px;
+    line-height: 1.55;
+    color: #1a2744;
+  }
+  .insight strong { color: #1e40af; }
+  .insight.success {
+    background: #f0f9e8;
+    border-color: #c4e0a3;
+    border-left-color: #5a9e3a;
+  }
+  .insight.success strong { color: #2d6a1f; }
+
+  /* ── Footer ── */
+  .footer {
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .check-btn {
+    background: #1a2744; color: #fff;
+    border: none; border-radius: 9px;
+    padding: 10px 24px; font-size: 14px;
+    cursor: pointer; font-family: inherit;
+    font-weight: 500;
+    transition: background .15s;
+  }
+  .check-btn:hover { background: #243660; }
+  .reset-btn {
+    font-size: 13px; color: #64748b;
+    background: none; border: none;
+    cursor: pointer; text-decoration: underline;
+    font-family: inherit;
+  }
+  .reveal-link {
+    margin-left: auto;
+    font-size: 12.5px;
+    color: #64748b;
+    background: none; border: none;
+    cursor: pointer; text-decoration: underline;
+    font-family: inherit;
+  }
+  .reveal-link:hover { color: #1a2744; }
+  .score-out {
+    font-size: 14px; font-weight: 600;
+    color: #1a2744;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 6px 14px;
+  }
+  .score-out:empty { display: none; }
+
+  /* ── Responsive ── */
+  @media (max-width: 700px) {
+    header { padding: 14px 16px; }
+    main { padding: 0 12px 40px; }
+    .part { padding: 18px 14px 18px; }
+    .rel-row { grid-template-columns: 1fr; gap: 8px; }
+    .diff-row { grid-template-columns: 1fr; gap: 8px; }
+    .single-solve { grid-template-columns: 1fr; gap: 8px; }
+    .params-card { grid-template-columns: 1fr; }
+    .build-solve { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="header-left">
+    <h1>Differential Analysis</h1>
+  </div>
+  <button class="qr-btn" onclick="showQR()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="2" height="2"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="19" width="3" height="2"/><rect x="19" y="19" width="2" height="2"/></svg>
+    Share with students
+  </button>
+</header>
+
+<!-- QR Modal -->
+<div class="qr-overlay" id="qr-overlay" onclick="hideQR(event)">
+  <div class="qr-modal">
+    <h2>Scan to open on your device</h2>
+    <p>Students can scan this QR code or type the URL to open the activity on their phone or laptop.</p>
+    <div id="qr-code"></div>
+    <div id="qr-url"></div>
+    <button class="qr-close" onclick="hideQR()">Close</button>
+  </div>
+</div>
+
+<!-- Main -->
+<main>
+
+  <!-- ───────── STEP 1 — Identify relevant costs ───────── -->
+  <section class="part">
+    <div class="part-header">
+      <span class="part-tag practice">Step 1</span>
+      <h2>Which costs matter?</h2>
+      <span class="subtitle">identify the relevant items</span>
+    </div>
+
+    <div class="setup-box">
+      <p>HP's VP of Operations is reviewing last month's divisional results. The <strong>ProConnect adapter division</strong> — which makes USB-C adapters for enterprise clients — reported a <strong>$5,000 operating loss</strong>. She's weighing whether to shut it down entirely.</p>
+
+      <table class="segment-stmt">
+        <thead>
+          <tr><th></th><th>Per Unit</th><th>Monthly Total</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Sales revenue (4,000 units)</td><td>$20.00</td><td>$80,000</td></tr>
+          <tr><td class="indent">Direct materials</td><td>$3.00</td><td>$12,000</td></tr>
+          <tr><td class="indent">Direct labor</td><td>$4.00</td><td>$16,000</td></tr>
+          <tr><td class="indent">Variable manufacturing OH</td><td>$2.00</td><td>$8,000</td></tr>
+          <tr><td class="indent">Variable selling &amp; admin</td><td>$1.00</td><td>$4,000</td></tr>
+          <tr class="subtotal"><td>Contribution margin</td><td>$10.00</td><td>$40,000</td></tr>
+          <tr><td>Avoidable fixed costs</td><td></td><td>$25,000</td></tr>
+          <tr><td class="indent" style="font-size:12px;color:#64748b;">Supervisor, equipment lease, software licenses</td><td></td><td></td></tr>
+          <tr><td>Allocated corporate overhead</td><td></td><td>$20,000</td></tr>
+          <tr class="total"><td>Division operating income</td><td></td><td class="loss">($5,000)</td></tr>
+        </tbody>
+      </table>
+
+      <p>Before she can schedule the meeting, a purchasing manager from <strong>TechRetailer</strong> calls with a one-time offer: <strong>1,000 ProConnect adapters at $15 per unit</strong>, well below the regular $20. TechRetailer handles its own distribution, so HP wouldn't incur any variable selling and administrative costs on this order. HP's production team says the ProConnect line can produce up to <strong>5,000 units per month</strong> and would need a <strong>temporary quality inspector at $500 per month</strong> to handle the extra volume.</p>
+
+      <p>The VP now faces a combined question: should she shut down ProConnect, or keep it running and take the special order? The equipment used by the division was purchased last year for <strong>$100,000</strong> and is being depreciated at <strong>$4,000 per month</strong>.</p>
+    </div>
+
+    <p class="prompt">For each item below, decide whether it is <strong>relevant</strong> to HP's keep-or-discontinue decision.</p>
+
+    <div class="rel-list" id="rel-list">
+      <!-- Populated by JS -->
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep1()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep1()">Reset</button>
+      <span id="score1-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep2(true)" id="reveal-step2-btn">Skip ahead →</button>
+    </div>
+  </section>
+
+  <!-- ───────── STEP 2 — Quantify the differential ───────── -->
+  <section class="part reveal" id="step2">
+    <div class="part-header">
+      <span class="part-tag explore">Step 2</span>
+      <h2>Quantify the differential</h2>
+      <span class="subtitle">what's each item worth?</span>
+    </div>
+
+    <p class="prompt">For each relevant item, enter the <strong>effect on HP's monthly profit if the division stays open</strong>. Revenue HP receives is positive; costs HP must pay are negative.</p>
+
+    <div class="diff-list" id="diff-list">
+      <!-- Populated by JS -->
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep2()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep2()">Reset</button>
+      <span id="score2-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep3(true)" id="reveal-step3-btn">Skip ahead →</button>
+    </div>
+  </section>
+
+  <!-- ───────── STEP 3 — Make the call ───────── -->
+  <section class="part reveal" id="step3">
+    <div class="part-header">
+      <span class="part-tag solve">Step 3</span>
+      <h2>Make the call</h2>
+      <span class="subtitle">finish the analysis</span>
+    </div>
+
+    <div class="single-solve">
+      <div class="solve-prompt">
+        What is the <strong>net differential effect</strong> on HP's monthly profit from keeping the division and accepting the special order?
+        <small>Positive means keeping is better; negative means discontinuing is better.</small>
+      </div>
+      <div class="answer">
+        <label>Net differential</label>
+        <input type="text" id="s3-net" inputmode="decimal" placeholder="$">
+        <span class="corr-hint" id="hint-s3-net"></span>
+      </div>
+    </div>
+
+    <div class="decision-box">
+      <div class="decision-q">Based on your analysis, what should HP do?</div>
+      <div class="decision-buttons">
+        <button id="decide-keep" onclick="pickDecision('keep')">
+          Keep the division &amp; accept order
+        </button>
+        <button id="decide-disc" onclick="pickDecision('disc')">
+          Discontinue the division
+        </button>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep3()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep3()">Reset</button>
+      <span id="score3-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep4(true)" id="reveal-step4-btn">Skip ahead →</button>
+    </div>
+
+    <div id="step3-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 4 — Build your own ───────── -->
+  <section class="part reveal" id="step4">
+    <div class="part-header">
+      <span class="part-tag build">Step 4</span>
+      <h2>Build your own scenario</h2>
+      <span class="subtitle">change any input and test yourself</span>
+    </div>
+
+    <p class="build-prompt">Adjust any of the parameters below — regular volume, prices, costs, or the special order terms — then predict the <strong>net differential</strong> and make the <strong>keep-or-discontinue</strong> decision. Click Check to see if you're right.</p>
+
+    <div class="params-card">
+      <div class="params-group">
+        <div class="params-group-label">Division (regular operations)</div>
+        <div class="param-row">
+          <label>Regular units sold</label>
+          <input type="text" id="bv-units" inputmode="numeric" value="4,000">
+        </div>
+        <div class="param-row">
+          <label>Selling price <small>per unit</small></label>
+          <input type="text" id="bv-price" inputmode="decimal" value="$20">
+        </div>
+        <div class="param-row">
+          <label>Variable production cost <small>DM + DL + MOH per unit</small></label>
+          <input type="text" id="bv-vprod" inputmode="decimal" value="$9">
+        </div>
+        <div class="param-row">
+          <label>Variable S&amp;A cost <small>per unit</small></label>
+          <input type="text" id="bv-vsa" inputmode="decimal" value="$1">
+        </div>
+        <div class="param-row">
+          <label>Avoidable fixed costs <small>per month</small></label>
+          <input type="text" id="bv-afc" inputmode="decimal" value="$25,000">
+        </div>
+        <div class="param-row irrelevant-param">
+          <label>Allocated overhead <small>not relevant — shown for reference</small></label>
+          <input type="text" id="bv-alloc" inputmode="decimal" value="$20,000" disabled style="opacity:0.5;">
+        </div>
+      </div>
+      <div class="params-group">
+        <div class="params-group-label">Special order</div>
+        <div class="param-row">
+          <label>Special order units</label>
+          <input type="text" id="bv-so-units" inputmode="numeric" value="1,000">
+        </div>
+        <div class="param-row">
+          <label>Special order price <small>per unit</small></label>
+          <input type="text" id="bv-so-price" inputmode="decimal" value="$15">
+        </div>
+        <div class="param-row">
+          <label>Additional fixed cost <small>QC inspector, etc.</small></label>
+          <input type="text" id="bv-so-fc" inputmode="decimal" value="$500">
+        </div>
+      </div>
+    </div>
+
+    <div class="build-solve">
+      <div class="solve-card">
+        <label>Net differential <small>+ means keep is better</small></label>
+        <input type="text" id="bv-net" inputmode="decimal" placeholder="$">
+      </div>
+      <div class="solve-card">
+        <label>Decision</label>
+        <div class="decision-buttons" style="margin-top:6px;">
+          <button id="bv-decide-keep" onclick="pickBVDecision('keep')" style="padding:8px 12px;font-size:13px;">Keep</button>
+          <button id="bv-decide-disc" onclick="pickBVDecision('disc')" style="padding:8px 12px;font-size:13px;">Discontinue</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep4()">Check</button>
+      <button class="reset-btn" onclick="resetStep4()">Reset to original</button>
+      <span id="score4-out" class="score-out"></span>
+    </div>
+
+    <div id="step4-feedback"></div>
+  </section>
+
+</main>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   DATA
+═══════════════════════════════════════════════════════════════ */
+const ITEMS = [
+  { id: 'reg-rev',   label: 'Sales revenue from regular customers',    detail: '4,000 units × $20 = $80,000/month',    relevant: true,  diff:  80000 },
+  { id: 'reg-vprod', label: 'Variable production costs (regular)',      detail: '4,000 × $9 (DM + DL + MOH)',           relevant: true,  diff: -36000 },
+  { id: 'reg-vsa',   label: 'Variable selling & admin costs (regular)', detail: '4,000 × $1',                           relevant: true,  diff:  -4000 },
+  { id: 'avoid-fc',  label: 'Avoidable fixed costs',                    detail: 'Supervisor, lease, software — $25,000', relevant: true,  diff: -25000 },
+  { id: 'alloc-oh',  label: 'Allocated corporate overhead',             detail: '$20,000/month',                         relevant: false, diff: 0 },
+  { id: 'equip',     label: 'Equipment purchased last year',            detail: 'Original cost: $100,000',               relevant: false, diff: 0 },
+  { id: 'so-rev',    label: 'Special order revenue',                    detail: '1,000 units × $15',                     relevant: true,  diff:  15000 },
+  { id: 'so-vprod',  label: 'Special order variable production costs',  detail: '1,000 × $9 (DM + DL + MOH)',            relevant: true,  diff:  -9000 },
+  { id: 'so-qc',     label: 'Temporary QC inspector',                   detail: '$500/month for special order',           relevant: true,  diff:   -500 },
+  { id: 'deprec',    label: 'Depreciation on division equipment',       detail: '$4,000/month',                          relevant: false, diff: 0 }
+];
+const NET_DIFF = ITEMS.reduce((s, it) => s + (it.relevant ? it.diff : 0), 0); // 20,500
+const CORRECT_DECISION = 'keep';
+
+/* ═══════════════════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════════════════ */
+function parseNum(s) {
+  if (typeof s !== 'string') return NaN;
+  s = s.trim();
+  const neg = s.startsWith('(') && s.endsWith(')');
+  s = s.replace(/[\$,\s%()]/g, '');
+  const v = parseFloat(s);
+  return neg ? -Math.abs(v) : v;
+}
+function fmtMoney(v) {
+  const rounded = Math.round(v * 100) / 100;
+  const sign = rounded < 0 ? '-$' : '$';
+  return sign + Math.abs(rounded).toLocaleString('en-US', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  });
+}
+function fmtMoneySigned(v) {
+  const rounded = Math.round(v * 100) / 100;
+  if (rounded >= 0) return '+$' + Math.abs(rounded).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  return '\u2212$' + Math.abs(rounded).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   AUDIO
+═══════════════════════════════════════════════════════════════ */
+let audioCtx = null;
+function getAudio() {
+  if (!audioCtx) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (AC) audioCtx = new AC();
+  }
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+function playBell() {
+  const ctx = getAudio(); if (!ctx) return;
+  const now = ctx.currentTime;
+  [523.25, 659.25, 783.99].forEach(f => {
+    const osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = 'sine'; osc.frequency.value = f;
+    osc.connect(g).connect(ctx.destination);
+    g.gain.setValueAtTime(0, now);
+    g.gain.linearRampToValueAtTime(0.15, now + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 1.6);
+    osc.start(now); osc.stop(now + 1.7);
+  });
+}
+function playHorn() {
+  const ctx = getAudio(); if (!ctx) return;
+  const now = ctx.currentTime;
+  const notes = [
+    { f: 466.16, t: 0.00, d: 0.18 },
+    { f: 440.00, t: 0.20, d: 0.18 },
+    { f: 415.30, t: 0.40, d: 0.55 }
+  ];
+  notes.forEach(({ f, t, d }) => {
+    const osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(f, now + t);
+    if (d > 0.3) osc.frequency.exponentialRampToValueAtTime(f * 0.88, now + t + d);
+    osc.connect(g).connect(ctx.destination);
+    g.gain.setValueAtTime(0, now + t);
+    g.gain.linearRampToValueAtTime(0.12, now + t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, now + t + d);
+    osc.start(now + t); osc.stop(now + t + d + 0.05);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 1 — Identify relevant costs
+═══════════════════════════════════════════════════════════════ */
+const step1Picks = new Array(ITEMS.length).fill(null); // true = relevant, false = not relevant
+
+function buildStep1() {
+  const list = document.getElementById('rel-list');
+  ITEMS.forEach((item, i) => {
+    const row = document.createElement('div');
+    row.className = 'rel-row';
+    row.id = 'rel-row-' + i;
+    row.innerHTML = `
+      <div class="rel-item">
+        <div class="rel-label">${item.label}</div>
+        <div class="rel-detail">${item.detail}</div>
+        <div class="corr-tag" id="rel-corr-${i}"></div>
+      </div>
+      <div class="rel-toggle">
+        <button id="rel-yes-${i}" onclick="pickRelevance(${i}, true)">Relevant</button>
+        <button id="rel-no-${i}" onclick="pickRelevance(${i}, false)">Not relevant</button>
+      </div>
+    `;
+    list.appendChild(row);
+  });
+}
+
+function pickRelevance(i, val) {
+  step1Picks[i] = val;
+  document.getElementById('rel-yes-' + i).classList.toggle('selected', val === true);
+  document.getElementById('rel-no-'  + i).classList.toggle('selected', val === false);
+  // Clear any previous check styling
+  const row = document.getElementById('rel-row-' + i);
+  row.classList.remove('row-correct', 'row-wrong');
+  document.getElementById('rel-corr-' + i).textContent = '';
+  document.getElementById('rel-corr-' + i).className = 'corr-tag';
+}
+
+function checkStep1() {
+  let correct = 0, total = ITEMS.length, blanks = 0;
+  ITEMS.forEach((item, i) => {
+    const row = document.getElementById('rel-row-' + i);
+    const corr = document.getElementById('rel-corr-' + i);
+    row.classList.remove('row-correct', 'row-wrong');
+    corr.textContent = '';
+    corr.className = 'corr-tag';
+
+    if (step1Picks[i] === null) { blanks++; return; }
+
+    if (step1Picks[i] === item.relevant) {
+      row.classList.add('row-correct');
+      correct++;
+    } else {
+      row.classList.add('row-wrong');
+      if (item.relevant) {
+        corr.textContent = 'This is relevant — it differs between the two alternatives.';
+        corr.classList.add('show-yes');
+      } else {
+        corr.textContent = item.id === 'equip' || item.id === 'deprec'
+          ? 'Sunk cost — this doesn\'t change regardless of the decision.'
+          : 'This cost is allocated and won\'t change if the division is discontinued.';
+        corr.classList.add('show-no');
+      }
+    }
+  });
+
+  const out = document.getElementById('score1-out');
+  if (blanks === total) {
+    out.textContent = 'Select relevant or not relevant for each item.';
+    return;
+  }
+  out.textContent = correct + ' / ' + total + ' correct' + (blanks ? ' (' + blanks + ' blank)' : '');
+  if (correct === total) {
+    playBell();
+  } else {
+    playHorn();
+  }
+  // Always reveal Step 2 after first check attempt
+  revealStep2(correct === total);
+}
+
+function resetStep1() {
+  ITEMS.forEach((_, i) => {
+    step1Picks[i] = null;
+    document.getElementById('rel-yes-' + i).classList.remove('selected');
+    document.getElementById('rel-no-'  + i).classList.remove('selected');
+    const row = document.getElementById('rel-row-' + i);
+    row.classList.remove('row-correct', 'row-wrong');
+    const corr = document.getElementById('rel-corr-' + i);
+    corr.textContent = '';
+    corr.className = 'corr-tag';
+  });
+  document.getElementById('score1-out').textContent = '';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 2 — Quantify the differential
+═══════════════════════════════════════════════════════════════ */
+function buildStep2() {
+  const list = document.getElementById('diff-list');
+  ITEMS.forEach((item, i) => {
+    const row = document.createElement('div');
+    row.className = 'diff-row' + (item.relevant ? '' : ' irrelevant');
+    row.id = 'diff-row-' + i;
+    if (item.relevant) {
+      row.innerHTML = `
+        <div>
+          <div class="diff-label">${item.label}</div>
+          <div class="diff-detail">${item.detail}</div>
+        </div>
+        <div class="answer">
+          <label>Differential</label>
+          <input type="text" id="diff-${i}" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-diff-${i}"></span>
+        </div>
+      `;
+    } else {
+      row.innerHTML = `
+        <div>
+          <div class="diff-label">${item.label}</div>
+          <div class="diff-detail">${item.detail}</div>
+        </div>
+        <div class="answer">
+          <span class="na-label">Not relevant</span>
+        </div>
+      `;
+    }
+    list.appendChild(row);
+  });
+}
+
+function checkStep2() {
+  let correct = 0, total = 0, blanks = 0;
+  ITEMS.forEach((item, i) => {
+    if (!item.relevant) return;
+    total++;
+    const inp = document.getElementById('diff-' + i);
+    const hint = document.getElementById('hint-diff-' + i);
+    inp.classList.remove('correct', 'wrong');
+    hint.textContent = '';
+
+    if (inp.value.trim() === '') { blanks++; return; }
+    const val = parseNum(inp.value);
+    if (!isNaN(val) && Math.abs(val - item.diff) <= 0.5) {
+      inp.classList.add('correct');
+      correct++;
+    } else {
+      inp.classList.add('wrong');
+      hint.textContent = '\u2192 ' + fmtMoneySigned(item.diff);
+    }
+  });
+
+  const out = document.getElementById('score2-out');
+  if (blanks === total) {
+    out.textContent = 'Fill in some answers first.';
+    return;
+  }
+  out.textContent = correct + ' / ' + total + ' correct' + (blanks ? ' (' + blanks + ' blank)' : '');
+  if (correct === total) {
+    playBell();
+    revealStep3(false);
+  } else {
+    playHorn();
+  }
+}
+
+function resetStep2() {
+  ITEMS.forEach((item, i) => {
+    if (!item.relevant) return;
+    const inp = document.getElementById('diff-' + i);
+    const hint = document.getElementById('hint-diff-' + i);
+    inp.value = '';
+    inp.classList.remove('correct', 'wrong');
+    hint.textContent = '';
+  });
+  document.getElementById('score2-out').textContent = '';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 3 — Make the call
+═══════════════════════════════════════════════════════════════ */
+let step3Decision = null;
+
+function pickDecision(choice) {
+  step3Decision = choice;
+  document.getElementById('decide-keep').classList.toggle('selected', choice === 'keep');
+  document.getElementById('decide-disc').classList.toggle('selected', choice === 'disc');
+}
+
+function checkStep3() {
+  const inp = document.getElementById('s3-net');
+  const hint = document.getElementById('hint-s3-net');
+  const out = document.getElementById('score3-out');
+  const fb = document.getElementById('step3-insight');
+  inp.classList.remove('correct', 'wrong');
+  hint.textContent = '';
+  out.textContent = '';
+  fb.innerHTML = '';
+
+  let parts = 0, correct = 0;
+
+  // Check net differential
+  if (inp.value.trim() !== '') {
+    parts++;
+    const val = parseNum(inp.value);
+    if (!isNaN(val) && Math.abs(val - NET_DIFF) <= 0.5) {
+      inp.classList.add('correct');
+      correct++;
+    } else {
+      inp.classList.add('wrong');
+      hint.textContent = '\u2192 ' + fmtMoneySigned(NET_DIFF);
+    }
+  }
+
+  // Check decision
+  if (step3Decision !== null) {
+    parts++;
+    if (step3Decision === CORRECT_DECISION) {
+      correct++;
+    }
+  }
+
+  if (parts === 0) {
+    out.textContent = 'Enter the net differential and pick a decision.';
+    return;
+  }
+
+  if (correct === parts && parts === 2) {
+    out.textContent = 'Both correct!';
+    playBell();
+    fb.innerHTML = `
+      <div class="insight success">
+        <strong>The $5,000 "loss" is misleading.</strong> $20,000 of allocated overhead stays whether ProConnect exists or not. The division actually contributes $15,000 toward covering that overhead — and the special order adds another $5,500. Shutting it down would make HP ${fmtMoney(Math.abs(NET_DIFF))} worse off each month.
+      </div>
+    `;
+    revealStep4(false);
+  } else {
+    out.textContent = correct + ' / ' + parts + ' correct';
+    playHorn();
+    if (step3Decision !== null && step3Decision !== CORRECT_DECISION) {
+      fb.innerHTML = `<div class="insight">Think about which costs actually disappear if the division shuts down. Does the allocated overhead go away?</div>`;
+    }
+  }
+}
+
+function resetStep3() {
+  document.getElementById('s3-net').value = '';
+  document.getElementById('s3-net').classList.remove('correct', 'wrong');
+  document.getElementById('hint-s3-net').textContent = '';
+  document.getElementById('score3-out').textContent = '';
+  document.getElementById('step3-insight').innerHTML = '';
+  step3Decision = null;
+  document.getElementById('decide-keep').classList.remove('selected');
+  document.getElementById('decide-disc').classList.remove('selected');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 4 — Build your own
+═══════════════════════════════════════════════════════════════ */
+const BV_DEFAULTS = {
+  units: 4000, price: 20, vprod: 9, vsa: 1, afc: 25000,
+  soUnits: 1000, soPrice: 15, soFc: 500
+};
+
+let bvDecision = null;
+
+function pickBVDecision(choice) {
+  bvDecision = choice;
+  document.getElementById('bv-decide-keep').classList.toggle('selected', choice === 'keep');
+  document.getElementById('bv-decide-disc').classList.toggle('selected', choice === 'disc');
+}
+
+function readBV() {
+  return {
+    units:   parseNum(document.getElementById('bv-units').value),
+    price:   parseNum(document.getElementById('bv-price').value),
+    vprod:   parseNum(document.getElementById('bv-vprod').value),
+    vsa:     parseNum(document.getElementById('bv-vsa').value),
+    afc:     parseNum(document.getElementById('bv-afc').value),
+    soUnits: parseNum(document.getElementById('bv-so-units').value),
+    soPrice: parseNum(document.getElementById('bv-so-price').value),
+    soFc:    parseNum(document.getElementById('bv-so-fc').value)
+  };
+}
+
+function computeNetDiff(p) {
+  // Net differential = revenue gained - costs incurred by keeping
+  const regRev    = p.units * p.price;
+  const regVProd  = p.units * p.vprod;
+  const regVSA    = p.units * p.vsa;
+  const soRev     = p.soUnits * p.soPrice;
+  const soVProd   = p.soUnits * p.vprod;  // special order has same production cost
+  return regRev - regVProd - regVSA - p.afc + soRev - soVProd - p.soFc;
+}
+
+function refreshBVHighlights() {
+  const p = readBV();
+  const fields = [
+    { id: 'bv-units',    cur: p.units,   ref: BV_DEFAULTS.units },
+    { id: 'bv-price',    cur: p.price,   ref: BV_DEFAULTS.price },
+    { id: 'bv-vprod',    cur: p.vprod,   ref: BV_DEFAULTS.vprod },
+    { id: 'bv-vsa',      cur: p.vsa,     ref: BV_DEFAULTS.vsa },
+    { id: 'bv-afc',      cur: p.afc,     ref: BV_DEFAULTS.afc },
+    { id: 'bv-so-units', cur: p.soUnits, ref: BV_DEFAULTS.soUnits },
+    { id: 'bv-so-price', cur: p.soPrice, ref: BV_DEFAULTS.soPrice },
+    { id: 'bv-so-fc',    cur: p.soFc,    ref: BV_DEFAULTS.soFc }
+  ];
+  fields.forEach(({ id, cur, ref }) => {
+    const el = document.getElementById(id);
+    if (!isNaN(cur) && Math.abs(cur - ref) > 0.001) el.classList.add('changed');
+    else el.classList.remove('changed');
+  });
+}
+
+function checkStep4() {
+  const p = readBV();
+  const netEl = document.getElementById('bv-net');
+  const out = document.getElementById('score4-out');
+  const fb = document.getElementById('step4-feedback');
+  netEl.classList.remove('correct', 'wrong');
+  out.textContent = '';
+  fb.innerHTML = '';
+
+  // Validate inputs
+  const vals = Object.values(p);
+  if (vals.some(v => isNaN(v))) {
+    fb.innerHTML = '<div class="insight">Make sure every parameter has a valid number.</div>';
+    return;
+  }
+
+  const actual = computeNetDiff(p);
+  const correctDecision = actual >= 0 ? 'keep' : 'disc';
+
+  const netGuess = netEl.value.trim();
+  let parts = [], allCorrect = true;
+
+  if (netGuess) {
+    const v = parseNum(netGuess);
+    const tol = Math.max(0.5, Math.abs(actual) * 0.001);
+    if (!isNaN(v) && Math.abs(v - actual) <= tol) {
+      netEl.classList.add('correct');
+      parts.push('\u2714 Net differential');
+    } else {
+      netEl.classList.add('wrong');
+      parts.push('\u2718 Net differential (actual: ' + fmtMoneySigned(actual) + ')');
+      allCorrect = false;
+    }
+  }
+
+  if (bvDecision !== null) {
+    if (bvDecision === correctDecision) {
+      parts.push('\u2714 Decision');
+    } else {
+      parts.push('\u2718 Decision (should ' + (correctDecision === 'keep' ? 'keep' : 'discontinue') + ')');
+      allCorrect = false;
+    }
+  }
+
+  if (parts.length === 0) {
+    fb.innerHTML = '<div class="insight">Enter the net differential and/or pick a decision before checking.</div>';
+    return;
+  }
+
+  out.textContent = parts.join('  \u00b7  ');
+
+  const summaryLine = `Net differential: <strong>${fmtMoneySigned(actual)}</strong> \u2014 HP should <strong>${correctDecision === 'keep' ? 'keep the division' : 'discontinue'}</strong>.`;
+  if (allCorrect) {
+    fb.innerHTML = `<div class="insight success">${summaryLine}</div>`;
+    playBell();
+  } else {
+    fb.innerHTML = `<div class="insight">${summaryLine}</div>`;
+    playHorn();
+  }
+}
+
+function resetStep4() {
+  document.getElementById('bv-units').value    = '4,000';
+  document.getElementById('bv-price').value    = '$20';
+  document.getElementById('bv-vprod').value    = '$9';
+  document.getElementById('bv-vsa').value      = '$1';
+  document.getElementById('bv-afc').value      = '$25,000';
+  document.getElementById('bv-so-units').value = '1,000';
+  document.getElementById('bv-so-price').value = '$15';
+  document.getElementById('bv-so-fc').value    = '$500';
+
+  document.getElementById('bv-net').value = '';
+  document.getElementById('bv-net').classList.remove('correct', 'wrong');
+  document.getElementById('score4-out').textContent = '';
+  document.getElementById('step4-feedback').innerHTML = '';
+
+  bvDecision = null;
+  document.getElementById('bv-decide-keep').classList.remove('selected');
+  document.getElementById('bv-decide-disc').classList.remove('selected');
+
+  refreshBVHighlights();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   REVEAL STEPS
+═══════════════════════════════════════════════════════════════ */
+const revealedSteps = new Set();
+function revealStep(stepNum, scroll) {
+  const el = document.getElementById('step' + stepNum);
+  if (!revealedSteps.has(stepNum)) {
+    el.classList.add('show');
+    revealedSteps.add(stepNum);
+    const btn = document.getElementById('reveal-step' + stepNum + '-btn');
+    if (btn) btn.style.display = 'none';
+  }
+  if (scroll) setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+}
+function revealStep2(scroll) { revealStep(2, scroll); }
+function revealStep3(scroll) { revealStep(3, scroll); }
+function revealStep4(scroll) { revealStep(4, scroll); }
+
+/* ═══════════════════════════════════════════════════════════════
+   QR / SHARE
+═══════════════════════════════════════════════════════════════ */
+function showQR() {
+  const url = location.href;
+  document.getElementById('qr-url').textContent = url;
+  const qrEl = document.getElementById('qr-code');
+  qrEl.innerHTML = '';
+  if (window.QRCode) {
+    new QRCode(qrEl, { text: url, width: 180, height: 180, colorDark: '#1a2744', colorLight: '#ffffff' });
+  }
+  document.getElementById('qr-overlay').classList.add('show');
+}
+function hideQR(ev) {
+  if (ev && ev.target.id !== 'qr-overlay' && ev.target.className !== 'qr-close') return;
+  document.getElementById('qr-overlay').classList.remove('show');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+  buildStep1();
+  buildStep2();
+
+  // Step 4 input listeners
+  ['bv-units','bv-price','bv-vprod','bv-vsa','bv-afc','bv-so-units','bv-so-price','bv-so-fc'].forEach(id => {
+    document.getElementById(id).addEventListener('input', () => {
+      refreshBVHighlights();
+      document.getElementById('bv-net').classList.remove('correct', 'wrong');
+      document.getElementById('score4-out').textContent = '';
+      document.getElementById('step4-feedback').innerHTML = '';
+    });
+  });
+  refreshBVHighlights();
+});
+</script>
+
+</body>
+</html>
