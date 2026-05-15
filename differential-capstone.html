@@ -1,0 +1,1365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Capstone: The Full Picture</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  /* ── Reset & base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    background: #f4f0e8;
+    color: #1a2744;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    background: #1a2744;
+    color: #fff;
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .header-left h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+
+  .qr-btn {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    transition: background .15s;
+  }
+  .qr-btn:hover { background: rgba(255,255,255,0.18); }
+
+  /* QR Modal */
+  .qr-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .qr-overlay.show { display: flex; }
+  .qr-modal {
+    background: #fff;
+    border-radius: 14px;
+    padding: 32px;
+    text-align: center;
+    max-width: 300px;
+    width: 90%;
+  }
+  .qr-modal h2 { font-size: 16px; font-weight: 600; color: #1a2744; margin-bottom: 6px; }
+  .qr-modal p  { font-size: 12px; color: #64748b; margin-bottom: 18px; line-height: 1.5; }
+  #qr-code { display: flex; justify-content: center; margin-bottom: 16px; }
+  #qr-url  { font-size: 11px; color: #94a3b8; word-break: break-all; margin-bottom: 18px; }
+  .qr-close {
+    background: #1a2744; color: #fff;
+    border: none; border-radius: 8px;
+    padding: 8px 24px; font-size: 13px;
+    cursor: pointer; font-family: inherit;
+  }
+
+  /* ── Main layout ── */
+  main {
+    max-width: 920px;
+    margin: 28px auto;
+    padding: 0 20px 48px;
+  }
+
+  .part {
+    background: #fff;
+    border: 1px solid #dde3ef;
+    border-radius: 12px;
+    padding: 22px 24px 24px;
+    margin-bottom: 22px;
+  }
+
+  .part-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .part-tag {
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    background: #1a2744;
+    padding: 3px 10px;
+    border-radius: 99px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+  .part-tag.practice { background: #D85A30; }
+  .part-tag.explore  { background: #3b7dd8; }
+  .part-tag.solve    { background: #7a5cb6; }
+  .part-tag.build    { background: #5a9e3a; }
+  .part-header h2 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -.01em;
+  }
+  .part-header .subtitle {
+    font-size: 13px;
+    color: #64748b;
+  }
+
+  .setup-box {
+    background: #f8f6f0;
+    border: 1px solid #e6dfd0;
+    border-radius: 9px;
+    padding: 14px 16px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: #334155;
+    margin-bottom: 16px;
+  }
+  .setup-box strong { color: #1a2744; }
+  .setup-box p + p { margin-top: 6px; }
+
+  .prompt {
+    font-size: 14px;
+    color: #1a2744;
+    margin-bottom: 12px;
+    line-height: 1.55;
+  }
+  .prompt strong { font-weight: 700; }
+
+  /* ── Segment income stmt (in setup) ── */
+  .segment-stmt {
+    width: 100%;
+    border-collapse: collapse;
+    font-variant-numeric: tabular-nums;
+    margin: 10px 0;
+    font-size: 13px;
+  }
+  .segment-stmt th {
+    text-align: right;
+    font-size: 11.5px;
+    color: #64748b;
+    font-weight: 600;
+    padding: 5px 10px;
+    border-bottom: 1px solid #e6dfd0;
+  }
+  .segment-stmt th:first-child { text-align: left; }
+  .segment-stmt td {
+    padding: 4px 10px;
+    text-align: right;
+    color: #334155;
+    font-size: 13px;
+  }
+  .segment-stmt td:first-child { text-align: left; color: #1a2744; }
+  .segment-stmt td.indent { padding-left: 20px; }
+  .segment-stmt tr.subtotal td {
+    border-top: 1px solid #e6dfd0;
+    font-weight: 600;
+    color: #1a2744;
+  }
+  .segment-stmt tr.total td {
+    border-top: 2px solid #1a2744;
+    font-weight: 700;
+    color: #1a2744;
+  }
+
+  /* ── QA rows ── */
+  .qa-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 4px; }
+  .qa-row {
+    display: grid;
+    grid-template-columns: 1fr 200px;
+    gap: 14px;
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #e1eaf3;
+    border-radius: 9px;
+    padding: 13px 16px;
+  }
+  .qa-row .qa-prompt {
+    font-size: 13.5px;
+    color: #1a2744;
+    line-height: 1.5;
+  }
+  .qa-row .qa-prompt strong { font-weight: 700; }
+  .qa-row .qa-prompt small {
+    display: block;
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 3px;
+  }
+  .qa-row .answer { display: flex; flex-direction: column; }
+  .qa-row .answer label {
+    font-size: 10.5px;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 4px;
+  }
+  .qa-row .answer input {
+    padding: 8px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .qa-row .answer input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .qa-row .answer input.correct {
+    border-color: #5a9e3a;
+    background: #f0f9e8;
+    color: #2d6a1f;
+  }
+  .qa-row .answer input.wrong {
+    border-color: #c94040;
+    background: #fff1f1;
+    color: #9b2020;
+  }
+  .qa-row .answer .corr-hint {
+    display: block;
+    font-size: 11px;
+    color: #5a9e3a;
+    font-weight: 600;
+    margin-top: 3px;
+    min-height: 14px;
+    text-align: center;
+  }
+  .corr-hint {
+    display: block;
+    font-size: 11px;
+    color: #5a9e3a;
+    font-weight: 600;
+    margin-top: 3px;
+    min-height: 14px;
+  }
+
+  /* ── Yes/No toggle (sunk cost questions) ── */
+  .yn-toggle {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+  }
+  .yn-toggle button {
+    padding: 7px 18px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    background: #fff;
+    color: #64748b;
+    transition: all .15s;
+  }
+  .yn-toggle button:hover {
+    border-color: #3b7dd8;
+    color: #1a2744;
+  }
+  .yn-toggle button.selected {
+    background: #1a2744;
+    color: #fff;
+    border-color: #1a2744;
+  }
+  .yn-toggle button.yn-correct {
+    background: #5a9e3a;
+    border-color: #5a9e3a;
+    color: #fff;
+  }
+  .yn-toggle button.yn-wrong {
+    background: #c94040;
+    border-color: #c94040;
+    color: #fff;
+  }
+
+  /* ── Decision buttons ── */
+  .decision-box {
+    background: #f8fafc;
+    border: 1px solid #e1eaf3;
+    border-radius: 9px;
+    padding: 16px 18px;
+    margin-bottom: 10px;
+  }
+  .decision-box .decision-q {
+    font-size: 14px;
+    color: #1a2744;
+    margin-bottom: 12px;
+    line-height: 1.55;
+  }
+  .decision-box .decision-q strong { font-weight: 700; }
+  .decision-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .decision-buttons button {
+    flex: 1;
+    min-width: 110px;
+    background: #fff;
+    border: 1.5px solid #cbd5e1;
+    color: #1a2744;
+    padding: 12px 14px;
+    border-radius: 9px;
+    font-size: 13.5px;
+    font-family: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .decision-buttons button:hover {
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .decision-buttons button.selected {
+    background: #1a2744;
+    color: #fff;
+    border-color: #1a2744;
+  }
+
+  /* Reveal animation */
+  .reveal {
+    display: none;
+    animation: slideIn 0.4s ease-out;
+  }
+  .reveal.show { display: block; }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Build-your-own (Step 4) ── */
+  .build-prompt {
+    font-size: 14px;
+    color: #1a2744;
+    margin-bottom: 14px;
+    line-height: 1.55;
+  }
+  .params-card {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .params-group-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #64748b;
+    margin-bottom: 6px;
+    padding-left: 2px;
+  }
+  .params-group { display: flex; flex-direction: column; gap: 8px; }
+  .param-row {
+    display: grid;
+    grid-template-columns: 1fr 110px;
+    gap: 10px;
+    align-items: center;
+    background: #f8f6f0;
+    border: 1px solid #e6dfd0;
+    border-radius: 8px;
+    padding: 10px 14px;
+  }
+  .param-row label {
+    font-size: 13px;
+    color: #1a2744;
+    font-weight: 500;
+  }
+  .param-row label small {
+    display: block;
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 400;
+    margin-top: 1px;
+  }
+  .param-row input {
+    padding: 7px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-variant-numeric: tabular-nums;
+  }
+  .param-row input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .param-row input.changed {
+    border-color: #D85A30;
+    background: #fff7f0;
+  }
+
+  .build-solve {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .build-solve .solve-card {
+    background: #fff;
+    border: 1px solid #dde3ef;
+    border-radius: 9px;
+    padding: 12px 14px;
+  }
+  .build-solve .solve-card label {
+    display: block;
+    font-size: 12px;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 6px;
+  }
+  .build-solve .solve-card label small {
+    display: block;
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 400;
+    color: #94a3b8;
+    margin-top: 2px;
+  }
+  .build-solve .solve-card input {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 15px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .build-solve .solve-card input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .build-solve .solve-card input.correct {
+    border-color: #5a9e3a;
+    background: #f0f9e8;
+    color: #2d6a1f;
+  }
+  .build-solve .solve-card input.wrong {
+    border-color: #c94040;
+    background: #fff1f1;
+    color: #9b2020;
+  }
+
+  /* ── Insight ── */
+  .insight {
+    margin-top: 8px;
+    background: #eff6ff;
+    border: 1px solid #c7dcf5;
+    border-left: 4px solid #3b7dd8;
+    border-radius: 0 8px 8px 0;
+    padding: 11px 14px;
+    font-size: 13px;
+    line-height: 1.55;
+    color: #1a2744;
+  }
+  .insight strong { color: #1e40af; }
+  .insight.success {
+    background: #f0f9e8;
+    border-color: #c4e0a3;
+    border-left-color: #5a9e3a;
+  }
+  .insight.success strong { color: #2d6a1f; }
+
+  /* ── Footer ── */
+  .footer {
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .check-btn {
+    background: #1a2744; color: #fff;
+    border: none; border-radius: 9px;
+    padding: 10px 24px; font-size: 14px;
+    cursor: pointer; font-family: inherit;
+    font-weight: 500;
+    transition: background .15s;
+  }
+  .check-btn:hover { background: #243660; }
+  .reset-btn {
+    font-size: 13px; color: #64748b;
+    background: none; border: none;
+    cursor: pointer; text-decoration: underline;
+    font-family: inherit;
+  }
+  .reveal-link {
+    margin-left: auto;
+    font-size: 12.5px;
+    color: #64748b;
+    background: none; border: none;
+    cursor: pointer; text-decoration: underline;
+    font-family: inherit;
+  }
+  .reveal-link:hover { color: #1a2744; }
+  .score-out {
+    font-size: 14px; font-weight: 600;
+    color: #1a2744;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 6px 14px;
+  }
+  .score-out:empty { display: none; }
+
+  /* ── Responsive ── */
+  @media (max-width: 700px) {
+    header { padding: 14px 16px; }
+    main { padding: 0 12px 40px; }
+    .part { padding: 18px 14px 18px; }
+    .qa-row { grid-template-columns: 1fr; gap: 8px; }
+    .params-card { grid-template-columns: 1fr; }
+    .build-solve { grid-template-columns: 1fr; }
+    .decision-buttons button { min-width: 90px; font-size: 12.5px; padding: 10px 10px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="header-left">
+    <h1>Capstone: The Full Picture</h1>
+  </div>
+  <button class="qr-btn" onclick="showQR()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="2" height="2"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="19" width="3" height="2"/><rect x="19" y="19" width="2" height="2"/></svg>
+    Share with students
+  </button>
+</header>
+
+<!-- QR Modal -->
+<div class="qr-overlay" id="qr-overlay" onclick="hideQR(event)">
+  <div class="qr-modal">
+    <h2>Scan to open on your device</h2>
+    <p>Students can scan this QR code or type the URL to open the activity on their phone or laptop.</p>
+    <div id="qr-code"></div>
+    <div id="qr-url"></div>
+    <button class="qr-close" onclick="hideQR()">Close</button>
+  </div>
+</div>
+
+<!-- Main -->
+<main>
+
+  <!-- ───────── STEP 1 — Baseline ───────── -->
+  <section class="part">
+    <div class="part-header">
+      <span class="part-tag practice">Step 1</span>
+      <h2>Set the baseline</h2>
+      <span class="subtitle">know where HP stands today</span>
+    </div>
+
+    <div class="setup-box">
+      <p>HP's ProConnect division makes standard USB-C adapters on a production line with a capacity of <strong>5,000 standard-equivalent units per month</strong>. Current monthly results:</p>
+
+      <table class="segment-stmt">
+        <thead><tr><th></th><th>Per Unit</th><th>Monthly Total</th></tr></thead>
+        <tbody>
+          <tr><td>Revenue (4,000 units)</td><td>$20.00</td><td>$80,000</td></tr>
+          <tr><td class="indent">Direct materials</td><td>$3.00</td><td>$12,000</td></tr>
+          <tr><td class="indent">Direct labor</td><td>$4.00</td><td>$16,000</td></tr>
+          <tr><td class="indent">Variable manufacturing OH</td><td>$2.00</td><td>$8,000</td></tr>
+          <tr><td class="indent">Variable selling &amp; admin</td><td>$1.00</td><td>$4,000</td></tr>
+          <tr class="subtotal"><td>Contribution margin</td><td>$10.00</td><td>$40,000</td></tr>
+          <tr><td>Fixed costs</td><td></td><td>$28,000</td></tr>
+          <tr class="total"><td>Operating income</td><td></td><td>$12,000</td></tr>
+        </tbody>
+      </table>
+
+      <p>The division's production equipment was purchased two years ago for <strong>$60,000</strong> and has a current book value of <strong>$20,000</strong>. Each standard adapter uses <strong>1.0 standard-equivalent unit</strong> of production capacity.</p>
+    </div>
+
+    <p class="prompt">Confirm the baseline numbers:</p>
+
+    <div class="qa-list">
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Contribution margin</strong> per unit</div>
+        <div class="answer">
+          <label>CM / unit</label>
+          <input type="text" id="s1-cm" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s1-cm"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt">Current monthly <strong>operating income</strong></div>
+        <div class="answer">
+          <label>OI</label>
+          <input type="text" id="s1-oi" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s1-oi"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Spare capacity</strong> available each month
+          <small>In standard-equivalent units</small>
+        </div>
+        <div class="answer">
+          <label>Spare units</label>
+          <input type="text" id="s1-spare" inputmode="numeric" placeholder="units">
+          <span class="corr-hint" id="hint-s1-spare"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep1()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep1()">Reset</button>
+      <span id="score1-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep2(true)" id="reveal-step2-btn">Skip ahead →</button>
+    </div>
+  </section>
+
+  <!-- ───────── STEP 2 — Screen each opportunity ───────── -->
+  <section class="part reveal" id="step2">
+    <div class="part-header">
+      <span class="part-tag explore">Step 2</span>
+      <h2>Screen each opportunity</h2>
+      <span class="subtitle">evaluate them in isolation first</span>
+    </div>
+
+    <div class="setup-box">
+      <p>Two proposals land on the CFO's desk the same week:</p>
+      <p><strong>Proposal A — ProConnect Plus:</strong> HP's engineering team has developed an upgraded adapter with USB-C Power Delivery. The upgrade adds <strong>$5 per unit</strong> in processing cost and sells for <strong>$29</strong> instead of $20. Each Plus unit requires <strong>1.5 standard-equivalent units</strong> of production capacity (extra testing and calibration). HP commissioned a market study for <strong>$8,000 last quarter</strong> that confirmed demand for the upgrade.</p>
+      <p><strong>Proposal B — University order:</strong> A state university system wants <strong>1,500 standard adapters at $14 per unit</strong> as a one-time bulk purchase. The university handles its own distribution, so HP incurs <strong>no variable S&amp;A</strong>. The university requires the full 1,500 units — <strong>no partial shipments</strong>.</p>
+    </div>
+
+    <p class="prompt">Evaluate each proposal on its own merits — ignore capacity for now.</p>
+
+    <div class="qa-list">
+      <div class="qa-row">
+        <div class="qa-prompt">ProConnect Plus <strong>incremental CM per unit</strong>
+          <small>Additional profit from upgrading one standard adapter to Plus</small>
+        </div>
+        <div class="answer">
+          <label>Incr. CM</label>
+          <input type="text" id="s2-plus-cm" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s2-plus-cm"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt">University order <strong>CM per unit</strong>
+          <small>What does each special-order unit contribute?</small>
+        </div>
+        <div class="answer">
+          <label>SO CM</label>
+          <input type="text" id="s2-so-cm" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s2-so-cm"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt">Is the <strong>$8,000 market study</strong> relevant to this decision?</div>
+        <div class="answer">
+          <div class="yn-toggle">
+            <button id="s2-study-yes" onclick="pickSunk('study',true)">Yes</button>
+            <button id="s2-study-no" onclick="pickSunk('study',false)">No</button>
+          </div>
+          <span class="corr-hint" id="hint-s2-study" style="text-align:center;"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt">Is the equipment <strong>book value ($20,000)</strong> relevant?</div>
+        <div class="answer">
+          <div class="yn-toggle">
+            <button id="s2-book-yes" onclick="pickSunk('book',true)">Yes</button>
+            <button id="s2-book-no" onclick="pickSunk('book',false)">No</button>
+          </div>
+          <span class="corr-hint" id="hint-s2-book" style="text-align:center;"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep2()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep2()">Reset</button>
+      <span id="score2-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep3(true)" id="reveal-step3-btn">Skip ahead →</button>
+    </div>
+
+    <div id="step2-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 3 — Allocate scarce capacity ───────── -->
+  <section class="part reveal" id="step3">
+    <div class="part-header">
+      <span class="part-tag solve">Step 3</span>
+      <h2>Allocate scarce capacity</h2>
+      <span class="subtitle">both proposals can't fully coexist — which wins?</span>
+    </div>
+
+    <div class="setup-box">
+      <p>HP has only <strong>1,000 spare capacity units</strong>. Each Plus upgrade consumes <strong>0.5 extra</strong> capacity units (1.5 total vs. 1.0 standard). The university order needs <strong>1,500 capacity units</strong> but only 1,000 are available — accepting the full order means <strong>turning away 500 regular customers</strong> who pay $20 each.</p>
+      <p>HP must decide: upgrade adapters to Plus, accept the university order, or do nothing.</p>
+    </div>
+
+    <p class="prompt">Compare the proposals per unit of scarce capacity, then compute the bottom-line impact of each.</p>
+
+    <div class="qa-list">
+      <div class="qa-row">
+        <div class="qa-prompt">ProConnect Plus — <strong>CM per extra capacity unit</strong> used
+          <small>Incremental CM ÷ extra capacity consumed per upgrade</small>
+        </div>
+        <div class="answer">
+          <label>$ / cap unit</label>
+          <input type="text" id="s3-plus-cphr" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s3-plus-cphr"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt">University order — <strong>CM per capacity unit</strong> used</div>
+        <div class="answer">
+          <label>$ / cap unit</label>
+          <input type="text" id="s3-so-cphr" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s3-so-cphr"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt">Net monthly <strong>improvement from accepting the university order</strong>
+          <small>Account for any regular customers HP must turn away</small>
+        </div>
+        <div class="answer">
+          <label>SO improvement</label>
+          <input type="text" id="s3-so-net" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s3-so-net"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt">Net monthly <strong>improvement from upgrading to Plus</strong>
+          <small>Maximum upgrades within spare capacity</small>
+        </div>
+        <div class="answer">
+          <label>Plus improvement</label>
+          <input type="text" id="s3-plus-net" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s3-plus-net"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="decision-box">
+      <div class="decision-q">What should HP do?</div>
+      <div class="decision-buttons">
+        <button id="s3-dec-plus" onclick="pickS3('plus')">Upgrade to Plus</button>
+        <button id="s3-dec-so" onclick="pickS3('so')">Accept university order</button>
+        <button id="s3-dec-none" onclick="pickS3('none')">Do nothing</button>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep3()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep3()">Reset</button>
+      <span id="score3-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep4(true)" id="reveal-step4-btn">Skip ahead →</button>
+    </div>
+
+    <div id="step3-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 4 — Build your own ───────── -->
+  <section class="part reveal" id="step4">
+    <div class="part-header">
+      <span class="part-tag build">Step 4</span>
+      <h2>Build your own scenario</h2>
+      <span class="subtitle">change the inputs — does the answer flip?</span>
+    </div>
+
+    <p class="build-prompt">Adjust any parameter — product economics, capacity, the Plus upgrade, or the special order — then predict the <strong>profit improvement</strong> from each option and pick the best one.</p>
+
+    <div class="params-card">
+      <div class="params-group">
+        <div class="params-group-label">Standard adapter</div>
+        <div class="param-row">
+          <label>Regular units <small>per month</small></label>
+          <input type="text" id="bv-units" inputmode="numeric" value="4,000">
+        </div>
+        <div class="param-row">
+          <label>Selling price</label>
+          <input type="text" id="bv-sp" inputmode="decimal" value="$20">
+        </div>
+        <div class="param-row">
+          <label>Var production cost <small>DM + DL + MOH</small></label>
+          <input type="text" id="bv-vprod" inputmode="decimal" value="$9">
+        </div>
+        <div class="param-row">
+          <label>Var S&amp;A cost</label>
+          <input type="text" id="bv-vsa" inputmode="decimal" value="$1">
+        </div>
+        <div class="param-row">
+          <label>Production capacity <small>standard-equivalent units</small></label>
+          <input type="text" id="bv-cap" inputmode="numeric" value="5,000">
+        </div>
+      </div>
+      <div class="params-group">
+        <div class="params-group-label">ProConnect Plus</div>
+        <div class="param-row">
+          <label>Plus selling price</label>
+          <input type="text" id="bv-plus-sp" inputmode="decimal" value="$29">
+        </div>
+        <div class="param-row">
+          <label>Extra processing cost <small>per unit</small></label>
+          <input type="text" id="bv-plus-extra" inputmode="decimal" value="$5">
+        </div>
+        <div class="param-row">
+          <label>Capacity multiplier <small>1.5 = uses 50% more capacity</small></label>
+          <input type="text" id="bv-plus-cap" inputmode="decimal" value="1.5">
+        </div>
+        <div class="params-group-label" style="margin-top:10px;">University order</div>
+        <div class="param-row">
+          <label>Order quantity <small>all-or-nothing</small></label>
+          <input type="text" id="bv-so-units" inputmode="numeric" value="1,500">
+        </div>
+        <div class="param-row">
+          <label>Price per unit</label>
+          <input type="text" id="bv-so-price" inputmode="decimal" value="$14">
+        </div>
+      </div>
+    </div>
+
+    <div class="build-solve">
+      <div class="solve-card">
+        <label>Plus improvement <small>max upgrades within spare capacity</small></label>
+        <input type="text" id="bv-plus-imp" inputmode="decimal" placeholder="$">
+      </div>
+      <div class="solve-card">
+        <label>SO improvement <small>include any displacement cost</small></label>
+        <input type="text" id="bv-so-imp" inputmode="decimal" placeholder="$">
+      </div>
+    </div>
+
+    <div class="decision-box" style="margin-bottom:0;">
+      <div class="decision-q">Which option should HP pursue?</div>
+      <div class="decision-buttons">
+        <button id="bv-dec-plus" onclick="pickBV('plus')" style="font-size:13px;padding:10px 12px;">Plus</button>
+        <button id="bv-dec-so" onclick="pickBV('so')" style="font-size:13px;padding:10px 12px;">University order</button>
+        <button id="bv-dec-none" onclick="pickBV('none')" style="font-size:13px;padding:10px 12px;">Neither</button>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep4()">Check</button>
+      <button class="reset-btn" onclick="resetStep4()">Reset to original</button>
+      <span id="score4-out" class="score-out"></span>
+    </div>
+
+    <div id="step4-feedback"></div>
+  </section>
+
+</main>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   DATA
+═══════════════════════════════════════════════════════════════ */
+const SP = 20, VAR_PROD = 9, VAR_SA = 1;
+const CM = SP - VAR_PROD - VAR_SA;              // 10
+const UNITS = 4000, FC = 28000, CAPACITY = 5000;
+const OI = CM * UNITS - FC;                     // 12,000
+const SPARE = CAPACITY - UNITS;                 // 1,000
+
+// Plus (process further)
+const PLUS_SP = 29, PLUS_EXTRA = 5, PLUS_CAP_MULTI = 1.5;
+const PLUS_INCR_CM = PLUS_SP - SP - PLUS_EXTRA; // 4
+const PLUS_EXTRA_CAP = PLUS_CAP_MULTI - 1.0;    // 0.5
+const PLUS_CM_PER_CAP = PLUS_INCR_CM / PLUS_EXTRA_CAP; // 8
+const MAX_PLUS = Math.min(Math.floor(SPARE / PLUS_EXTRA_CAP), UNITS); // 2,000
+const PLUS_IMPROVE = MAX_PLUS * PLUS_INCR_CM;   // 8,000
+
+// Special order
+const SO_UNITS = 1500, SO_PRICE = 14;
+const SO_CM = SO_PRICE - VAR_PROD;              // 5 (no S&A)
+const SO_CM_PER_CAP = SO_CM / 1.0;              // 5
+const SO_DISPLACED = Math.max(0, SO_UNITS - SPARE); // 500
+const SO_IMPROVE = SO_UNITS * SO_CM - SO_DISPLACED * CM; // 7,500 - 5,000 = 2,500
+
+/* ═══════════════════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════════════════ */
+function parseNum(s) {
+  if (typeof s !== 'string') return NaN;
+  s = s.trim();
+  const neg = s.startsWith('(') && s.endsWith(')');
+  s = s.replace(/[\$,\s%()]/g, '');
+  const v = parseFloat(s);
+  return neg ? -Math.abs(v) : v;
+}
+function fmtMoney(v) {
+  const rounded = Math.round(v * 100) / 100;
+  const sign = rounded < 0 ? '-$' : '$';
+  return sign + Math.abs(rounded).toLocaleString('en-US', {
+    minimumFractionDigits: 0, maximumFractionDigits: 0
+  });
+}
+function fmtMoneySigned(v) {
+  const rounded = Math.round(v * 100) / 100;
+  if (rounded >= 0) return '+$' + Math.abs(rounded).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  return '\u2212$' + Math.abs(rounded).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+function fmtUnits(v) { return Math.round(v).toLocaleString('en-US'); }
+
+/* ═══════════════════════════════════════════════════════════════
+   AUDIO
+═══════════════════════════════════════════════════════════════ */
+let audioCtx = null;
+function getAudio() {
+  if (!audioCtx) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (AC) audioCtx = new AC();
+  }
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+function playBell() {
+  const ctx = getAudio(); if (!ctx) return;
+  const now = ctx.currentTime;
+  [523.25, 659.25, 783.99].forEach(f => {
+    const osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = 'sine'; osc.frequency.value = f;
+    osc.connect(g).connect(ctx.destination);
+    g.gain.setValueAtTime(0, now);
+    g.gain.linearRampToValueAtTime(0.15, now + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 1.6);
+    osc.start(now); osc.stop(now + 1.7);
+  });
+}
+function playHorn() {
+  const ctx = getAudio(); if (!ctx) return;
+  const now = ctx.currentTime;
+  [{ f: 466.16, t: 0, d: 0.18 }, { f: 440, t: 0.2, d: 0.18 }, { f: 415.3, t: 0.4, d: 0.55 }]
+  .forEach(({ f, t, d }) => {
+    const osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(f, now + t);
+    if (d > 0.3) osc.frequency.exponentialRampToValueAtTime(f * 0.88, now + t + d);
+    osc.connect(g).connect(ctx.destination);
+    g.gain.setValueAtTime(0, now + t);
+    g.gain.linearRampToValueAtTime(0.12, now + t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, now + t + d);
+    osc.start(now + t); osc.stop(now + t + d + 0.05);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   GENERIC CHECKER
+═══════════════════════════════════════════════════════════════ */
+function checkGroup(spec, scoreId, allCorrectFn) {
+  let correct = 0, total = 0, blanks = 0;
+  spec.forEach(f => {
+    const inp = document.getElementById(f.inputId);
+    const hint = document.getElementById(f.hintId);
+    inp.classList.remove('correct', 'wrong');
+    hint.textContent = '';
+    total++;
+    if (inp.value.trim() === '') { blanks++; return; }
+    const val = parseNum(inp.value);
+    if (!isNaN(val) && Math.abs(val - f.expected) <= f.tol) {
+      inp.classList.add('correct');
+      correct++;
+    } else {
+      inp.classList.add('wrong');
+      hint.textContent = '\u2192 ' + f.fmt(f.expected);
+    }
+  });
+  const out = document.getElementById(scoreId);
+  if (blanks === total) { out.textContent = 'Fill in some answers first.'; return false; }
+  out.textContent = correct + ' / ' + total + ' correct' + (blanks ? ' (' + blanks + ' blank)' : '');
+  if (correct === total) { playBell(); if (allCorrectFn) allCorrectFn(); return true; }
+  playHorn(); return false;
+}
+function resetGroup(spec, scoreId, extraFn) {
+  spec.forEach(f => {
+    const inp = document.getElementById(f.inputId);
+    const hint = document.getElementById(f.hintId);
+    inp.value = ''; inp.classList.remove('correct', 'wrong'); hint.textContent = '';
+  });
+  document.getElementById(scoreId).textContent = '';
+  if (extraFn) extraFn();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 1
+═══════════════════════════════════════════════════════════════ */
+const S1 = [
+  { inputId: 's1-cm',    hintId: 'hint-s1-cm',    expected: CM,    tol: 0.05, fmt: v => fmtMoney(v) },
+  { inputId: 's1-oi',    hintId: 'hint-s1-oi',    expected: OI,    tol: 0.5,  fmt: v => fmtMoney(v) },
+  { inputId: 's1-spare', hintId: 'hint-s1-spare', expected: SPARE, tol: 1,    fmt: v => fmtUnits(v) + ' units' }
+];
+function checkStep1() { checkGroup(S1, 'score1-out', () => revealStep2(false)); }
+function resetStep1() { resetGroup(S1, 'score1-out'); }
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 2
+═══════════════════════════════════════════════════════════════ */
+let sunkPicks = { study: null, book: null };
+
+function pickSunk(key, val) {
+  sunkPicks[key] = val;
+  document.getElementById('s2-' + key + '-yes').classList.toggle('selected', val === true);
+  document.getElementById('s2-' + key + '-no').classList.toggle('selected', val === false);
+  // Clear check styling
+  document.getElementById('s2-' + key + '-yes').classList.remove('yn-correct', 'yn-wrong');
+  document.getElementById('s2-' + key + '-no').classList.remove('yn-correct', 'yn-wrong');
+  document.getElementById('hint-s2-' + key).textContent = '';
+}
+
+const S2_INPUTS = [
+  { inputId: 's2-plus-cm', hintId: 'hint-s2-plus-cm', expected: PLUS_INCR_CM, tol: 0.05, fmt: v => fmtMoney(v) },
+  { inputId: 's2-so-cm',   hintId: 'hint-s2-so-cm',   expected: SO_CM,        tol: 0.05, fmt: v => fmtMoney(v) }
+];
+
+function checkStep2() {
+  const fb = document.getElementById('step2-insight');
+  fb.innerHTML = '';
+
+  // Check numeric inputs
+  let correct = 0, total = 0, blanks = 0;
+  S2_INPUTS.forEach(f => {
+    const inp = document.getElementById(f.inputId);
+    const hint = document.getElementById(f.hintId);
+    inp.classList.remove('correct', 'wrong'); hint.textContent = '';
+    total++;
+    if (inp.value.trim() === '') { blanks++; return; }
+    const val = parseNum(inp.value);
+    if (!isNaN(val) && Math.abs(val - f.expected) <= f.tol) { inp.classList.add('correct'); correct++; }
+    else { inp.classList.add('wrong'); hint.textContent = '\u2192 ' + f.fmt(f.expected); }
+  });
+
+  // Check sunk cost picks
+  ['study', 'book'].forEach(key => {
+    const yesBtn = document.getElementById('s2-' + key + '-yes');
+    const noBtn  = document.getElementById('s2-' + key + '-no');
+    const hint   = document.getElementById('hint-s2-' + key);
+    yesBtn.classList.remove('yn-correct', 'yn-wrong');
+    noBtn.classList.remove('yn-correct', 'yn-wrong');
+    hint.textContent = '';
+    if (sunkPicks[key] === null) { total++; blanks++; return; }
+    total++;
+    if (sunkPicks[key] === false) {
+      // Correct — both are sunk
+      noBtn.classList.remove('selected'); noBtn.classList.add('yn-correct');
+      correct++;
+    } else {
+      yesBtn.classList.remove('selected'); yesBtn.classList.add('yn-wrong');
+      hint.textContent = 'Sunk cost \u2014 already spent, can\u2019t be recovered.';
+    }
+  });
+
+  const out = document.getElementById('score2-out');
+  if (blanks === total) { out.textContent = 'Fill in some answers first.'; return; }
+  out.textContent = correct + ' / ' + total + ' correct' + (blanks ? ' (' + blanks + ' blank)' : '');
+
+  if (correct === total) {
+    playBell();
+    fb.innerHTML = `
+      <div class="insight success">
+        <strong>Both proposals look profitable in isolation</strong> \u2014 Plus adds $4/unit, the university order adds $5/unit. But HP can't do everything with only 1,000 spare capacity units. The next step is figuring out which one wins when capacity is scarce.
+      </div>
+    `;
+    revealStep3(false);
+  } else {
+    playHorn();
+  }
+}
+
+function resetStep2() {
+  resetGroup(S2_INPUTS, 'score2-out', () => {
+    document.getElementById('step2-insight').innerHTML = '';
+    ['study', 'book'].forEach(key => {
+      sunkPicks[key] = null;
+      document.getElementById('s2-' + key + '-yes').classList.remove('selected', 'yn-correct', 'yn-wrong');
+      document.getElementById('s2-' + key + '-no').classList.remove('selected', 'yn-correct', 'yn-wrong');
+      document.getElementById('hint-s2-' + key).textContent = '';
+    });
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 3
+═══════════════════════════════════════════════════════════════ */
+let s3Decision = null;
+function pickS3(choice) {
+  s3Decision = choice;
+  ['plus', 'so', 'none'].forEach(c => {
+    document.getElementById('s3-dec-' + c).classList.toggle('selected', c === choice);
+  });
+}
+
+const S3_INPUTS = [
+  { inputId: 's3-plus-cphr', hintId: 'hint-s3-plus-cphr', expected: PLUS_CM_PER_CAP, tol: 0.05, fmt: v => fmtMoney(v) },
+  { inputId: 's3-so-cphr',   hintId: 'hint-s3-so-cphr',   expected: SO_CM_PER_CAP,   tol: 0.05, fmt: v => fmtMoney(v) },
+  { inputId: 's3-so-net',    hintId: 'hint-s3-so-net',    expected: SO_IMPROVE,       tol: 0.5,  fmt: v => fmtMoneySigned(v) },
+  { inputId: 's3-plus-net',  hintId: 'hint-s3-plus-net',  expected: PLUS_IMPROVE,     tol: 0.5,  fmt: v => fmtMoneySigned(v) }
+];
+
+function checkStep3() {
+  const fb = document.getElementById('step3-insight');
+  fb.innerHTML = '';
+
+  let correct = 0, total = 0, blanks = 0;
+  S3_INPUTS.forEach(f => {
+    const inp = document.getElementById(f.inputId);
+    const hint = document.getElementById(f.hintId);
+    inp.classList.remove('correct', 'wrong'); hint.textContent = '';
+    total++;
+    if (inp.value.trim() === '') { blanks++; return; }
+    const val = parseNum(inp.value);
+    if (!isNaN(val) && Math.abs(val - f.expected) <= f.tol) { inp.classList.add('correct'); correct++; }
+    else { inp.classList.add('wrong'); hint.textContent = '\u2192 ' + f.fmt(f.expected); }
+  });
+
+  if (s3Decision !== null) { total++; if (s3Decision === 'plus') correct++; }
+
+  const out = document.getElementById('score3-out');
+  if (blanks === S3_INPUTS.length && s3Decision === null) { out.textContent = 'Fill in some answers first.'; return; }
+  out.textContent = correct + ' / ' + total + ' correct';
+
+  if (correct === total && total === 5) {
+    playBell();
+    fb.innerHTML = `
+      <div class="insight success">
+        <strong>Per-unit CM is misleading when capacity is scarce.</strong> The university order has higher CM per unit ($5 vs. $4) but the Plus upgrade generates <strong>$8 per capacity unit</strong> vs. $5 for the special order. Upgrading 2,000 adapters to Plus yields $8,000 of additional profit \u2014 more than three times the $2,500 from the university order (which also requires turning away 500 regular customers at $10 CM each).
+      </div>
+    `;
+    revealStep4(false);
+  } else {
+    playHorn();
+    if (s3Decision === 'so') {
+      fb.innerHTML = `<div class="insight">The university order looks tempting at $5 CM per unit. But it also requires displacing 500 regular customers. Compare the improvement to what Plus can generate with the same capacity.</div>`;
+    } else if (s3Decision === 'none') {
+      fb.innerHTML = `<div class="insight">Both proposals are profitable. One of them generates significant improvement \u2014 look at CM per capacity unit consumed.</div>`;
+    }
+  }
+}
+
+function resetStep3() {
+  resetGroup(S3_INPUTS, 'score3-out', () => {
+    document.getElementById('step3-insight').innerHTML = '';
+    s3Decision = null;
+    ['plus', 'so', 'none'].forEach(c => document.getElementById('s3-dec-' + c).classList.remove('selected'));
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 4 — Build your own
+═══════════════════════════════════════════════════════════════ */
+const BV_DEFAULTS = {
+  units: 4000, sp: 20, vprod: 9, vsa: 1, cap: 5000,
+  plusSP: 29, plusExtra: 5, plusCapMulti: 1.5,
+  soUnits: 1500, soPrice: 14
+};
+let bvDecision = null;
+
+function pickBV(choice) {
+  bvDecision = choice;
+  ['plus', 'so', 'none'].forEach(c => document.getElementById('bv-dec-' + c).classList.toggle('selected', c === choice));
+}
+
+function readBV() {
+  return {
+    units:       parseNum(document.getElementById('bv-units').value),
+    sp:          parseNum(document.getElementById('bv-sp').value),
+    vprod:       parseNum(document.getElementById('bv-vprod').value),
+    vsa:         parseNum(document.getElementById('bv-vsa').value),
+    cap:         parseNum(document.getElementById('bv-cap').value),
+    plusSP:      parseNum(document.getElementById('bv-plus-sp').value),
+    plusExtra:   parseNum(document.getElementById('bv-plus-extra').value),
+    plusCapMulti: parseNum(document.getElementById('bv-plus-cap').value),
+    soUnits:     parseNum(document.getElementById('bv-so-units').value),
+    soPrice:     parseNum(document.getElementById('bv-so-price').value)
+  };
+}
+
+function computeBV(p) {
+  const stdCM = p.sp - p.vprod - p.vsa;
+  const spare = Math.max(0, p.cap - p.units);
+
+  // Plus
+  const plusIncrCM = p.plusSP - p.sp - p.plusExtra;
+  const extraCap = p.plusCapMulti - 1.0;
+  let maxPlus;
+  if (extraCap <= 0) maxPlus = p.units;
+  else maxPlus = Math.min(Math.floor(spare / extraCap), p.units);
+  const plusImp = maxPlus * plusIncrCM;
+
+  // SO
+  const soCM = p.soPrice - p.vprod; // no S&A
+  const displaced = Math.max(0, p.soUnits - spare);
+  const soImp = p.soUnits * soCM - displaced * stdCM;
+
+  // Best
+  let best;
+  if (plusImp >= soImp && plusImp > 0) best = 'plus';
+  else if (soImp > plusImp && soImp > 0) best = 'so';
+  else best = 'none';
+
+  return { plusImp, soImp, best };
+}
+
+function refreshBVHighlights() {
+  const p = readBV();
+  const refs = [
+    ['bv-units', p.units, BV_DEFAULTS.units], ['bv-sp', p.sp, BV_DEFAULTS.sp],
+    ['bv-vprod', p.vprod, BV_DEFAULTS.vprod], ['bv-vsa', p.vsa, BV_DEFAULTS.vsa],
+    ['bv-cap', p.cap, BV_DEFAULTS.cap], ['bv-plus-sp', p.plusSP, BV_DEFAULTS.plusSP],
+    ['bv-plus-extra', p.plusExtra, BV_DEFAULTS.plusExtra], ['bv-plus-cap', p.plusCapMulti, BV_DEFAULTS.plusCapMulti],
+    ['bv-so-units', p.soUnits, BV_DEFAULTS.soUnits], ['bv-so-price', p.soPrice, BV_DEFAULTS.soPrice]
+  ];
+  refs.forEach(([id, cur, ref]) => {
+    const el = document.getElementById(id);
+    if (!isNaN(cur) && Math.abs(cur - ref) > 0.001) el.classList.add('changed');
+    else el.classList.remove('changed');
+  });
+}
+
+function checkStep4() {
+  const p = readBV();
+  const plusEl = document.getElementById('bv-plus-imp');
+  const soEl   = document.getElementById('bv-so-imp');
+  const out = document.getElementById('score4-out');
+  const fb  = document.getElementById('step4-feedback');
+  plusEl.classList.remove('correct', 'wrong');
+  soEl.classList.remove('correct', 'wrong');
+  out.textContent = ''; fb.innerHTML = '';
+
+  if (Object.values(p).some(v => isNaN(v))) {
+    fb.innerHTML = '<div class="insight">Make sure every parameter has a valid number.</div>';
+    return;
+  }
+
+  const { plusImp, soImp, best } = computeBV(p);
+  let parts = [], allCorrect = true;
+
+  if (plusEl.value.trim()) {
+    const v = parseNum(plusEl.value);
+    const tol = Math.max(0.5, Math.abs(plusImp) * 0.001);
+    if (!isNaN(v) && Math.abs(v - plusImp) <= tol) { plusEl.classList.add('correct'); parts.push('\u2714 Plus'); }
+    else { plusEl.classList.add('wrong'); parts.push('\u2718 Plus (' + fmtMoneySigned(plusImp) + ')'); allCorrect = false; }
+  }
+  if (soEl.value.trim()) {
+    const v = parseNum(soEl.value);
+    const tol = Math.max(0.5, Math.abs(soImp) * 0.001);
+    if (!isNaN(v) && Math.abs(v - soImp) <= tol) { soEl.classList.add('correct'); parts.push('\u2714 SO'); }
+    else { soEl.classList.add('wrong'); parts.push('\u2718 SO (' + fmtMoneySigned(soImp) + ')'); allCorrect = false; }
+  }
+  if (bvDecision !== null) {
+    if (bvDecision === best) parts.push('\u2714 Decision');
+    else { parts.push('\u2718 Decision (should ' + (best === 'plus' ? 'upgrade to Plus' : best === 'so' ? 'accept SO' : 'do nothing') + ')'); allCorrect = false; }
+  }
+
+  if (parts.length === 0) {
+    fb.innerHTML = '<div class="insight">Enter at least one improvement or pick a decision.</div>';
+    return;
+  }
+
+  out.textContent = parts.join('  \u00b7  ');
+  const line = `Plus improvement: <strong>${fmtMoneySigned(plusImp)}</strong> &nbsp;\u00b7&nbsp; SO improvement: <strong>${fmtMoneySigned(soImp)}</strong> &nbsp;\u2014&nbsp; Best: <strong>${best === 'plus' ? 'Upgrade to Plus' : best === 'so' ? 'Accept university order' : 'Do nothing'}</strong>`;
+  if (allCorrect) { fb.innerHTML = `<div class="insight success">${line}</div>`; playBell(); }
+  else { fb.innerHTML = `<div class="insight">${line}</div>`; playHorn(); }
+}
+
+function resetStep4() {
+  document.getElementById('bv-units').value     = '4,000';
+  document.getElementById('bv-sp').value        = '$20';
+  document.getElementById('bv-vprod').value     = '$9';
+  document.getElementById('bv-vsa').value       = '$1';
+  document.getElementById('bv-cap').value       = '5,000';
+  document.getElementById('bv-plus-sp').value   = '$29';
+  document.getElementById('bv-plus-extra').value = '$5';
+  document.getElementById('bv-plus-cap').value  = '1.5';
+  document.getElementById('bv-so-units').value  = '1,500';
+  document.getElementById('bv-so-price').value  = '$14';
+  ['bv-plus-imp', 'bv-so-imp'].forEach(id => {
+    document.getElementById(id).value = '';
+    document.getElementById(id).classList.remove('correct', 'wrong');
+  });
+  document.getElementById('score4-out').textContent = '';
+  document.getElementById('step4-feedback').innerHTML = '';
+  bvDecision = null;
+  ['plus', 'so', 'none'].forEach(c => document.getElementById('bv-dec-' + c).classList.remove('selected'));
+  refreshBVHighlights();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   REVEAL STEPS
+═══════════════════════════════════════════════════════════════ */
+const revealedSteps = new Set();
+function revealStep(n, scroll) {
+  const el = document.getElementById('step' + n);
+  if (!revealedSteps.has(n)) {
+    el.classList.add('show');
+    revealedSteps.add(n);
+    const btn = document.getElementById('reveal-step' + n + '-btn');
+    if (btn) btn.style.display = 'none';
+  }
+  if (scroll) setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+}
+function revealStep2(s) { revealStep(2, s); }
+function revealStep3(s) { revealStep(3, s); }
+function revealStep4(s) { revealStep(4, s); }
+
+/* ═══════════════════════════════════════════════════════════════
+   QR / SHARE
+═══════════════════════════════════════════════════════════════ */
+function showQR() {
+  const url = location.href;
+  document.getElementById('qr-url').textContent = url;
+  const qrEl = document.getElementById('qr-code');
+  qrEl.innerHTML = '';
+  if (window.QRCode) new QRCode(qrEl, { text: url, width: 180, height: 180, colorDark: '#1a2744', colorLight: '#ffffff' });
+  document.getElementById('qr-overlay').classList.add('show');
+}
+function hideQR(ev) {
+  if (ev && ev.target.id !== 'qr-overlay' && ev.target.className !== 'qr-close') return;
+  document.getElementById('qr-overlay').classList.remove('show');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+  const bvIds = ['bv-units','bv-sp','bv-vprod','bv-vsa','bv-cap',
+    'bv-plus-sp','bv-plus-extra','bv-plus-cap','bv-so-units','bv-so-price'];
+  bvIds.forEach(id => document.getElementById(id).addEventListener('input', () => {
+    refreshBVHighlights();
+    ['bv-plus-imp','bv-so-imp'].forEach(x => document.getElementById(x).classList.remove('correct','wrong'));
+    document.getElementById('score4-out').textContent = '';
+    document.getElementById('step4-feedback').innerHTML = '';
+  }));
+  refreshBVHighlights();
+});
+</script>
+
+</body>
+</html>
