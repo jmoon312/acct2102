@@ -1,0 +1,1434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Outsourcing &amp; Capacity</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  /* ── Reset & base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    background: #f4f0e8;
+    color: #1a2744;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    background: #1a2744;
+    color: #fff;
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .header-left h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+
+  .qr-btn {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    transition: background .15s;
+  }
+  .qr-btn:hover { background: rgba(255,255,255,0.18); }
+
+  /* QR Modal */
+  .qr-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .qr-overlay.show { display: flex; }
+  .qr-modal {
+    background: #fff;
+    border-radius: 14px;
+    padding: 32px;
+    text-align: center;
+    max-width: 300px;
+    width: 90%;
+  }
+  .qr-modal h2 { font-size: 16px; font-weight: 600; color: #1a2744; margin-bottom: 6px; }
+  .qr-modal p  { font-size: 12px; color: #64748b; margin-bottom: 18px; line-height: 1.5; }
+  #qr-code { display: flex; justify-content: center; margin-bottom: 16px; }
+  #qr-url  { font-size: 11px; color: #94a3b8; word-break: break-all; margin-bottom: 18px; }
+  .qr-close {
+    background: #1a2744; color: #fff;
+    border: none; border-radius: 8px;
+    padding: 8px 24px; font-size: 13px;
+    cursor: pointer; font-family: inherit;
+  }
+
+  /* ── Main layout ── */
+  main {
+    max-width: 920px;
+    margin: 28px auto;
+    padding: 0 20px 48px;
+  }
+
+  .part {
+    background: #fff;
+    border: 1px solid #dde3ef;
+    border-radius: 12px;
+    padding: 22px 24px 24px;
+    margin-bottom: 22px;
+  }
+
+  .part-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .part-tag {
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    background: #1a2744;
+    padding: 3px 10px;
+    border-radius: 99px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+  .part-tag.practice { background: #D85A30; }
+  .part-tag.explore  { background: #3b7dd8; }
+  .part-tag.solve    { background: #7a5cb6; }
+  .part-tag.build    { background: #5a9e3a; }
+  .part-header h2 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -.01em;
+  }
+  .part-header .subtitle {
+    font-size: 13px;
+    color: #64748b;
+  }
+
+  .setup-box {
+    background: #f8f6f0;
+    border: 1px solid #e6dfd0;
+    border-radius: 9px;
+    padding: 14px 16px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: #334155;
+    margin-bottom: 16px;
+  }
+  .setup-box strong { color: #1a2744; }
+  .setup-box p + p { margin-top: 6px; }
+
+  .prompt {
+    font-size: 14px;
+    color: #1a2744;
+    margin-bottom: 12px;
+    line-height: 1.55;
+  }
+  .prompt strong { font-weight: 700; }
+
+  /* ── Product table ── */
+  .prod-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-bottom: 6px;
+    font-variant-numeric: tabular-nums;
+  }
+  .prod-table thead th {
+    background: #fde9c8;
+    color: #1a2744;
+    font-size: 12px;
+    font-weight: 700;
+    text-align: center;
+    padding: 10px 8px;
+    border-bottom: 2px solid #f0c674;
+  }
+  .prod-table thead th:first-child {
+    border-top-left-radius: 8px;
+    text-align: left;
+    padding-left: 14px;
+  }
+  .prod-table thead th:last-child  { border-top-right-radius: 8px; }
+  .prod-table tbody td {
+    background: #f0f5fa;
+    padding: 9px 8px;
+    text-align: center;
+    border-bottom: 1px solid #e1eaf3;
+    font-size: 13.5px;
+  }
+  .prod-table tbody td.prod-name {
+    text-align: left;
+    padding-left: 14px;
+    font-weight: 600;
+    color: #1a2744;
+  }
+  .prod-table tbody tr:last-child td:first-child { border-bottom-left-radius: 8px; }
+  .prod-table tbody tr:last-child td:last-child  { border-bottom-right-radius: 8px; }
+
+  .prod-table input {
+    width: 100%;
+    max-width: 100px;
+    padding: 7px 8px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-variant-numeric: tabular-nums;
+    transition: border-color .12s, background .12s;
+  }
+  .prod-table input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .prod-table input.correct {
+    border-color: #5a9e3a;
+    background: #f0f9e8;
+    color: #2d6a1f;
+    font-weight: 600;
+  }
+  .prod-table input.wrong {
+    border-color: #c94040;
+    background: #fff1f1;
+    color: #9b2020;
+  }
+  .corr-hint {
+    display: block;
+    font-size: 11px;
+    color: #5a9e3a;
+    font-weight: 600;
+    margin-top: 3px;
+    min-height: 14px;
+  }
+
+  /* ── QA rows ── */
+  .qa-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 4px; }
+  .qa-row {
+    display: grid;
+    grid-template-columns: 1fr 200px;
+    gap: 14px;
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #e1eaf3;
+    border-radius: 9px;
+    padding: 13px 16px;
+  }
+  .qa-row .qa-prompt {
+    font-size: 13.5px;
+    color: #1a2744;
+    line-height: 1.5;
+  }
+  .qa-row .qa-prompt strong { font-weight: 700; }
+  .qa-row .qa-prompt small {
+    display: block;
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 3px;
+  }
+  .qa-row .answer { display: flex; flex-direction: column; }
+  .qa-row .answer label {
+    font-size: 10.5px;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 4px;
+  }
+  .qa-row .answer input {
+    padding: 8px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .qa-row .answer input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .qa-row .answer input.correct {
+    border-color: #5a9e3a;
+    background: #f0f9e8;
+    color: #2d6a1f;
+  }
+  .qa-row .answer input.wrong {
+    border-color: #c94040;
+    background: #fff1f1;
+    color: #9b2020;
+  }
+  .qa-row .answer .corr-hint { text-align: center; margin-top: 3px; }
+
+  /* ── Decision buttons ── */
+  .decision-box {
+    background: #f8fafc;
+    border: 1px solid #e1eaf3;
+    border-radius: 9px;
+    padding: 16px 18px;
+    margin-bottom: 10px;
+  }
+  .decision-box .decision-q {
+    font-size: 14px;
+    color: #1a2744;
+    margin-bottom: 12px;
+    line-height: 1.55;
+  }
+  .decision-box .decision-q strong { font-weight: 700; }
+  .decision-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .decision-buttons button {
+    flex: 1;
+    min-width: 130px;
+    background: #fff;
+    border: 1.5px solid #cbd5e1;
+    color: #1a2744;
+    padding: 12px 16px;
+    border-radius: 9px;
+    font-size: 14px;
+    font-family: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .decision-buttons button:hover {
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .decision-buttons button.selected {
+    background: #1a2744;
+    color: #fff;
+    border-color: #1a2744;
+  }
+
+  /* ── Single-cell solve ── */
+  .single-solve {
+    display: grid;
+    grid-template-columns: 1fr 200px;
+    gap: 14px;
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #e1eaf3;
+    border-radius: 9px;
+    padding: 16px 18px;
+    margin-bottom: 10px;
+  }
+  .single-solve .solve-prompt {
+    font-size: 14px;
+    color: #1a2744;
+    line-height: 1.55;
+  }
+  .single-solve .solve-prompt strong { font-weight: 700; }
+  .single-solve .solve-prompt small {
+    display: block;
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 4px;
+  }
+  .single-solve .answer { display: flex; flex-direction: column; }
+  .single-solve .answer label {
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 4px;
+  }
+  .single-solve .answer input {
+    padding: 9px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 15px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .single-solve .answer input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .single-solve .answer input.correct {
+    border-color: #5a9e3a;
+    background: #f0f9e8;
+    color: #2d6a1f;
+  }
+  .single-solve .answer input.wrong {
+    border-color: #c94040;
+    background: #fff1f1;
+    color: #9b2020;
+  }
+
+  /* Reveal animation */
+  .reveal {
+    display: none;
+    animation: slideIn 0.4s ease-out;
+  }
+  .reveal.show { display: block; }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Build-your-own (Step 4) ── */
+  .build-prompt {
+    font-size: 14px;
+    color: #1a2744;
+    margin-bottom: 14px;
+    line-height: 1.55;
+  }
+  .params-card {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .params-group-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #64748b;
+    margin-bottom: 6px;
+    padding-left: 2px;
+  }
+  .params-group { display: flex; flex-direction: column; gap: 8px; }
+  .param-row {
+    display: grid;
+    grid-template-columns: 1fr 120px;
+    gap: 10px;
+    align-items: center;
+    background: #f8f6f0;
+    border: 1px solid #e6dfd0;
+    border-radius: 8px;
+    padding: 10px 14px;
+  }
+  .param-row label {
+    font-size: 13px;
+    color: #1a2744;
+    font-weight: 500;
+  }
+  .param-row label small {
+    display: block;
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 400;
+    margin-top: 1px;
+  }
+  .param-row input {
+    padding: 7px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-variant-numeric: tabular-nums;
+  }
+  .param-row input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .param-row input.changed {
+    border-color: #D85A30;
+    background: #fff7f0;
+  }
+
+  .build-solve {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .build-solve .solve-card {
+    background: #fff;
+    border: 1px solid #dde3ef;
+    border-radius: 9px;
+    padding: 12px 14px;
+  }
+  .build-solve .solve-card label {
+    display: block;
+    font-size: 12px;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 6px;
+  }
+  .build-solve .solve-card label small {
+    display: block;
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 400;
+    color: #94a3b8;
+    margin-top: 2px;
+  }
+  .build-solve .solve-card input {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 15px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .build-solve .solve-card input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .build-solve .solve-card input.correct {
+    border-color: #5a9e3a;
+    background: #f0f9e8;
+    color: #2d6a1f;
+  }
+  .build-solve .solve-card input.wrong {
+    border-color: #c94040;
+    background: #fff1f1;
+    color: #9b2020;
+  }
+
+  /* ── Insight ── */
+  .insight {
+    margin-top: 8px;
+    background: #eff6ff;
+    border: 1px solid #c7dcf5;
+    border-left: 4px solid #3b7dd8;
+    border-radius: 0 8px 8px 0;
+    padding: 11px 14px;
+    font-size: 13px;
+    line-height: 1.55;
+    color: #1a2744;
+  }
+  .insight strong { color: #1e40af; }
+  .insight.success {
+    background: #f0f9e8;
+    border-color: #c4e0a3;
+    border-left-color: #5a9e3a;
+  }
+  .insight.success strong { color: #2d6a1f; }
+
+  /* ── Footer ── */
+  .footer {
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .check-btn {
+    background: #1a2744; color: #fff;
+    border: none; border-radius: 9px;
+    padding: 10px 24px; font-size: 14px;
+    cursor: pointer; font-family: inherit;
+    font-weight: 500;
+    transition: background .15s;
+  }
+  .check-btn:hover { background: #243660; }
+  .reset-btn {
+    font-size: 13px; color: #64748b;
+    background: none; border: none;
+    cursor: pointer; text-decoration: underline;
+    font-family: inherit;
+  }
+  .reveal-link {
+    margin-left: auto;
+    font-size: 12.5px;
+    color: #64748b;
+    background: none; border: none;
+    cursor: pointer; text-decoration: underline;
+    font-family: inherit;
+  }
+  .reveal-link:hover { color: #1a2744; }
+  .score-out {
+    font-size: 14px; font-weight: 600;
+    color: #1a2744;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 6px 14px;
+  }
+  .score-out:empty { display: none; }
+
+  /* ── Responsive ── */
+  @media (max-width: 700px) {
+    header { padding: 14px 16px; }
+    main { padding: 0 12px 40px; }
+    .part { padding: 18px 14px 18px; }
+    .prod-table thead th, .prod-table tbody td { font-size: 11.5px; padding: 7px 4px; }
+    .qa-row { grid-template-columns: 1fr; gap: 8px; }
+    .single-solve { grid-template-columns: 1fr; gap: 8px; }
+    .params-card { grid-template-columns: 1fr; }
+    .build-solve { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="header-left">
+    <h1>Outsourcing &amp; Capacity</h1>
+  </div>
+  <button class="qr-btn" onclick="showQR()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="2" height="2"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="19" width="3" height="2"/><rect x="19" y="19" width="2" height="2"/></svg>
+    Share with students
+  </button>
+</header>
+
+<!-- QR Modal -->
+<div class="qr-overlay" id="qr-overlay" onclick="hideQR(event)">
+  <div class="qr-modal">
+    <h2>Scan to open on your device</h2>
+    <p>Students can scan this QR code or type the URL to open the activity on their phone or laptop.</p>
+    <div id="qr-code"></div>
+    <div id="qr-url"></div>
+    <button class="qr-close" onclick="hideQR()">Close</button>
+  </div>
+</div>
+
+<!-- Main -->
+<main>
+
+  <!-- ───────── STEP 1 — Baseline metrics ───────── -->
+  <section class="part">
+    <div class="part-header">
+      <span class="part-tag practice">Step 1</span>
+      <h2>Know the products</h2>
+      <span class="subtitle">contribution margin per machine hour</span>
+    </div>
+
+    <div class="setup-box">
+      <p>HP's adapter division runs two products on a shared assembly line. The line maxes out at <strong>7,000 machine hours per month</strong> — and right now, every hour is spoken for.</p>
+      <p>Variable production costs for the standard adapter include direct materials ($3), direct labor ($4), and variable manufacturing overhead ($2). For the premium hub: direct materials ($8), direct labor ($6), and variable manufacturing overhead ($4). Variable selling &amp; administrative costs run $1 per adapter and $2 per hub.</p>
+    </div>
+
+    <table class="prod-table">
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Units / mo</th>
+          <th>Selling price</th>
+          <th>Var prod / unit</th>
+          <th>Var S&amp;A / unit</th>
+          <th>Machine hrs / unit</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="prod-name">Standard Adapter</td>
+          <td>2,000</td><td>$20</td><td>$9</td><td>$1</td><td>2.0</td>
+        </tr>
+        <tr>
+          <td class="prod-name">Premium Hub</td>
+          <td>1,000</td><td>$50</td><td>$18</td><td>$2</td><td>3.0</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p class="prompt" style="margin-top:14px;">Fill in the contribution margin and CM per machine hour for each product:</p>
+
+    <table class="prod-table">
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>CM / unit</th>
+          <th>CM / machine hour</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="prod-name">Standard Adapter</td>
+          <td><input type="text" id="s1-cm-std" inputmode="decimal" placeholder="$"><span class="corr-hint" id="hint-s1-cm-std"></span></td>
+          <td><input type="text" id="s1-cmhr-std" inputmode="decimal" placeholder="$"><span class="corr-hint" id="hint-s1-cmhr-std"></span></td>
+        </tr>
+        <tr>
+          <td class="prod-name">Premium Hub</td>
+          <td><input type="text" id="s1-cm-hub" inputmode="decimal" placeholder="$"><span class="corr-hint" id="hint-s1-cm-hub"></span></td>
+          <td><input type="text" id="s1-cmhr-hub" inputmode="decimal" placeholder="$"><span class="corr-hint" id="hint-s1-cmhr-hub"></span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep1()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep1()">Reset</button>
+      <span id="score1-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep2(true)" id="reveal-step2-btn">Skip ahead →</button>
+    </div>
+
+    <div id="step1-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 2 — Pure outsourcing ───────── -->
+  <section class="part reveal" id="step2">
+    <div class="part-header">
+      <span class="part-tag explore">Step 2</span>
+      <h2>Make or buy?</h2>
+      <span class="subtitle">pure outsourcing analysis</span>
+    </div>
+
+    <div class="setup-box">
+      <p>A contract manufacturer offers to supply all <strong>2,000 standard adapters</strong> HP needs each month for <strong>$11 per unit</strong>. If HP outsources, it can eliminate <strong>$3,000 per month</strong> in dedicated supervision and tooling costs tied to the standard adapter line. Variable selling &amp; administrative costs would remain unchanged — HP still handles distribution either way.</p>
+    </div>
+
+    <p class="prompt">Evaluate the outsourcing offer on a pure cost basis — ignore capacity effects for now.</p>
+
+    <div class="qa-list">
+      <div class="qa-row">
+        <div class="qa-prompt">What is the relevant per-unit cost of <strong>making</strong> each standard adapter?
+          <small>Only costs that go away if HP stops making them.</small>
+        </div>
+        <div class="answer">
+          <label>Make cost / unit</label>
+          <input type="text" id="s2-make" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s2-make"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt">What is the <strong>net effect on monthly profit</strong> from outsourcing?
+          <small>Positive = outsourcing increases profit; negative = decreases it.</small>
+        </div>
+        <div class="answer">
+          <label>Profit effect</label>
+          <input type="text" id="s2-net" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s2-net"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="decision-box">
+      <div class="decision-q">Based on cost alone, should HP outsource the standard adapter?</div>
+      <div class="decision-buttons">
+        <button id="s2-decide-make" onclick="pickS2('make')">Keep making in-house</button>
+        <button id="s2-decide-out" onclick="pickS2('out')">Outsource</button>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep2()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep2()">Reset</button>
+      <span id="score2-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep3(true)" id="reveal-step3-btn">Skip ahead →</button>
+    </div>
+
+    <div id="step2-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 3 — Factor in capacity ───────── -->
+  <section class="part reveal" id="step3">
+    <div class="part-header">
+      <span class="part-tag solve">Step 3</span>
+      <h2>What about capacity?</h2>
+      <span class="subtitle">the opportunity cost changes everything</span>
+    </div>
+
+    <div class="setup-box">
+      <p>HP's sales team reports unfilled demand: <strong>300 corporate clients</strong> are requesting premium hubs each month, but HP has had to turn them away because the assembly line is fully booked. If HP outsources the standard adapter, those machine hours become available for hub production.</p>
+    </div>
+
+    <div class="qa-list">
+      <div class="qa-row">
+        <div class="qa-prompt">How many <strong>machine hours</strong> does outsourcing the standard adapter free up?</div>
+        <div class="answer">
+          <label>Freed hours</label>
+          <input type="text" id="s3-hours" inputmode="numeric" placeholder="hours">
+          <span class="corr-hint" id="hint-s3-hours"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt">How many <strong>additional premium hubs</strong> will HP produce and sell?
+          <small>Consider both freed capacity and market demand.</small>
+        </div>
+        <div class="answer">
+          <label>Additional hubs</label>
+          <input type="text" id="s3-hubs" inputmode="numeric" placeholder="units">
+          <span class="corr-hint" id="hint-s3-hubs"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt">What <strong>additional contribution margin</strong> do those extra hubs generate?</div>
+        <div class="answer">
+          <label>Additional CM</label>
+          <input type="text" id="s3-cm" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s3-cm"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="single-solve">
+      <div class="solve-prompt">
+        Now combine the outsourcing cost from Step 2 with the capacity opportunity. What is the <strong>combined net effect</strong> on monthly profit?
+        <small>Outsourcing effect + additional hub CM.</small>
+      </div>
+      <div class="answer">
+        <label>Combined net</label>
+        <input type="text" id="s3-net" inputmode="decimal" placeholder="$">
+        <span class="corr-hint" id="hint-s3-net"></span>
+      </div>
+    </div>
+
+    <div class="decision-box">
+      <div class="decision-q">With capacity in the picture, should HP outsource the standard adapter?</div>
+      <div class="decision-buttons">
+        <button id="s3-decide-make" onclick="pickS3('make')">Keep making in-house</button>
+        <button id="s3-decide-out" onclick="pickS3('out')">Outsource</button>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep3()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep3()">Reset</button>
+      <span id="score3-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep4(true)" id="reveal-step4-btn">Skip ahead →</button>
+    </div>
+
+    <div id="step3-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 4 — Build your own ───────── -->
+  <section class="part reveal" id="step4">
+    <div class="part-header">
+      <span class="part-tag build">Step 4</span>
+      <h2>Build your own scenario</h2>
+      <span class="subtitle">change any input and test yourself</span>
+    </div>
+
+    <p class="build-prompt">Adjust the outsourcing offer, product economics, or market demand, then predict the <strong>combined net effect on profit</strong> and the make-or-outsource decision.</p>
+
+    <div class="params-card">
+      <div class="params-group">
+        <div class="params-group-label">Standard adapter</div>
+        <div class="param-row">
+          <label>Monthly units</label>
+          <input type="text" id="bv-std-units" inputmode="numeric" value="2,000">
+        </div>
+        <div class="param-row">
+          <label>Var production cost <small>per unit (DM + DL + MOH)</small></label>
+          <input type="text" id="bv-std-vprod" inputmode="decimal" value="$9">
+        </div>
+        <div class="param-row">
+          <label>Machine hours <small>per unit</small></label>
+          <input type="text" id="bv-std-hrs" inputmode="decimal" value="2.0">
+        </div>
+        <div class="params-group-label" style="margin-top:10px;">Outsourcing terms</div>
+        <div class="param-row">
+          <label>Buy price <small>per unit from supplier</small></label>
+          <input type="text" id="bv-buy" inputmode="decimal" value="$11">
+        </div>
+        <div class="param-row">
+          <label>Avoidable fixed costs <small>eliminated if outsourced</small></label>
+          <input type="text" id="bv-afc" inputmode="decimal" value="$3,000">
+        </div>
+      </div>
+      <div class="params-group">
+        <div class="params-group-label">Premium hub</div>
+        <div class="param-row">
+          <label>Selling price</label>
+          <input type="text" id="bv-hub-sp" inputmode="decimal" value="$50">
+        </div>
+        <div class="param-row">
+          <label>Var production cost <small>per unit</small></label>
+          <input type="text" id="bv-hub-vprod" inputmode="decimal" value="$18">
+        </div>
+        <div class="param-row">
+          <label>Var S&amp;A cost <small>per unit</small></label>
+          <input type="text" id="bv-hub-vsa" inputmode="decimal" value="$2">
+        </div>
+        <div class="param-row">
+          <label>Machine hours <small>per unit</small></label>
+          <input type="text" id="bv-hub-hrs" inputmode="decimal" value="3.0">
+        </div>
+        <div class="params-group-label" style="margin-top:10px;">Market</div>
+        <div class="param-row">
+          <label>Unfilled hub demand <small>units/month</small></label>
+          <input type="text" id="bv-demand" inputmode="numeric" value="300">
+        </div>
+      </div>
+    </div>
+
+    <div class="build-solve">
+      <div class="solve-card">
+        <label>Combined net effect <small>+ = outsourcing is better</small></label>
+        <input type="text" id="bv-net" inputmode="decimal" placeholder="$">
+      </div>
+      <div class="solve-card">
+        <label>Decision</label>
+        <div class="decision-buttons" style="margin-top:6px;">
+          <button id="bv-decide-make" onclick="pickBV('make')" style="padding:8px 12px;font-size:13px;">Make</button>
+          <button id="bv-decide-out" onclick="pickBV('out')" style="padding:8px 12px;font-size:13px;">Outsource</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep4()">Check</button>
+      <button class="reset-btn" onclick="resetStep4()">Reset to original</button>
+      <span id="score4-out" class="score-out"></span>
+    </div>
+
+    <div id="step4-feedback"></div>
+  </section>
+
+</main>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   DATA
+═══════════════════════════════════════════════════════════════ */
+const STD = { units: 2000, SP: 20, varProd: 9, varSA: 1, machHrs: 2.0 };
+const HUB = { units: 1000, SP: 50, varProd: 18, varSA: 2, machHrs: 3.0 };
+const STD_CM = STD.SP - STD.varProd - STD.varSA;           // 10
+const HUB_CM = HUB.SP - HUB.varProd - HUB.varSA;           // 30
+const STD_CM_HR = STD_CM / STD.machHrs;                     // 5
+const HUB_CM_HR = HUB_CM / HUB.machHrs;                     // 10
+const CAPACITY = STD.units * STD.machHrs + HUB.units * HUB.machHrs; // 7,000
+
+// Step 2 — pure outsourcing
+const BUY_PRICE = 11;
+const AVOID_FC  = 3000;
+const MAKE_COST = STD.varProd;                               // 9
+const OUTSOURCE_PURE = AVOID_FC - (BUY_PRICE - MAKE_COST) * STD.units; // -1,000
+
+// Step 3 — with capacity
+const UNFILLED_DEMAND = 300;
+const FREED_HOURS     = STD.units * STD.machHrs;             // 4,000
+const MAX_HUBS        = Math.floor(FREED_HOURS / HUB.machHrs); // 1,333
+const ACTUAL_HUBS     = Math.min(MAX_HUBS, UNFILLED_DEMAND); // 300
+const CAPACITY_CM     = ACTUAL_HUBS * HUB_CM;                // 9,000
+const COMBINED_NET    = OUTSOURCE_PURE + CAPACITY_CM;         // 8,000
+
+/* ═══════════════════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════════════════ */
+function parseNum(s) {
+  if (typeof s !== 'string') return NaN;
+  s = s.trim();
+  const neg = s.startsWith('(') && s.endsWith(')');
+  s = s.replace(/[\$,\s%()]/g, '');
+  const v = parseFloat(s);
+  return neg ? -Math.abs(v) : v;
+}
+function fmtMoney(v) {
+  const rounded = Math.round(v * 100) / 100;
+  const sign = rounded < 0 ? '-$' : '$';
+  return sign + Math.abs(rounded).toLocaleString('en-US', {
+    minimumFractionDigits: 0, maximumFractionDigits: 0
+  });
+}
+function fmtMoneySigned(v) {
+  const rounded = Math.round(v * 100) / 100;
+  if (rounded >= 0) return '+$' + Math.abs(rounded).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  return '\u2212$' + Math.abs(rounded).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+function fmtUnits(v) {
+  return Math.round(v).toLocaleString('en-US');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   AUDIO
+═══════════════════════════════════════════════════════════════ */
+let audioCtx = null;
+function getAudio() {
+  if (!audioCtx) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (AC) audioCtx = new AC();
+  }
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+function playBell() {
+  const ctx = getAudio(); if (!ctx) return;
+  const now = ctx.currentTime;
+  [523.25, 659.25, 783.99].forEach(f => {
+    const osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = 'sine'; osc.frequency.value = f;
+    osc.connect(g).connect(ctx.destination);
+    g.gain.setValueAtTime(0, now);
+    g.gain.linearRampToValueAtTime(0.15, now + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 1.6);
+    osc.start(now); osc.stop(now + 1.7);
+  });
+}
+function playHorn() {
+  const ctx = getAudio(); if (!ctx) return;
+  const now = ctx.currentTime;
+  const notes = [
+    { f: 466.16, t: 0.00, d: 0.18 },
+    { f: 440.00, t: 0.20, d: 0.18 },
+    { f: 415.30, t: 0.40, d: 0.55 }
+  ];
+  notes.forEach(({ f, t, d }) => {
+    const osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(f, now + t);
+    if (d > 0.3) osc.frequency.exponentialRampToValueAtTime(f * 0.88, now + t + d);
+    osc.connect(g).connect(ctx.destination);
+    g.gain.setValueAtTime(0, now + t);
+    g.gain.linearRampToValueAtTime(0.12, now + t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, now + t + d);
+    osc.start(now + t); osc.stop(now + t + d + 0.05);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   GENERIC CHECKER
+═══════════════════════════════════════════════════════════════ */
+function checkGroup(spec, scoreId, allCorrectFn) {
+  let correct = 0, total = 0, blanks = 0;
+  spec.forEach(f => {
+    const inp  = document.getElementById(f.inputId);
+    const hint = document.getElementById(f.hintId);
+    inp.classList.remove('correct', 'wrong');
+    hint.textContent = '';
+    total++;
+    if (inp.value.trim() === '') { blanks++; return; }
+    const val = parseNum(inp.value);
+    const exp = f.expected;
+    const tol = f.tol;
+    if (!isNaN(val) && Math.abs(val - exp) <= tol) {
+      inp.classList.add('correct');
+      correct++;
+    } else {
+      inp.classList.add('wrong');
+      hint.textContent = '\u2192 ' + f.fmt(exp);
+    }
+  });
+  const out = document.getElementById(scoreId);
+  if (blanks === total) {
+    out.textContent = 'Fill in some answers first.';
+    return false;
+  }
+  out.textContent = correct + ' / ' + total + ' correct' + (blanks ? ' (' + blanks + ' blank)' : '');
+  if (correct === total) {
+    playBell();
+    if (allCorrectFn) allCorrectFn();
+    return true;
+  } else {
+    playHorn();
+    return false;
+  }
+}
+
+function resetGroup(spec, scoreId, extraFn) {
+  spec.forEach(f => {
+    const inp = document.getElementById(f.inputId);
+    const hint = document.getElementById(f.hintId);
+    inp.value = '';
+    inp.classList.remove('correct', 'wrong');
+    hint.textContent = '';
+  });
+  document.getElementById(scoreId).textContent = '';
+  if (extraFn) extraFn();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 1 — Baseline metrics
+═══════════════════════════════════════════════════════════════ */
+const STEP1_SPEC = [
+  { inputId: 's1-cm-std',   hintId: 'hint-s1-cm-std',   expected: STD_CM,    tol: 0.05, fmt: v => fmtMoney(v) },
+  { inputId: 's1-cmhr-std', hintId: 'hint-s1-cmhr-std', expected: STD_CM_HR, tol: 0.05, fmt: v => fmtMoney(v) },
+  { inputId: 's1-cm-hub',   hintId: 'hint-s1-cm-hub',   expected: HUB_CM,    tol: 0.05, fmt: v => fmtMoney(v) },
+  { inputId: 's1-cmhr-hub', hintId: 'hint-s1-cmhr-hub', expected: HUB_CM_HR, tol: 0.05, fmt: v => fmtMoney(v) }
+];
+function checkStep1() {
+  checkGroup(STEP1_SPEC, 'score1-out', () => {
+    document.getElementById('step1-insight').innerHTML = `
+      <div class="insight success">
+        <strong>The premium hub generates $10 of CM per machine hour vs. $5 for the standard adapter.</strong> When a resource is scarce, profitability per unit of that resource — not per product unit — is what matters.
+      </div>
+    `;
+    revealStep2(false);
+  });
+}
+function resetStep1() {
+  resetGroup(STEP1_SPEC, 'score1-out', () => {
+    document.getElementById('step1-insight').innerHTML = '';
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 2 — Pure outsourcing
+═══════════════════════════════════════════════════════════════ */
+let s2Decision = null;
+function pickS2(choice) {
+  s2Decision = choice;
+  document.getElementById('s2-decide-make').classList.toggle('selected', choice === 'make');
+  document.getElementById('s2-decide-out').classList.toggle('selected', choice === 'out');
+}
+
+const STEP2_SPEC = [
+  { inputId: 's2-make', hintId: 'hint-s2-make', expected: MAKE_COST,       tol: 0.05, fmt: v => fmtMoney(v) },
+  { inputId: 's2-net',  hintId: 'hint-s2-net',  expected: OUTSOURCE_PURE,  tol: 0.5,  fmt: v => fmtMoneySigned(v) }
+];
+
+function checkStep2() {
+  const fb = document.getElementById('step2-insight');
+  fb.innerHTML = '';
+
+  let correct = 0, total = 0, blanks = 0;
+  STEP2_SPEC.forEach(f => {
+    const inp  = document.getElementById(f.inputId);
+    const hint = document.getElementById(f.hintId);
+    inp.classList.remove('correct', 'wrong');
+    hint.textContent = '';
+    total++;
+    if (inp.value.trim() === '') { blanks++; return; }
+    const val = parseNum(inp.value);
+    if (!isNaN(val) && Math.abs(val - f.expected) <= f.tol) {
+      inp.classList.add('correct');
+      correct++;
+    } else {
+      inp.classList.add('wrong');
+      hint.textContent = '\u2192 ' + f.fmt(f.expected);
+    }
+  });
+
+  // Decision
+  if (s2Decision !== null) { total++; if (s2Decision === 'make') correct++; }
+
+  const out = document.getElementById('score2-out');
+  if (blanks === STEP2_SPEC.length && s2Decision === null) {
+    out.textContent = 'Fill in some answers first.';
+    return;
+  }
+  out.textContent = correct + ' / ' + total + ' correct';
+
+  if (correct === total && total === 3) {
+    playBell();
+    fb.innerHTML = `
+      <div class="insight success">
+        <strong>On cost alone, making is $1,000 cheaper per month.</strong> The supplier charges $2 more per unit than HP's variable production cost, which adds up to $4,000 — only partially offset by $3,000 in avoidable fixed cost savings. But hold that thought.
+      </div>
+    `;
+    revealStep3(false);
+  } else {
+    playHorn();
+    if (s2Decision === 'out') {
+      fb.innerHTML = `<div class="insight">The relevant cost of making is only the variable production cost ($9) — S&amp;A doesn't change either way. Compare that to the $11 buy price and factor in the $3,000 fixed cost savings.</div>`;
+    }
+  }
+}
+
+function resetStep2() {
+  resetGroup(STEP2_SPEC, 'score2-out', () => {
+    document.getElementById('step2-insight').innerHTML = '';
+    s2Decision = null;
+    document.getElementById('s2-decide-make').classList.remove('selected');
+    document.getElementById('s2-decide-out').classList.remove('selected');
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 3 — Factor in capacity
+═══════════════════════════════════════════════════════════════ */
+let s3Decision = null;
+function pickS3(choice) {
+  s3Decision = choice;
+  document.getElementById('s3-decide-make').classList.toggle('selected', choice === 'make');
+  document.getElementById('s3-decide-out').classList.toggle('selected', choice === 'out');
+}
+
+const STEP3_SPEC = [
+  { inputId: 's3-hours', hintId: 'hint-s3-hours', expected: FREED_HOURS,  tol: 1,   fmt: v => fmtUnits(v) + ' hrs' },
+  { inputId: 's3-hubs',  hintId: 'hint-s3-hubs',  expected: ACTUAL_HUBS,  tol: 1,   fmt: v => fmtUnits(v) + ' hubs' },
+  { inputId: 's3-cm',    hintId: 'hint-s3-cm',    expected: CAPACITY_CM,  tol: 0.5, fmt: v => fmtMoney(v) },
+  { inputId: 's3-net',   hintId: 'hint-s3-net',   expected: COMBINED_NET, tol: 0.5, fmt: v => fmtMoneySigned(v) }
+];
+
+function checkStep3() {
+  const fb = document.getElementById('step3-insight');
+  fb.innerHTML = '';
+
+  let correct = 0, total = 0, blanks = 0;
+  STEP3_SPEC.forEach(f => {
+    const inp  = document.getElementById(f.inputId);
+    const hint = document.getElementById(f.hintId);
+    inp.classList.remove('correct', 'wrong');
+    hint.textContent = '';
+    total++;
+    if (inp.value.trim() === '') { blanks++; return; }
+    const val = parseNum(inp.value);
+    if (!isNaN(val) && Math.abs(val - f.expected) <= f.tol) {
+      inp.classList.add('correct');
+      correct++;
+    } else {
+      inp.classList.add('wrong');
+      hint.textContent = '\u2192 ' + f.fmt(f.expected);
+    }
+  });
+
+  // Decision
+  if (s3Decision !== null) { total++; if (s3Decision === 'out') correct++; }
+
+  const out = document.getElementById('score3-out');
+  if (blanks === STEP3_SPEC.length && s3Decision === null) {
+    out.textContent = 'Fill in some answers first.';
+    return;
+  }
+  out.textContent = correct + ' / ' + total + ' correct';
+
+  if (correct === total && total === 5) {
+    playBell();
+    fb.innerHTML = `
+      <div class="insight success">
+        <strong>The answer flipped.</strong> On a pure cost basis, outsourcing costs HP $1,000 more per month. But freeing 4,000 machine hours lets HP fill 300 unfilled hub orders at $30 CM each — that's $9,000 of contribution margin that was previously locked out. The combined effect is <strong>+$8,000 per month</strong> in HP's favor.
+      </div>
+    `;
+    revealStep4(false);
+  } else {
+    playHorn();
+    if (s3Decision === 'make') {
+      fb.innerHTML = `<div class="insight">Reconsider — the outsourcing cost from Step 2 is only part of the picture. What can HP do with the freed machine hours?</div>`;
+    }
+  }
+}
+
+function resetStep3() {
+  resetGroup(STEP3_SPEC, 'score3-out', () => {
+    document.getElementById('step3-insight').innerHTML = '';
+    s3Decision = null;
+    document.getElementById('s3-decide-make').classList.remove('selected');
+    document.getElementById('s3-decide-out').classList.remove('selected');
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 4 — Build your own
+═══════════════════════════════════════════════════════════════ */
+const BV_DEFAULTS = {
+  stdUnits: 2000, stdVarProd: 9, stdMachHrs: 2.0,
+  buyPrice: 11, avoidFC: 3000,
+  hubSP: 50, hubVarProd: 18, hubVarSA: 2, hubMachHrs: 3.0,
+  demand: 300
+};
+let bvDecision = null;
+
+function pickBV(choice) {
+  bvDecision = choice;
+  document.getElementById('bv-decide-make').classList.toggle('selected', choice === 'make');
+  document.getElementById('bv-decide-out').classList.toggle('selected', choice === 'out');
+}
+
+function readBV() {
+  return {
+    stdUnits:   parseNum(document.getElementById('bv-std-units').value),
+    stdVarProd: parseNum(document.getElementById('bv-std-vprod').value),
+    stdMachHrs: parseNum(document.getElementById('bv-std-hrs').value),
+    buyPrice:   parseNum(document.getElementById('bv-buy').value),
+    avoidFC:    parseNum(document.getElementById('bv-afc').value),
+    hubSP:      parseNum(document.getElementById('bv-hub-sp').value),
+    hubVarProd: parseNum(document.getElementById('bv-hub-vprod').value),
+    hubVarSA:   parseNum(document.getElementById('bv-hub-vsa').value),
+    hubMachHrs: parseNum(document.getElementById('bv-hub-hrs').value),
+    demand:     parseNum(document.getElementById('bv-demand').value)
+  };
+}
+
+function computeBV(p) {
+  const pureEffect = p.avoidFC - (p.buyPrice - p.stdVarProd) * p.stdUnits;
+  const freedHrs   = p.stdUnits * p.stdMachHrs;
+  const hubCM      = p.hubSP - p.hubVarProd - p.hubVarSA;
+  const maxHubs    = p.hubMachHrs > 0 ? Math.floor(freedHrs / p.hubMachHrs) : 0;
+  const actualHubs = Math.min(maxHubs, Math.max(0, p.demand));
+  const capGain    = actualHubs * hubCM;
+  return pureEffect + capGain;
+}
+
+function refreshBVHighlights() {
+  const p = readBV();
+  const fields = [
+    { id: 'bv-std-units', cur: p.stdUnits,   ref: BV_DEFAULTS.stdUnits },
+    { id: 'bv-std-vprod', cur: p.stdVarProd,  ref: BV_DEFAULTS.stdVarProd },
+    { id: 'bv-std-hrs',   cur: p.stdMachHrs,  ref: BV_DEFAULTS.stdMachHrs },
+    { id: 'bv-buy',       cur: p.buyPrice,    ref: BV_DEFAULTS.buyPrice },
+    { id: 'bv-afc',       cur: p.avoidFC,     ref: BV_DEFAULTS.avoidFC },
+    { id: 'bv-hub-sp',    cur: p.hubSP,       ref: BV_DEFAULTS.hubSP },
+    { id: 'bv-hub-vprod', cur: p.hubVarProd,   ref: BV_DEFAULTS.hubVarProd },
+    { id: 'bv-hub-vsa',   cur: p.hubVarSA,    ref: BV_DEFAULTS.hubVarSA },
+    { id: 'bv-hub-hrs',   cur: p.hubMachHrs,  ref: BV_DEFAULTS.hubMachHrs },
+    { id: 'bv-demand',    cur: p.demand,      ref: BV_DEFAULTS.demand }
+  ];
+  fields.forEach(({ id, cur, ref }) => {
+    const el = document.getElementById(id);
+    if (!isNaN(cur) && Math.abs(cur - ref) > 0.001) el.classList.add('changed');
+    else el.classList.remove('changed');
+  });
+}
+
+function checkStep4() {
+  const p = readBV();
+  const netEl = document.getElementById('bv-net');
+  const out = document.getElementById('score4-out');
+  const fb = document.getElementById('step4-feedback');
+  netEl.classList.remove('correct', 'wrong');
+  out.textContent = '';
+  fb.innerHTML = '';
+
+  const vals = Object.values(p);
+  if (vals.some(v => isNaN(v))) {
+    fb.innerHTML = '<div class="insight">Make sure every parameter has a valid number.</div>';
+    return;
+  }
+
+  const actual = computeBV(p);
+  const correctDec = actual >= 0 ? 'out' : 'make';
+
+  const netGuess = netEl.value.trim();
+  let parts = [], allCorrect = true;
+
+  if (netGuess) {
+    const v = parseNum(netGuess);
+    const tol = Math.max(0.5, Math.abs(actual) * 0.001);
+    if (!isNaN(v) && Math.abs(v - actual) <= tol) {
+      netEl.classList.add('correct');
+      parts.push('\u2714 Net effect');
+    } else {
+      netEl.classList.add('wrong');
+      parts.push('\u2718 Net effect (actual: ' + fmtMoneySigned(actual) + ')');
+      allCorrect = false;
+    }
+  }
+
+  if (bvDecision !== null) {
+    if (bvDecision === correctDec) {
+      parts.push('\u2714 Decision');
+    } else {
+      parts.push('\u2718 Decision (should ' + (correctDec === 'out' ? 'outsource' : 'make') + ')');
+      allCorrect = false;
+    }
+  }
+
+  if (parts.length === 0) {
+    fb.innerHTML = '<div class="insight">Enter the net effect and/or pick a decision before checking.</div>';
+    return;
+  }
+
+  out.textContent = parts.join('  \u00b7  ');
+  const line = `Combined net effect: <strong>${fmtMoneySigned(actual)}</strong> \u2014 HP should <strong>${correctDec === 'out' ? 'outsource' : 'keep making in-house'}</strong>.`;
+  if (allCorrect) {
+    fb.innerHTML = `<div class="insight success">${line}</div>`;
+    playBell();
+  } else {
+    fb.innerHTML = `<div class="insight">${line}</div>`;
+    playHorn();
+  }
+}
+
+function resetStep4() {
+  document.getElementById('bv-std-units').value = '2,000';
+  document.getElementById('bv-std-vprod').value = '$9';
+  document.getElementById('bv-std-hrs').value   = '2.0';
+  document.getElementById('bv-buy').value       = '$11';
+  document.getElementById('bv-afc').value       = '$3,000';
+  document.getElementById('bv-hub-sp').value    = '$50';
+  document.getElementById('bv-hub-vprod').value = '$18';
+  document.getElementById('bv-hub-vsa').value   = '$2';
+  document.getElementById('bv-hub-hrs').value   = '3.0';
+  document.getElementById('bv-demand').value    = '300';
+
+  document.getElementById('bv-net').value = '';
+  document.getElementById('bv-net').classList.remove('correct', 'wrong');
+  document.getElementById('score4-out').textContent = '';
+  document.getElementById('step4-feedback').innerHTML = '';
+
+  bvDecision = null;
+  document.getElementById('bv-decide-make').classList.remove('selected');
+  document.getElementById('bv-decide-out').classList.remove('selected');
+
+  refreshBVHighlights();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   REVEAL STEPS
+═══════════════════════════════════════════════════════════════ */
+const revealedSteps = new Set();
+function revealStep(stepNum, scroll) {
+  const el = document.getElementById('step' + stepNum);
+  if (!revealedSteps.has(stepNum)) {
+    el.classList.add('show');
+    revealedSteps.add(stepNum);
+    const btn = document.getElementById('reveal-step' + stepNum + '-btn');
+    if (btn) btn.style.display = 'none';
+  }
+  if (scroll) setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+}
+function revealStep2(scroll) { revealStep(2, scroll); }
+function revealStep3(scroll) { revealStep(3, scroll); }
+function revealStep4(scroll) { revealStep(4, scroll); }
+
+/* ═══════════════════════════════════════════════════════════════
+   QR / SHARE
+═══════════════════════════════════════════════════════════════ */
+function showQR() {
+  const url = location.href;
+  document.getElementById('qr-url').textContent = url;
+  const qrEl = document.getElementById('qr-code');
+  qrEl.innerHTML = '';
+  if (window.QRCode) {
+    new QRCode(qrEl, { text: url, width: 180, height: 180, colorDark: '#1a2744', colorLight: '#ffffff' });
+  }
+  document.getElementById('qr-overlay').classList.add('show');
+}
+function hideQR(ev) {
+  if (ev && ev.target.id !== 'qr-overlay' && ev.target.className !== 'qr-close') return;
+  document.getElementById('qr-overlay').classList.remove('show');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+  // Step 4 input listeners
+  ['bv-std-units','bv-std-vprod','bv-std-hrs','bv-buy','bv-afc',
+   'bv-hub-sp','bv-hub-vprod','bv-hub-vsa','bv-hub-hrs','bv-demand'].forEach(id => {
+    document.getElementById(id).addEventListener('input', () => {
+      refreshBVHighlights();
+      document.getElementById('bv-net').classList.remove('correct', 'wrong');
+      document.getElementById('score4-out').textContent = '';
+      document.getElementById('step4-feedback').innerHTML = '';
+    });
+  });
+  refreshBVHighlights();
+});
+</script>
+
+</body>
+</html>
