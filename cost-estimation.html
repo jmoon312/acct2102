@@ -1,0 +1,1631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cost Estimation Methods</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  /* ── Reset & base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    background: #f4f0e8;
+    color: #1a2744;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    background: #1a2744;
+    color: #fff;
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .header-left h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+  .header-left p  { font-size: 13px; color: #a0aec0; margin-top: 2px; }
+
+  .qr-btn {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    transition: background .15s;
+  }
+  .qr-btn:hover { background: rgba(255,255,255,0.18); }
+
+  /* QR Modal */
+  .qr-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .qr-overlay.show { display: flex; }
+  .qr-modal {
+    background: #fff;
+    border-radius: 14px;
+    padding: 32px;
+    text-align: center;
+    max-width: 300px;
+    width: 90%;
+  }
+  .qr-modal h2 { font-size: 16px; font-weight: 600; color: #1a2744; margin-bottom: 6px; }
+  .qr-modal p  { font-size: 12px; color: #64748b; margin-bottom: 18px; line-height: 1.5; }
+  #qr-code { display: flex; justify-content: center; margin-bottom: 16px; }
+  #qr-url  { font-size: 11px; color: #94a3b8; word-break: break-all; margin-bottom: 18px; }
+  .qr-close {
+    background: #1a2744; color: #fff;
+    border: none; border-radius: 8px;
+    padding: 8px 24px; font-size: 13px;
+    cursor: pointer; font-family: inherit;
+  }
+
+  /* ── Main layout ── */
+  main {
+    max-width: 920px;
+    margin: 28px auto;
+    padding: 0 20px 48px;
+  }
+
+  .part {
+    background: #fff;
+    border: 1px solid #dde3ef;
+    border-radius: 12px;
+    padding: 22px 24px 24px;
+    margin-bottom: 22px;
+  }
+
+  .part-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .part-tag {
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    background: #1a2744;
+    padding: 3px 10px;
+    border-radius: 99px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+  .part-tag.practice { background: #D85A30; }
+  .part-tag.explore  { background: #3b7dd8; }
+  .part-tag.solve    { background: #7a5cb6; }
+  .part-tag.build    { background: #5a9e3a; }
+  .part-header h2 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -.01em;
+  }
+
+  .setup-box {
+    background: #f8f6f0;
+    border: 1px solid #e6dfd0;
+    border-radius: 9px;
+    padding: 14px 16px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: #334155;
+    margin-bottom: 16px;
+  }
+  .setup-box strong { color: #1a2744; }
+  .setup-box p + p { margin-top: 6px; }
+
+  .prompt {
+    font-size: 14px;
+    color: #1a2744;
+    margin-bottom: 12px;
+    line-height: 1.55;
+  }
+  .prompt strong { font-weight: 700; }
+
+  /* ── Data table ── */
+  .data-table-wrap {
+    max-height: 420px;
+    overflow-y: auto;
+    border: 1px solid #e1eaf3;
+    border-radius: 8px;
+    margin-bottom: 14px;
+  }
+  .data-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-variant-numeric: tabular-nums;
+    font-size: 13.5px;
+  }
+  .data-table thead th {
+    background: #fde9c8;
+    color: #1a2744;
+    font-size: 12.5px;
+    font-weight: 700;
+    text-align: center;
+    padding: 10px 12px;
+    border-bottom: 2px solid #f0c674;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+  .data-table thead th:first-child { text-align: center; }
+  .data-table tbody td {
+    background: #f0f5fa;
+    padding: 8px 12px;
+    text-align: center;
+    border-bottom: 1px solid #e1eaf3;
+    cursor: default;
+  }
+  .data-table tbody tr.selectable td { cursor: pointer; }
+  .data-table tbody tr.selectable:hover td { background: #e8eef6; }
+  .data-table tbody tr.sel-high td {
+    background: #D85A30; color: #fff; font-weight: 600;
+  }
+  .data-table tbody tr.sel-low td {
+    background: #3b7dd8; color: #fff; font-weight: 600;
+  }
+  .data-table tbody tr.sel-high td .row-badge,
+  .data-table tbody tr.sel-low td .row-badge {
+    display: inline-block;
+    font-size: 10px;
+    background: rgba(255,255,255,0.3);
+    padding: 1px 6px;
+    border-radius: 4px;
+    margin-left: 6px;
+    font-weight: 700;
+  }
+  .select-btns {
+    display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap;
+  }
+  .sel-btn {
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-family: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all .15s;
+  }
+  .sel-btn.high {
+    background: #fff3ed; color: #D85A30; border-color: #D85A30;
+  }
+  .sel-btn.high.active {
+    background: #D85A30; color: #fff;
+  }
+  .sel-btn.low {
+    background: #eff6ff; color: #3b7dd8; border-color: #3b7dd8;
+  }
+  .sel-btn.low.active {
+    background: #3b7dd8; color: #fff;
+  }
+
+  /* ── QA rows ── */
+  .qa-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 4px; }
+  .qa-row {
+    display: grid;
+    grid-template-columns: 1fr 200px;
+    gap: 14px;
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #e1eaf3;
+    border-radius: 9px;
+    padding: 13px 16px;
+  }
+  .qa-row .qa-prompt {
+    font-size: 13.5px;
+    color: #1a2744;
+    line-height: 1.5;
+  }
+  .qa-row .qa-prompt strong { font-weight: 700; }
+  .qa-row .qa-prompt small {
+    display: block;
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 3px;
+  }
+  .qa-row .answer { display: flex; flex-direction: column; }
+  .qa-row .answer label {
+    font-size: 10.5px;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 4px;
+  }
+  .qa-row .answer input {
+    padding: 8px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .qa-row .answer input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .qa-row .answer input.correct {
+    border-color: #5a9e3a;
+    background: #f0f9e8;
+    color: #2d6a1f;
+  }
+  .qa-row .answer input.wrong {
+    border-color: #c94040;
+    background: #fff1f1;
+    color: #9b2020;
+  }
+  .qa-row .answer .corr-hint {
+    text-align: center; margin-top: 3px;
+    display: block; font-size: 11px;
+    color: #5a9e3a; font-weight: 600;
+    min-height: 14px;
+  }
+
+  /* ── Chart ── */
+  .chart-wrap {
+    background: #fff;
+    border: 1px solid #e1eaf3;
+    border-radius: 9px;
+    padding: 12px;
+    margin-bottom: 14px;
+    text-align: center;
+  }
+  .chart-wrap svg { max-width: 100%; height: auto; }
+  .chart-eq {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1a2744;
+    margin-top: 8px;
+    font-variant-numeric: tabular-nums;
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  }
+  .chart-eq .eq-fc { color: #7a5cb6; }
+  .chart-eq .eq-vc { color: #D85A30; }
+
+  /* ── Comparison cards ── */
+  .compare-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .compare-card {
+    background: #f8fafc;
+    border: 2px solid #e1eaf3;
+    border-radius: 9px;
+    padding: 14px 16px;
+    text-align: center;
+  }
+  .compare-card.winner {
+    border-color: #5a9e3a;
+    background: #f0f9e8;
+  }
+  .compare-card .cc-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin-bottom: 8px;
+  }
+  .compare-card .cc-label.hl  { color: #D85A30; }
+  .compare-card .cc-label.vf  { color: #3b7dd8; }
+  .compare-card .cc-label.reg { color: #7a5cb6; }
+  .compare-card .cc-row {
+    font-size: 13px;
+    color: #475569;
+    margin-bottom: 4px;
+    font-variant-numeric: tabular-nums;
+  }
+  .compare-card .cc-row strong { color: #1a2744; }
+  .compare-card .cc-sse {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid #e1eaf3;
+    font-size: 14px;
+    font-weight: 700;
+    color: #1a2744;
+    font-variant-numeric: tabular-nums;
+  }
+  .compare-card.winner .cc-sse { color: #2d6a1f; }
+  .winner-badge {
+    display: inline-block;
+    font-size: 10px;
+    background: #5a9e3a;
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-left: 4px;
+    font-weight: 700;
+    vertical-align: middle;
+  }
+
+  /* ── Regression column picker ── */
+  .col-picker {
+    display: flex; gap: 14px; margin-bottom: 14px; flex-wrap: wrap;
+  }
+  .col-pick-group {
+    flex: 1; min-width: 200px;
+    background: #f8fafc;
+    border: 1px solid #e1eaf3;
+    border-radius: 9px;
+    padding: 12px 16px;
+  }
+  .col-pick-group .cpg-label {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .04em; color: #64748b; margin-bottom: 8px;
+  }
+  .col-pick-group .cpg-options { display: flex; gap: 8px; }
+  .col-pick-group .cpg-opt {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 7px;
+    background: #fff;
+    font-size: 13px;
+    font-family: inherit;
+    font-weight: 600;
+    color: #1a2744;
+    cursor: pointer;
+    text-align: center;
+    transition: all .15s;
+  }
+  .col-pick-group .cpg-opt:hover { border-color: #3b7dd8; }
+  .col-pick-group .cpg-opt.picked {
+    background: #7a5cb6; color: #fff; border-color: #7a5cb6;
+  }
+  .col-pick-group .cpg-opt.wrong-pick {
+    background: #fff1f1; color: #9b2020; border-color: #c94040;
+  }
+  .reg-results {
+    background: #f8f6f0;
+    border: 1px solid #e6dfd0;
+    border-radius: 9px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+    display: none;
+  }
+  .reg-results.show { display: block; }
+  .reg-results .rr-eq {
+    font-size: 16px;
+    font-weight: 700;
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-variant-numeric: tabular-nums;
+    margin-bottom: 6px;
+  }
+  .reg-results .rr-stats {
+    font-size: 13px;
+    color: #475569;
+  }
+
+  /* ── Build-your-own ── */
+  .build-params {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .build-param {
+    background: #f8fafc;
+    border: 1px solid #e1eaf3;
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+  .build-param label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 5px;
+  }
+  .build-param input {
+    width: 100%;
+    padding: 7px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .build-param input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .build-sse-live {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 12px;
+    font-variant-numeric: tabular-nums;
+  }
+  .build-sse-card {
+    text-align: center;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1.5px solid #e1eaf3;
+    background: #f8fafc;
+  }
+  .build-sse-card .bsc-label {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .05em; margin-bottom: 4px;
+  }
+  .build-sse-card .bsc-label.hl  { color: #D85A30; }
+  .build-sse-card .bsc-label.vf  { color: #3b7dd8; }
+  .build-sse-card .bsc-label.reg { color: #7a5cb6; }
+  .build-sse-card .bsc-val {
+    font-size: 14px; font-weight: 700; color: #1a2744;
+  }
+  .build-sse-card.winner {
+    border-color: #5a9e3a; background: #f0f9e8;
+  }
+  .build-sse-card.winner .bsc-val { color: #2d6a1f; }
+
+  /* ── Insight ── */
+  .insight {
+    background: #eff6ff;
+    border-left: 4px solid #3b7dd8;
+    border-radius: 0 8px 8px 0;
+    padding: 12px 16px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: #1a2744;
+    margin-top: 12px;
+  }
+  .insight strong { font-weight: 700; }
+  .insight.success {
+    background: #f0f9e8;
+    border-left-color: #5a9e3a;
+  }
+
+  /* ── Buttons ── */
+  .footer {
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .check-btn {
+    background: #1a2744; color: #fff;
+    border: none; border-radius: 9px;
+    padding: 10px 24px; font-size: 14px;
+    cursor: pointer; font-family: inherit;
+    font-weight: 500;
+    transition: background .15s;
+  }
+  .check-btn:hover { background: #243660; }
+  .check-btn:disabled { opacity: 0.5; cursor: default; }
+  .reset-btn {
+    font-size: 13px; color: #64748b;
+    background: none; border: none;
+    cursor: pointer; text-decoration: underline;
+    font-family: inherit;
+  }
+  .reveal-link {
+    margin-left: auto;
+    font-size: 12.5px;
+    color: #64748b;
+    background: none; border: none;
+    cursor: pointer; text-decoration: underline;
+    font-family: inherit;
+  }
+  .reveal-link:hover { color: #1a2744; }
+  .score-out {
+    font-size: 14px; font-weight: 600;
+    color: #1a2744;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 6px 14px;
+  }
+  .score-out:empty { display: none; }
+
+  /* Reveal animation */
+  .reveal {
+    display: none;
+    animation: slideIn 0.4s ease-out;
+  }
+  .reveal.show { display: block; }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Mobile ── */
+  @media (max-width: 700px) {
+    header { padding: 14px 16px; }
+    main { padding: 0 10px 36px; }
+    .part { padding: 16px 14px 18px; }
+    .qa-row { grid-template-columns: 1fr; gap: 8px; }
+    .compare-cards { grid-template-columns: 1fr; }
+    .col-picker { flex-direction: column; }
+    .build-sse-live { grid-template-columns: 1fr; }
+    .select-btns { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>Cost Estimation Methods</h1>
+    <p>Chapter 2 &mdash; Boulangerie du Metz</p>
+  </div>
+  <button class="qr-btn" onclick="showQR()">
+    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="3" height="3"/><line x1="21" y1="14" x2="21" y2="17"/><line x1="17" y1="21" x2="21" y2="21"/></svg>
+    Share with students
+  </button>
+</header>
+
+<div class="qr-overlay" id="qr-overlay" onclick="hideQR(event)">
+  <div class="qr-modal">
+    <h2>Scan to open</h2>
+    <p>Students can open this activity on their own device.</p>
+    <div id="qr-code"></div>
+    <div id="qr-url"></div>
+    <button class="qr-close" onclick="hideQR()">Close</button>
+  </div>
+</div>
+
+<main>
+
+<!-- ═══════════ STEP 1: HIGH-LOW ═══════════ -->
+<section class="part" id="step1">
+  <div class="part-header">
+    <span class="part-tag practice">Step 1</span>
+    <h2>High-Low Method</h2>
+  </div>
+
+  <div class="setup-box">
+    <p>You're the new controller at <strong>Boulangerie du Metz</strong>, a busy artisan bakery in the heart of Metz. The head baker has been tracking weekly production data &mdash; <strong>dozens of croissants baked</strong> and <strong>total weekly cost</strong> (flour, butter, energy, labor) &mdash; for the past 20 weeks.</p>
+    <p>Your first task: estimate the bakery's cost function using the <strong>high-low method</strong>. Identify the high and low points, then compute the variable cost per dozen and fixed costs.</p>
+  </div>
+
+  <div class="select-btns">
+    <button class="sel-btn high" id="sel-high-btn" onclick="startSelect('high')">Select the high point</button>
+    <button class="sel-btn low" id="sel-low-btn" onclick="startSelect('low')">Select the low point</button>
+  </div>
+
+  <div class="data-table-wrap">
+    <table class="data-table" id="hl-table">
+      <thead>
+        <tr><th>Week</th><th>Dozens Baked</th><th>Total Cost</th></tr>
+      </thead>
+      <tbody id="hl-tbody"></tbody>
+    </table>
+  </div>
+
+  <div class="qa-list">
+    <div class="qa-row">
+      <div class="qa-prompt">
+        <strong>Variable cost per dozen</strong>
+        <small>(High cost &minus; Low cost) &divide; (High activity &minus; Low activity)</small>
+      </div>
+      <div class="answer">
+        <label>VC / Dozen</label>
+        <input id="hl-vc" type="text" placeholder="€">
+        <span class="corr-hint" id="hl-vc-hint"></span>
+      </div>
+    </div>
+    <div class="qa-row">
+      <div class="qa-prompt">
+        <strong>Fixed cost per week</strong>
+        <small>Total cost &minus; (VC &times; activity) at either point</small>
+      </div>
+      <div class="answer">
+        <label>Fixed Cost</label>
+        <input id="hl-fc" type="text" placeholder="€">
+        <span class="corr-hint" id="hl-fc-hint"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <button class="check-btn" onclick="checkStep1()">Check</button>
+    <button class="reset-btn" onclick="resetStep1()">Reset</button>
+    <span class="score-out" id="score1-out"></span>
+    <button class="reveal-link" id="reveal-step2-btn" onclick="revealStep(2,true)">Skip ahead &rarr;</button>
+  </div>
+  <div id="step1-feedback"></div>
+</section>
+
+<!-- ═══════════ STEP 2: VISUAL FIT ═══════════ -->
+<section class="part reveal" id="step2">
+  <div class="part-header">
+    <span class="part-tag explore">Step 2</span>
+    <h2>Visual Fit</h2>
+  </div>
+
+  <div class="setup-box">
+    <p>Now try estimating the cost function <strong>by eye</strong>. Drag the two handles on the scatter plot to position your best-fit line through the data. The equation updates live as you drag.</p>
+  </div>
+
+  <div class="chart-wrap">
+    <svg id="chart2" viewBox="0 0 600 400"></svg>
+    <div class="chart-eq" id="chart2-eq">Drag the handles to set your line</div>
+  </div>
+
+  <div class="footer">
+    <button class="check-btn" id="lock-vf-btn" onclick="lockVisualFit()">Lock In My Line</button>
+    <button class="reset-btn" onclick="resetStep2()">Reset line</button>
+    <button class="reveal-link" id="reveal-step3-btn" onclick="revealStep(3,true)">Skip ahead &rarr;</button>
+  </div>
+  <div id="step2-feedback"></div>
+</section>
+
+<!-- ═══════════ STEP 3: REGRESSION ═══════════ -->
+<section class="part reveal" id="step3">
+  <div class="part-header">
+    <span class="part-tag solve">Step 3</span>
+    <h2>Least-Squares Regression</h2>
+  </div>
+
+  <div class="setup-box">
+    <p>Time to let the math do the work. Before running the regression, <strong>identify which variable is X (the independent cost driver) and which is Y (the cost you're estimating).</strong></p>
+  </div>
+
+  <div class="col-picker">
+    <div class="col-pick-group">
+      <div class="cpg-label">X &mdash; Independent Variable (cost driver)</div>
+      <div class="cpg-options">
+        <button class="cpg-opt" id="x-dozens" onclick="pickCol('x','dozens')">Dozens Baked</button>
+        <button class="cpg-opt" id="x-cost" onclick="pickCol('x','cost')">Total Cost</button>
+      </div>
+    </div>
+    <div class="col-pick-group">
+      <div class="cpg-label">Y &mdash; Dependent Variable (what we predict)</div>
+      <div class="cpg-options">
+        <button class="cpg-opt" id="y-dozens" onclick="pickCol('y','dozens')">Dozens Baked</button>
+        <button class="cpg-opt" id="y-cost" onclick="pickCol('y','cost')">Total Cost</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer" style="margin-top:0">
+    <button class="check-btn" id="run-reg-btn" onclick="runRegression()" disabled>Run Regression</button>
+    <button class="reset-btn" onclick="resetStep3()">Reset</button>
+    <button class="reveal-link" id="reveal-step4-btn" onclick="revealStep(4,true)">Skip ahead &rarr;</button>
+  </div>
+
+  <div class="reg-results" id="reg-results">
+    <div class="rr-eq" id="rr-eq"></div>
+    <div class="rr-stats" id="rr-stats"></div>
+  </div>
+  <div id="step3-feedback"></div>
+</section>
+
+<!-- ═══════════ STEP 4: COMPARISON ═══════════ -->
+<section class="part reveal" id="step4">
+  <div class="part-header">
+    <span class="part-tag solve">Step 4</span>
+    <h2>Compare All Three</h2>
+  </div>
+
+  <div class="setup-box">
+    <p>Here are your three cost estimates side by side. For each method, we compute the <strong>predicted cost</strong> at every activity level, measure how far off each prediction was, square those errors, and sum them up. The method with the <strong>lowest sum of squared errors (SSE)</strong> fits the data best.</p>
+  </div>
+
+  <div class="compare-cards" id="compare-cards"></div>
+
+  <div class="chart-wrap">
+    <svg id="chart4" viewBox="0 0 600 400"></svg>
+  </div>
+
+  <div id="step4-feedback"></div>
+
+  <div class="footer">
+    <button class="reveal-link" id="reveal-step5-btn" onclick="revealStep(5,true)" style="margin-left:0">Continue to Build Your Own &rarr;</button>
+  </div>
+</section>
+
+<!-- ═══════════ STEP 5: BUILD YOUR OWN ═══════════ -->
+<section class="part reveal" id="step5">
+  <div class="part-header">
+    <span class="part-tag build">Step 5</span>
+    <h2>Build Your Own</h2>
+  </div>
+
+  <div class="setup-box">
+    <p>Set the <strong>true</strong> cost function and noise level, then generate a fresh dataset. Try to beat the regression with your visual fit &mdash; the SSE updates live as you drag.</p>
+  </div>
+
+  <div class="build-params">
+    <div class="build-param">
+      <label>True Fixed Cost</label>
+      <input id="byo-fc" type="text" value="€1,200">
+    </div>
+    <div class="build-param">
+      <label>True VC / Dozen</label>
+      <input id="byo-vc" type="text" value="€3.50">
+    </div>
+    <div class="build-param">
+      <label>Noise (Std Dev)</label>
+      <input id="byo-noise" type="text" value="€80">
+    </div>
+    <div class="build-param">
+      <label>Weeks</label>
+      <input id="byo-n" type="text" value="20">
+    </div>
+  </div>
+
+  <div class="footer" style="margin-top:0;margin-bottom:14px">
+    <button class="check-btn" onclick="generateBYO()">Generate New Data</button>
+    <button class="reset-btn" onclick="resetStep5()">Reset defaults</button>
+  </div>
+
+  <div id="byo-area" style="display:none">
+    <div class="chart-wrap">
+      <svg id="chart5" viewBox="0 0 600 400"></svg>
+      <div class="chart-eq" id="chart5-eq">Drag the handles to set your line</div>
+    </div>
+
+    <div class="build-sse-live" id="byo-sse"></div>
+
+    <div id="step5-feedback"></div>
+  </div>
+</section>
+
+</main>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   DATA
+═══════════════════════════════════════════════════════════════ */
+const DATA = [
+  {wk:1,  x:425, y:2625}, {wk:2,  x:310, y:2188},
+  {wk:3,  x:580, y:3079}, {wk:4,  x:490, y:2727},
+  {wk:5,  x:355, y:2464}, {wk:6,  x:640, y:3162},
+  {wk:7,  x:250, y:2040}, {wk:8,  x:530, y:2974},
+  {wk:9,  x:710, y:3338}, {wk:10, x:460, y:2713},
+  {wk:11, x:375, y:2355}, {wk:12, x:620, y:3196},
+  {wk:13, x:280, y:2034}, {wk:14, x:550, y:2980},
+  {wk:15, x:750, y:3540}, {wk:16, x:680, y:3464},
+  {wk:17, x:400, y:2500}, {wk:18, x:570, y:3071},
+  {wk:19, x:330, y:2374}, {wk:20, x:700, y:3560}
+];
+
+// High-low correct answers (activity extremes)
+const HL_HIGH = DATA.reduce((a, b) => b.x > a.x ? b : a);
+const HL_LOW  = DATA.reduce((a, b) => b.x < a.x ? b : a);
+const HL_VC   = (HL_HIGH.y - HL_LOW.y) / (HL_HIGH.x - HL_LOW.x);
+const HL_FC   = HL_HIGH.y - HL_VC * HL_HIGH.x;
+
+/* ═══════════════════════════════════════════════════════════════
+   UTILITIES
+═══════════════════════════════════════════════════════════════ */
+function parseNum(s) {
+  if (typeof s === 'number') return s;
+  return parseFloat(String(s).replace(/[€$,\s]/g, ''));
+}
+function fmtMoney(v, d) {
+  if (d === undefined) d = (Math.round(v * 100) === Math.round(v) * 100) ? 0 : 2;
+  const r = Math.round(v * Math.pow(10, d)) / Math.pow(10, d);
+  return '€' + r.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+}
+function fmtNum(v, d) {
+  d = d ?? 2;
+  return v.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+}
+function fmtInt(v) { return Math.round(v).toLocaleString('en-US'); }
+
+/* ═══════════════════════════════════════════════════════════════
+   AUDIO
+═══════════════════════════════════════════════════════════════ */
+let audioCtx = null;
+function getAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+function playBell() {
+  try {
+    const ctx = getAudio();
+    [660, 880, 1100].forEach((f, i) => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = 'sine'; o.frequency.value = f;
+      g.gain.setValueAtTime(0.12, ctx.currentTime + i * 0.12);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.12 + 0.4);
+      o.connect(g); g.connect(ctx.destination);
+      o.start(ctx.currentTime + i * 0.12);
+      o.stop(ctx.currentTime + i * 0.12 + 0.4);
+    });
+  } catch (e) {}
+}
+function playHorn() {
+  try {
+    const ctx = getAudio();
+    [392, 311, 261].forEach((f, i) => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = 'square'; o.frequency.value = f;
+      g.gain.setValueAtTime(0.08, ctx.currentTime + i * 0.2);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.2 + 0.35);
+      o.connect(g); g.connect(ctx.destination);
+      o.start(ctx.currentTime + i * 0.2);
+      o.stop(ctx.currentTime + i * 0.2 + 0.35);
+    });
+  } catch (e) {}
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   OLS HELPER
+═══════════════════════════════════════════════════════════════ */
+function ols(data) {
+  const n = data.length;
+  let sx = 0, sy = 0, sxx = 0, sxy = 0;
+  for (const d of data) {
+    sx += d.x; sy += d.y;
+    sxx += d.x * d.x;
+    sxy += d.x * d.y;
+  }
+  const mx = sx / n, my = sy / n;
+  const b = (sxy - n * mx * my) / (sxx - n * mx * mx);
+  const a = my - b * mx;
+  let sst = 0, sse = 0;
+  for (const d of data) {
+    sst += (d.y - my) ** 2;
+    sse += (d.y - (a + b * d.x)) ** 2;
+  }
+  return { a, b, r2: 1 - sse / sst, sse };
+}
+
+function computeSSE(data, a, b) {
+  let sse = 0;
+  for (const d of data) sse += (d.y - (a + b * d.x)) ** 2;
+  return sse;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CHART HELPERS (SVG scatter + draggable line)
+═══════════════════════════════════════════════════════════════ */
+const PL = 75, PR = 575, PT = 25, PB = 360; // plot area bounds
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
+function chartScales(data, opts) {
+  opts = opts || {};
+  const pad = opts.pad || 0.08;
+  const xs = data.map(d => d.x), ys = data.map(d => d.y);
+  let xMin = Math.min(...xs), xMax = Math.max(...xs);
+  let yMin = Math.min(...ys), yMax = Math.max(...ys);
+  const xPad = (xMax - xMin) * pad, yPad = (yMax - yMin) * pad;
+  xMin -= xPad; xMax += xPad; yMin -= yPad; yMax += yPad;
+  // Extend left toward intercept if requested (not quite to 0)
+  if (opts.showIntercept) {
+    xMin = 50;
+    // Extend y downward to accommodate intercept range
+    yMin = Math.min(yMin, 800);
+  }
+  // Round to nice numbers
+  xMin = Math.floor(xMin / 50) * 50;
+  xMax = Math.ceil(xMax / 50) * 50;
+  yMin = Math.floor(yMin / 200) * 200;
+  yMax = Math.ceil(yMax / 200) * 200;
+  return { xMin, xMax, yMin, yMax };
+}
+
+function toSvgX(v, sc) { return PL + (v - sc.xMin) / (sc.xMax - sc.xMin) * (PR - PL); }
+function toSvgY(v, sc) { return PB - (v - sc.yMin) / (sc.yMax - sc.yMin) * (PB - PT); }
+function fromSvgY(sy, sc) { return sc.yMin + (PB - sy) / (PB - PT) * (sc.yMax - sc.yMin); }
+
+function drawChart(svgId, data, sc, opts) {
+  opts = opts || {};
+  const svg = document.getElementById(svgId);
+  svg.innerHTML = '';
+
+  // Grid lines
+  const xStep = (sc.xMax - sc.xMin) <= 600 ? 100 : 200;
+  const yStep = (sc.yMax - sc.yMin) <= 2000 ? 200 : 500;
+  for (let v = sc.xMin; v <= sc.xMax; v += xStep) {
+    const sx = toSvgX(v, sc);
+    const line = document.createElementNS(SVG_NS, 'line');
+    line.setAttribute('x1', sx); line.setAttribute('x2', sx);
+    line.setAttribute('y1', PT); line.setAttribute('y2', PB);
+    line.setAttribute('stroke', '#e5e7eb'); line.setAttribute('stroke-width', '1');
+    svg.appendChild(line);
+    const txt = document.createElementNS(SVG_NS, 'text');
+    txt.setAttribute('x', sx); txt.setAttribute('y', PB + 18);
+    txt.setAttribute('text-anchor', 'middle');
+    txt.setAttribute('font-size', '11'); txt.setAttribute('fill', '#64748b');
+    txt.textContent = v.toLocaleString();
+    svg.appendChild(txt);
+  }
+  for (let v = sc.yMin; v <= sc.yMax; v += yStep) {
+    const sy = toSvgY(v, sc);
+    const line = document.createElementNS(SVG_NS, 'line');
+    line.setAttribute('x1', PL); line.setAttribute('x2', PR);
+    line.setAttribute('y1', sy); line.setAttribute('y2', sy);
+    line.setAttribute('stroke', '#e5e7eb'); line.setAttribute('stroke-width', '1');
+    svg.appendChild(line);
+    const txt = document.createElementNS(SVG_NS, 'text');
+    txt.setAttribute('x', PL - 8); txt.setAttribute('y', sy + 4);
+    txt.setAttribute('text-anchor', 'end');
+    txt.setAttribute('font-size', '11'); txt.setAttribute('fill', '#64748b');
+    txt.textContent = '€' + v.toLocaleString();
+    svg.appendChild(txt);
+  }
+
+  // Axes
+  const xAxis = document.createElementNS(SVG_NS, 'line');
+  xAxis.setAttribute('x1', PL); xAxis.setAttribute('x2', PR);
+  xAxis.setAttribute('y1', PB); xAxis.setAttribute('y2', PB);
+  xAxis.setAttribute('stroke', '#374151'); xAxis.setAttribute('stroke-width', '1.5');
+  svg.appendChild(xAxis);
+  const yAxis = document.createElementNS(SVG_NS, 'line');
+  yAxis.setAttribute('x1', PL); yAxis.setAttribute('x2', PL);
+  yAxis.setAttribute('y1', PT); yAxis.setAttribute('y2', PB);
+  yAxis.setAttribute('stroke', '#374151'); yAxis.setAttribute('stroke-width', '1.5');
+  svg.appendChild(yAxis);
+
+  // Axis labels
+  const xLabel = document.createElementNS(SVG_NS, 'text');
+  xLabel.setAttribute('x', (PL + PR) / 2); xLabel.setAttribute('y', PB + 40);
+  xLabel.setAttribute('text-anchor', 'middle');
+  xLabel.setAttribute('font-size', '12.5'); xLabel.setAttribute('fill', '#475569');
+  xLabel.setAttribute('font-weight', '600');
+  xLabel.textContent = 'Dozens Baked';
+  svg.appendChild(xLabel);
+  const yLabel = document.createElementNS(SVG_NS, 'text');
+  yLabel.setAttribute('x', 15); yLabel.setAttribute('y', (PT + PB) / 2);
+  yLabel.setAttribute('text-anchor', 'middle');
+  yLabel.setAttribute('font-size', '12.5'); yLabel.setAttribute('fill', '#475569');
+  yLabel.setAttribute('font-weight', '600');
+  yLabel.setAttribute('transform', `rotate(-90, 15, ${(PT + PB) / 2})`);
+  yLabel.textContent = 'Total Cost (€)';
+  svg.appendChild(yLabel);
+
+  // Data points
+  for (const d of data) {
+    const c = document.createElementNS(SVG_NS, 'circle');
+    c.setAttribute('cx', toSvgX(d.x, sc));
+    c.setAttribute('cy', toSvgY(d.y, sc));
+    c.setAttribute('r', '5');
+    c.setAttribute('fill', '#1a2744');
+    c.setAttribute('opacity', '0.7');
+    svg.appendChild(c);
+  }
+
+  // Return svg for further drawing
+  return svg;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DRAGGABLE LINE
+═══════════════════════════════════════════════════════════════ */
+function addDragLine(svgId, sc, eqId, color, onUpdate) {
+  color = color || '#3b7dd8';
+  const svg = document.getElementById(svgId);
+  const midY = (sc.yMin + sc.yMax) / 2;
+
+  // Line
+  const line = document.createElementNS(SVG_NS, 'line');
+  line.setAttribute('x1', PL); line.setAttribute('x2', PR);
+  line.setAttribute('y1', toSvgY(midY, sc)); line.setAttribute('y2', toSvgY(midY, sc));
+  line.setAttribute('stroke', color); line.setAttribute('stroke-width', '2.5');
+  line.setAttribute('stroke-dasharray', '8,4');
+  line.id = svgId + '-line';
+  svg.appendChild(line);
+
+  // Handles
+  const handleL = document.createElementNS(SVG_NS, 'circle');
+  handleL.setAttribute('cx', PL); handleL.setAttribute('cy', toSvgY(midY, sc));
+  handleL.setAttribute('r', '9'); handleL.setAttribute('fill', '#fff');
+  handleL.setAttribute('stroke', color); handleL.setAttribute('stroke-width', '3');
+  handleL.setAttribute('cursor', 'ns-resize'); handleL.id = svgId + '-hL';
+  svg.appendChild(handleL);
+
+  const handleR = document.createElementNS(SVG_NS, 'circle');
+  handleR.setAttribute('cx', PR); handleR.setAttribute('cy', toSvgY(midY, sc));
+  handleR.setAttribute('r', '9'); handleR.setAttribute('fill', '#fff');
+  handleR.setAttribute('stroke', color); handleR.setAttribute('stroke-width', '3');
+  handleR.setAttribute('cursor', 'ns-resize'); handleR.id = svgId + '-hR';
+  svg.appendChild(handleR);
+
+  let dragging = null;
+
+  function getEquation() {
+    const yL = fromSvgY(parseFloat(handleL.getAttribute('cy')), sc);
+    const yR = fromSvgY(parseFloat(handleR.getAttribute('cy')), sc);
+    const b = (yR - yL) / (sc.xMax - sc.xMin);
+    const a = yL - b * sc.xMin;
+    return { a, b };
+  }
+
+  function updateEq() {
+    const { a, b } = getEquation();
+    if (eqId) {
+      const el = document.getElementById(eqId);
+      el.innerHTML = `<span class="eq-fc">${fmtMoney(Math.round(a * 100) / 100)}</span> + <span class="eq-vc">${fmtMoney(Math.round(b * 100) / 100)}</span> &times; Dozens`;
+    }
+    if (onUpdate) onUpdate(a, b);
+  }
+
+  function svgY(evt) {
+    const svg = document.getElementById(svgId);
+    const rect = svg.getBoundingClientRect();
+    const clientY = evt.touches ? evt.touches[0].clientY : evt.clientY;
+    const vbH = 400;
+    return Math.max(PT, Math.min(PB, (clientY - rect.top) / rect.height * vbH));
+  }
+
+  function startDrag(which) {
+    return function(evt) {
+      evt.preventDefault();
+      dragging = which;
+      document.addEventListener('mousemove', doDrag);
+      document.addEventListener('mouseup', endDrag);
+      document.addEventListener('touchmove', doDrag, { passive: false });
+      document.addEventListener('touchend', endDrag);
+    };
+  }
+
+  function doDrag(evt) {
+    if (!dragging) return;
+    evt.preventDefault();
+    const sy = svgY(evt);
+    dragging.setAttribute('cy', sy);
+    line.setAttribute(dragging === handleL ? 'y1' : 'y2', sy);
+    updateEq();
+  }
+
+  function endDrag() {
+    dragging = null;
+    document.removeEventListener('mousemove', doDrag);
+    document.removeEventListener('mouseup', endDrag);
+    document.removeEventListener('touchmove', doDrag);
+    document.removeEventListener('touchend', endDrag);
+  }
+
+  handleL.addEventListener('mousedown', startDrag(handleL));
+  handleL.addEventListener('touchstart', startDrag(handleL), { passive: false });
+  handleR.addEventListener('mousedown', startDrag(handleR));
+  handleR.addEventListener('touchstart', startDrag(handleR), { passive: false });
+
+  updateEq();
+  return { getEquation, handleL, handleR, line };
+}
+
+function addStaticLine(svgId, sc, a, b, color, dash) {
+  const svg = document.getElementById(svgId);
+  const line = document.createElementNS(SVG_NS, 'line');
+  line.setAttribute('x1', toSvgX(sc.xMin, sc));
+  line.setAttribute('x2', toSvgX(sc.xMax, sc));
+  line.setAttribute('y1', toSvgY(a + b * sc.xMin, sc));
+  line.setAttribute('y2', toSvgY(a + b * sc.xMax, sc));
+  line.setAttribute('stroke', color);
+  line.setAttribute('stroke-width', '2');
+  if (dash) line.setAttribute('stroke-dasharray', dash);
+  svg.appendChild(line);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 1: HIGH-LOW
+═══════════════════════════════════════════════════════════════ */
+let selectMode = null;
+let selectedHigh = null, selectedLow = null;
+
+function buildHLTable() {
+  const tbody = document.getElementById('hl-tbody');
+  tbody.innerHTML = '';
+  for (const d of DATA) {
+    const tr = document.createElement('tr');
+    tr.className = 'selectable';
+    tr.dataset.wk = d.wk;
+    tr.onclick = () => clickRow(d.wk);
+    tr.innerHTML = `<td>${d.wk}</td><td>${fmtInt(d.x)}</td><td>${fmtMoney(d.y)}</td>`;
+    tbody.appendChild(tr);
+  }
+}
+
+function startSelect(mode) {
+  selectMode = mode;
+  document.getElementById('sel-high-btn').classList.toggle('active', mode === 'high');
+  document.getElementById('sel-low-btn').classList.toggle('active', mode === 'low');
+}
+
+function clickRow(wk) {
+  if (!selectMode) return;
+  if (selectMode === 'high') selectedHigh = wk;
+  else selectedLow = wk;
+  selectMode = null;
+  document.getElementById('sel-high-btn').classList.remove('active');
+  document.getElementById('sel-low-btn').classList.remove('active');
+  refreshHLHighlights();
+}
+
+function refreshHLHighlights() {
+  const rows = document.querySelectorAll('#hl-tbody tr');
+  rows.forEach(tr => {
+    tr.classList.remove('sel-high', 'sel-low');
+    // Remove existing badges
+    tr.querySelectorAll('.row-badge').forEach(b => b.remove());
+    const wk = parseInt(tr.dataset.wk);
+    if (wk === selectedHigh) {
+      tr.classList.add('sel-high');
+      tr.cells[1].insertAdjacentHTML('beforeend', '<span class="row-badge">HIGH</span>');
+    }
+    if (wk === selectedLow) {
+      tr.classList.add('sel-low');
+      tr.cells[1].insertAdjacentHTML('beforeend', '<span class="row-badge">LOW</span>');
+    }
+  });
+}
+
+function checkStep1() {
+  const out = document.getElementById('score1-out');
+  const fb = document.getElementById('step1-feedback');
+  const vcEl = document.getElementById('hl-vc');
+  const fcEl = document.getElementById('hl-fc');
+  const vcHint = document.getElementById('hl-vc-hint');
+  const fcHint = document.getElementById('hl-fc-hint');
+  vcEl.classList.remove('correct', 'wrong');
+  fcEl.classList.remove('correct', 'wrong');
+  vcHint.textContent = '';
+  fcHint.textContent = '';
+  out.textContent = '';
+  fb.innerHTML = '';
+
+  // Check row selections
+  if (!selectedHigh || !selectedLow) {
+    fb.innerHTML = '<div class="insight">Select both the highest and lowest <strong>activity</strong> rows first.</div>';
+    return;
+  }
+
+  let rowsOk = true;
+  const highData = DATA.find(d => d.wk === selectedHigh);
+  const lowData = DATA.find(d => d.wk === selectedLow);
+
+  // Check if they picked activity extremes
+  if (highData.x !== HL_HIGH.x) {
+    rowsOk = false;
+    // Did they pick highest cost instead?
+    const maxCost = Math.max(...DATA.map(d => d.y));
+    if (highData.y === maxCost) {
+      fb.innerHTML = '<div class="insight">You picked the week with the highest <strong>cost</strong>, not the highest <strong>activity</strong>. The high-low method uses the extremes of the activity level (dozens baked), not the cost.</div>';
+    } else {
+      fb.innerHTML = '<div class="insight">That\'s not the week with the highest activity. Look at the <strong>Dozens Baked</strong> column.</div>';
+    }
+    playHorn();
+    return;
+  }
+  if (lowData.x !== HL_LOW.x) {
+    rowsOk = false;
+    const minCost = Math.min(...DATA.map(d => d.y));
+    if (lowData.y === minCost) {
+      fb.innerHTML = '<div class="insight">You picked the week with the lowest <strong>cost</strong>, not the lowest <strong>activity</strong>. The high-low method uses the extremes of the activity level.</div>';
+    } else {
+      fb.innerHTML = '<div class="insight">That\'s not the week with the lowest activity. Look at the <strong>Dozens Baked</strong> column.</div>';
+    }
+    playHorn();
+    return;
+  }
+
+  // Check VC and FC
+  const vcGuess = parseNum(vcEl.value);
+  const fcGuess = parseNum(fcEl.value);
+  if (isNaN(vcGuess) || isNaN(fcGuess)) {
+    fb.innerHTML = '<div class="insight">Enter values for both variable cost and fixed cost.</div>';
+    return;
+  }
+
+  let allOk = true;
+  if (Math.abs(vcGuess - HL_VC) <= 0.05) {
+    vcEl.classList.add('correct');
+  } else {
+    vcEl.classList.add('wrong');
+    vcHint.textContent = fmtMoney(HL_VC) + '/dozen';
+    allOk = false;
+  }
+  if (Math.abs(fcGuess - HL_FC) <= 5) {
+    fcEl.classList.add('correct');
+  } else {
+    fcEl.classList.add('wrong');
+    fcHint.textContent = fmtMoney(HL_FC);
+    allOk = false;
+  }
+
+  if (allOk) {
+    out.textContent = '2 / 2';
+    fb.innerHTML = `<div class="insight success"><strong>Nice.</strong> High-low gives you Y = ${fmtMoney(HL_FC)} + ${fmtMoney(HL_VC)} &times; Dozens. Quick to compute, but it only uses two data points &mdash; the other 18 weeks are ignored entirely. Let's see if you can do better by eye.</div>`;
+    playBell();
+    revealStep(2, true);
+  } else {
+    out.textContent = (vcEl.classList.contains('correct') ? 1 : 0) + (fcEl.classList.contains('correct') ? 1 : 0) + ' / 2';
+    playHorn();
+  }
+}
+
+function resetStep1() {
+  selectedHigh = null; selectedLow = null; selectMode = null;
+  document.getElementById('sel-high-btn').classList.remove('active');
+  document.getElementById('sel-low-btn').classList.remove('active');
+  refreshHLHighlights();
+  ['hl-vc', 'hl-fc'].forEach(id => {
+    const el = document.getElementById(id);
+    el.value = ''; el.classList.remove('correct', 'wrong');
+  });
+  ['hl-vc-hint', 'hl-fc-hint'].forEach(id => document.getElementById(id).textContent = '');
+  document.getElementById('score1-out').textContent = '';
+  document.getElementById('step1-feedback').innerHTML = '';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 2: VISUAL FIT
+═══════════════════════════════════════════════════════════════ */
+let chart2Scales, chart2Drag;
+let vfLocked = false, vfA = NaN, vfB = NaN;
+
+function initChart2() {
+  chart2Scales = chartScales(DATA, { showIntercept: true });
+  drawChart('chart2', DATA, chart2Scales);
+  chart2Drag = addDragLine('chart2', chart2Scales, 'chart2-eq', '#3b7dd8');
+}
+
+function lockVisualFit() {
+  if (vfLocked) return;
+  const eq = chart2Drag.getEquation();
+  vfA = eq.a; vfB = eq.b;
+  vfLocked = true;
+  document.getElementById('lock-vf-btn').disabled = true;
+  document.getElementById('lock-vf-btn').textContent = 'Locked In';
+  const sse = computeSSE(DATA, vfA, vfB);
+  const fb = document.getElementById('step2-feedback');
+  fb.innerHTML = `<div class="insight success"><strong>Line locked.</strong> Your estimate: Y = ${fmtMoney(Math.round(vfA * 100) / 100)} + ${fmtMoney(Math.round(vfB * 100) / 100)} &times; Dozens. SSE = ${fmtInt(Math.round(sse))}. Let's see how regression compares.</div>`;
+  playBell();
+  revealStep(3, true);
+}
+
+function resetStep2() {
+  vfLocked = false; vfA = NaN; vfB = NaN;
+  document.getElementById('lock-vf-btn').disabled = false;
+  document.getElementById('lock-vf-btn').textContent = 'Lock In My Line';
+  document.getElementById('step2-feedback').innerHTML = '';
+  initChart2();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 3: REGRESSION
+═══════════════════════════════════════════════════════════════ */
+let xPick = null, yPick = null;
+let regResult = null;
+
+function pickCol(axis, col) {
+  // Clear same-axis picks
+  if (axis === 'x') {
+    xPick = col;
+    document.getElementById('x-dozens').classList.toggle('picked', col === 'dozens');
+    document.getElementById('x-cost').classList.toggle('picked', col === 'cost');
+    document.getElementById('x-dozens').classList.remove('wrong-pick');
+    document.getElementById('x-cost').classList.remove('wrong-pick');
+    // If same column is already Y, clear Y
+    if (yPick === col) {
+      yPick = null;
+      document.getElementById('y-dozens').classList.remove('picked');
+      document.getElementById('y-cost').classList.remove('picked');
+    }
+  } else {
+    yPick = col;
+    document.getElementById('y-dozens').classList.toggle('picked', col === 'dozens');
+    document.getElementById('y-cost').classList.toggle('picked', col === 'cost');
+    document.getElementById('y-dozens').classList.remove('wrong-pick');
+    document.getElementById('y-cost').classList.remove('wrong-pick');
+    if (xPick === col) {
+      xPick = null;
+      document.getElementById('x-dozens').classList.remove('picked');
+      document.getElementById('x-cost').classList.remove('picked');
+    }
+  }
+  document.getElementById('run-reg-btn').disabled = !(xPick && yPick);
+  document.getElementById('step3-feedback').innerHTML = '';
+  document.getElementById('reg-results').classList.remove('show');
+}
+
+function runRegression() {
+  const fb = document.getElementById('step3-feedback');
+  fb.innerHTML = '';
+
+  // Check correct assignment
+  if (xPick === 'cost' || yPick === 'dozens') {
+    document.getElementById('x-cost').classList.add('wrong-pick');
+    document.getElementById('y-dozens').classList.add('wrong-pick');
+    fb.innerHTML = '<div class="insight">Think about which variable <strong>drives</strong> cost. Activity (dozens baked) is the independent variable &mdash; it goes on the X-axis. Total cost is what we\'re trying to predict &mdash; it goes on Y.</div>';
+    playHorn();
+    return;
+  }
+
+  // Run OLS
+  regResult = ols(DATA);
+  const rr = document.getElementById('reg-results');
+  rr.classList.add('show');
+  document.getElementById('rr-eq').innerHTML =
+    `<span style="color:#7a5cb6">Ŷ = ${fmtMoney(Math.round(regResult.a * 100) / 100)} + ${fmtMoney(Math.round(regResult.b * 100) / 100)} &times; Dozens</span>`;
+  document.getElementById('rr-stats').innerHTML =
+    `R² = <strong>${fmtNum(regResult.r2, 4)}</strong> &nbsp;&middot;&nbsp; SSE = <strong>${fmtInt(Math.round(regResult.sse))}</strong>`;
+
+  fb.innerHTML = `<div class="insight success"><strong>Regression complete.</strong> The R² of ${fmtNum(regResult.r2, 3)} means ${fmtNum(regResult.r2 * 100, 1)}% of the variation in weekly cost is explained by dozens baked. Now let's see all three methods head to head.</div>`;
+  playBell();
+  revealStep(4, true);
+  buildComparison();
+}
+
+function resetStep3() {
+  xPick = null; yPick = null; regResult = null;
+  ['x-dozens', 'x-cost', 'y-dozens', 'y-cost'].forEach(id => {
+    document.getElementById(id).classList.remove('picked', 'wrong-pick');
+  });
+  document.getElementById('run-reg-btn').disabled = true;
+  document.getElementById('reg-results').classList.remove('show');
+  document.getElementById('step3-feedback').innerHTML = '';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 4: COMPARISON
+═══════════════════════════════════════════════════════════════ */
+function buildComparison() {
+  if (!regResult || isNaN(vfA)) return;
+
+  const hlSSE = computeSSE(DATA, HL_FC, HL_VC);
+  const vfSSE = computeSSE(DATA, vfA, vfB);
+  const regSSE = regResult.sse;
+  const minSSE = Math.min(hlSSE, vfSSE, regSSE);
+
+  // Cards
+  const cards = document.getElementById('compare-cards');
+  cards.innerHTML = `
+    <div class="compare-card ${hlSSE === minSSE ? 'winner' : ''}">
+      <div class="cc-label hl">High-Low</div>
+      <div class="cc-row">FC: <strong>${fmtMoney(HL_FC)}</strong></div>
+      <div class="cc-row">VC: <strong>${fmtMoney(HL_VC)}/doz</strong></div>
+      <div class="cc-sse">SSE: ${fmtInt(Math.round(hlSSE))}</div>
+    </div>
+    <div class="compare-card ${vfSSE === minSSE ? 'winner' : ''}">
+      <div class="cc-label vf">Your Line</div>
+      <div class="cc-row">FC: <strong>${fmtMoney(Math.round(vfA * 100) / 100)}</strong></div>
+      <div class="cc-row">VC: <strong>${fmtMoney(Math.round(vfB * 100) / 100)}/doz</strong></div>
+      <div class="cc-sse">SSE: ${fmtInt(Math.round(vfSSE))}</div>
+    </div>
+    <div class="compare-card ${regSSE === minSSE ? 'winner' : ''}">
+      <div class="cc-label reg">Regression</div>
+      <div class="cc-row">FC: <strong>${fmtMoney(Math.round(regResult.a * 100) / 100)}</strong></div>
+      <div class="cc-row">VC: <strong>${fmtMoney(Math.round(regResult.b * 100) / 100)}/doz</strong></div>
+      <div class="cc-sse">SSE: ${fmtInt(Math.round(regSSE))} <span class="winner-badge">LOWEST</span></div>
+    </div>
+  `;
+
+  // Chart with all three lines
+  const sc = chartScales(DATA, { showIntercept: true });
+  drawChart('chart4', DATA, sc);
+  addStaticLine('chart4', sc, HL_FC, HL_VC, '#D85A30', '6,4');
+  addStaticLine('chart4', sc, vfA, vfB, '#3b7dd8', '');
+  addStaticLine('chart4', sc, regResult.a, regResult.b, '#7a5cb6', '');
+
+  // Legend
+  const svg = document.getElementById('chart4');
+  const legendData = [
+    { label: 'High-Low', color: '#D85A30', dash: '6,4' },
+    { label: 'Your Line', color: '#3b7dd8', dash: '' },
+    { label: 'Regression', color: '#7a5cb6', dash: '' },
+  ];
+  legendData.forEach((item, i) => {
+    const lx = PL + 10 + i * 170;
+    const ly = PT + 10;
+    const line = document.createElementNS(SVG_NS, 'line');
+    line.setAttribute('x1', lx); line.setAttribute('x2', lx + 22);
+    line.setAttribute('y1', ly); line.setAttribute('y2', ly);
+    line.setAttribute('stroke', item.color); line.setAttribute('stroke-width', '2.5');
+    if (item.dash) line.setAttribute('stroke-dasharray', item.dash);
+    svg.appendChild(line);
+    const txt = document.createElementNS(SVG_NS, 'text');
+    txt.setAttribute('x', lx + 28); txt.setAttribute('y', ly + 4);
+    txt.setAttribute('font-size', '11.5'); txt.setAttribute('fill', '#475569');
+    txt.setAttribute('font-weight', '600');
+    txt.textContent = item.label;
+    svg.appendChild(txt);
+  });
+
+  // Insight
+  const pctBetter = ((vfSSE - regSSE) / regSSE * 100);
+  const fb = document.getElementById('step4-feedback');
+  let msg;
+  if (pctBetter < 5) {
+    msg = `<strong>Impressive eye.</strong> Your visual fit was within ${fmtNum(pctBetter, 1)}% of regression's SSE. But regression is mathematically guaranteed to have the lowest SSE &mdash; that's literally what "least squares" means. It finds the unique line that minimizes the sum of squared errors.`;
+  } else if (pctBetter < 30) {
+    msg = `<strong>Solid visual fit.</strong> Your line was ${fmtNum(pctBetter, 1)}% above regression's SSE. Regression always wins because it's specifically designed to minimize the sum of squared errors &mdash; no hand-drawn line can beat it, but yours came reasonably close.`;
+  } else {
+    msg = `<strong>Regression wins by a wide margin.</strong> Your line's SSE was ${fmtNum(pctBetter, 1)}% higher. This is why we use regression &mdash; it finds the unique line that minimizes SSE, which no visual estimate can beat. But the high-low method only uses two points, while regression uses all ${DATA.length}.`;
+  }
+  fb.innerHTML = `<div class="insight success">${msg}</div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 5: BUILD YOUR OWN
+═══════════════════════════════════════════════════════════════ */
+let byoData = null, byoScales = null, byoDrag = null;
+let byoHL = null, byoReg = null;
+
+function generateBYO() {
+  const fc = parseNum(document.getElementById('byo-fc').value);
+  const vc = parseNum(document.getElementById('byo-vc').value);
+  const noise = parseNum(document.getElementById('byo-noise').value);
+  const n = Math.max(6, Math.min(50, Math.round(parseNum(document.getElementById('byo-n').value))));
+
+  if (isNaN(fc) || isNaN(vc) || isNaN(noise) || isNaN(n)) {
+    document.getElementById('step5-feedback').innerHTML = '<div class="insight">Enter valid numbers for all parameters.</div>';
+    return;
+  }
+
+  // Generate data
+  byoData = [];
+  for (let i = 0; i < n; i++) {
+    const x = Math.round(200 + Math.random() * 600);
+    const trueY = fc + vc * x;
+    // Box-Muller normal
+    const u1 = Math.random(), u2 = Math.random();
+    const z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+    const y = Math.round(trueY + z * noise);
+    byoData.push({ wk: i + 1, x, y });
+  }
+
+  // Compute high-low
+  const hlH = byoData.reduce((a, b) => b.x > a.x ? b : a);
+  const hlL = byoData.reduce((a, b) => b.x < a.x ? b : a);
+  const hlVC = (hlH.y - hlL.y) / (hlH.x - hlL.x);
+  const hlFC = hlH.y - hlVC * hlH.x;
+  byoHL = { a: hlFC, b: hlVC };
+
+  // Compute regression
+  byoReg = ols(byoData);
+
+  // Draw chart
+  document.getElementById('byo-area').style.display = '';
+  byoScales = chartScales(byoData, { showIntercept: true });
+  drawChart('chart5', byoData, byoScales);
+
+  // Add static HL and regression lines (behind drag handles)
+  addStaticLine('chart5', byoScales, byoHL.a, byoHL.b, '#D85A30', '6,4');
+  addStaticLine('chart5', byoScales, byoReg.a, byoReg.b, '#7a5cb6', '');
+
+  // Add legend
+  const svg = document.getElementById('chart5');
+  const legendItems = [
+    { label: 'High-Low', color: '#D85A30', dash: '6,4' },
+    { label: 'Your Line', color: '#3b7dd8', dash: '' },
+    { label: 'Regression', color: '#7a5cb6', dash: '' },
+  ];
+  legendItems.forEach((item, i) => {
+    const lx = PL + 10 + i * 170;
+    const ly = PT + 10;
+    const line = document.createElementNS(SVG_NS, 'line');
+    line.setAttribute('x1', lx); line.setAttribute('x2', lx + 22);
+    line.setAttribute('y1', ly); line.setAttribute('y2', ly);
+    line.setAttribute('stroke', item.color); line.setAttribute('stroke-width', '2.5');
+    if (item.dash) line.setAttribute('stroke-dasharray', item.dash);
+    svg.appendChild(line);
+    const txt = document.createElementNS(SVG_NS, 'text');
+    txt.setAttribute('x', lx + 28); txt.setAttribute('y', ly + 4);
+    txt.setAttribute('font-size', '11.5'); txt.setAttribute('fill', '#475569');
+    txt.setAttribute('font-weight', '600');
+    txt.textContent = item.label;
+    svg.appendChild(txt);
+  });
+
+  // Draggable line (on top)
+  byoDrag = addDragLine('chart5', byoScales, 'chart5-eq', '#3b7dd8', updateBYOSSE);
+
+  updateBYOSSE();
+  document.getElementById('step5-feedback').innerHTML = `<div class="insight">Data generated from Y = ${fmtMoney(fc)} + ${fmtMoney(vc)} &times; Dozens + noise(σ=${fmtMoney(noise)}). Drag your line &mdash; can you beat regression?</div>`;
+}
+
+function updateBYOSSE(a, b) {
+  if (!byoData || !byoDrag) return;
+  if (a === undefined) {
+    const eq = byoDrag.getEquation();
+    a = eq.a; b = eq.b;
+  }
+  const hlSSE = computeSSE(byoData, byoHL.a, byoHL.b);
+  const vfSSE = computeSSE(byoData, a, b);
+  const regSSE = byoReg.sse;
+  const minSSE = Math.min(hlSSE, vfSSE, regSSE);
+
+  const container = document.getElementById('byo-sse');
+  container.innerHTML = `
+    <div class="build-sse-card ${hlSSE <= minSSE ? 'winner' : ''}">
+      <div class="bsc-label hl">High-Low</div>
+      <div class="bsc-val">${fmtInt(Math.round(hlSSE))}</div>
+    </div>
+    <div class="build-sse-card ${vfSSE <= minSSE ? 'winner' : ''}">
+      <div class="bsc-label vf">Your Line</div>
+      <div class="bsc-val">${fmtInt(Math.round(vfSSE))}</div>
+    </div>
+    <div class="build-sse-card ${regSSE <= minSSE ? 'winner' : ''}">
+      <div class="bsc-label reg">Regression</div>
+      <div class="bsc-val">${fmtInt(Math.round(regSSE))}</div>
+    </div>
+  `;
+}
+
+function resetStep5() {
+  document.getElementById('byo-fc').value = '€1,200';
+  document.getElementById('byo-vc').value = '€3.50';
+  document.getElementById('byo-noise').value = '€80';
+  document.getElementById('byo-n').value = '20';
+  document.getElementById('byo-area').style.display = 'none';
+  document.getElementById('step5-feedback').innerHTML = '';
+  byoData = null; byoScales = null; byoDrag = null;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   REVEAL STEPS
+═══════════════════════════════════════════════════════════════ */
+const revealedSteps = new Set();
+function revealStep(stepNum, scroll) {
+  const el = document.getElementById('step' + stepNum);
+  if (!revealedSteps.has(stepNum)) {
+    el.classList.add('show');
+    revealedSteps.add(stepNum);
+    const btn = document.getElementById('reveal-step' + stepNum + '-btn');
+    if (btn) btn.style.display = 'none';
+  }
+  if (scroll) setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   QR / SHARE
+═══════════════════════════════════════════════════════════════ */
+function showQR() {
+  const url = location.href;
+  document.getElementById('qr-url').textContent = url;
+  const qrEl = document.getElementById('qr-code');
+  qrEl.innerHTML = '';
+  if (window.QRCode) {
+    new QRCode(qrEl, { text: url, width: 180, height: 180, colorDark: '#1a2744', colorLight: '#ffffff' });
+  }
+  document.getElementById('qr-overlay').classList.add('show');
+}
+function hideQR(ev) {
+  if (ev && ev.target.id !== 'qr-overlay' && ev.target.className !== 'qr-close') return;
+  document.getElementById('qr-overlay').classList.remove('show');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+  buildHLTable();
+  initChart2();
+});
+</script>
+
+</body>
+</html>
