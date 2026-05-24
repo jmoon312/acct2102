@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PDOH Rates</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  /* ── Reset & base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    background: #f4f0e8;
+    color: #1a2744;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    background: #1a2744;
+    color: #fff;
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .header-left h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+  .header-left p  { font-size: 13px; color: #a0aec0; margin-top: 2px; }
+
+  .qr-btn {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    transition: background .15s;
+  }
+  .qr-btn:hover { background: rgba(255,255,255,0.18); }
+
+  /* QR Modal */
+  .qr-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .qr-overlay.show { display: flex; }
+  .qr-modal {
+    background: #fff;
+    border-radius: 14px;
+    padding: 32px;
+    text-align: center;
+    max-width: 300px;
+    width: 90%;
+  }
+  .qr-modal h2 { font-size: 16px; font-weight: 600; color: #1a2744; margin-bottom: 6px; }
+  .qr-modal p  { font-size: 12px; color: #64748b; margin-bottom: 18px; line-height: 1.5; }
+  #qr-code { display: flex; justify-content: center; margin-bottom: 16px; }
+  #qr-url  { font-size: 11px; color: #94a3b8; word-break: break-all; margin-bottom: 18px; }
+  .qr-close {
+    background: #1a2744; color: #fff;
+    border: none; border-radius: 8px;
+    padding: 8px 24px; font-size: 13px;
+    cursor: pointer; font-family: inherit;
+  }
+
+  /* ── Main layout ── */
+  main {
+    max-width: 880px;
+    margin: 28px auto;
+    padding: 0 20px 48px;
+  }
+
+  .part {
+    background: #fff;
+    border: 1px solid #dde3ef;
+    border-radius: 12px;
+    padding: 22px 24px 24px;
+    margin-bottom: 22px;
+  }
+
+  .part-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .part-tag {
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    background: #1a2744;
+    padding: 3px 10px;
+    border-radius: 99px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+  .part-tag.practice { background: #D85A30; }
+  .part-tag.explore  { background: #3b7dd8; }
+  .part-tag.solve    { background: #7a5cb6; }
+  .part-tag.build    { background: #5a9e3a; }
+  .part-header h2 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -.01em;
+  }
+  .part-header .subtitle {
+    font-size: 13px;
+    color: #64748b;
+  }
+
+  .setup-box {
+    background: #f8f6f0;
+    border: 1px solid #e6dfd0;
+    border-radius: 9px;
+    padding: 14px 16px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: #334155;
+    margin-bottom: 16px;
+  }
+  .setup-box strong { color: #1a2744; }
+  .setup-box p + p { margin-top: 6px; }
+  .setup-box .meta-line {
+    margin-top: 10px;
+    font-size: 13px;
+    color: #475569;
+  }
+  .setup-box .meta-line strong { color: #1a2744; }
+
+  /* ── Read-only product table ── */
+  .prompt {
+    font-size: 14px;
+    color: #1a2744;
+    margin-bottom: 12px;
+    line-height: 1.55;
+  }
+  .prompt strong { font-weight: 700; }
+
+  .prod-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-bottom: 6px;
+    font-variant-numeric: tabular-nums;
+  }
+  .prod-table thead th {
+    background: #fde9c8;
+    color: #1a2744;
+    font-size: 12.5px;
+    font-weight: 700;
+    text-align: center;
+    padding: 10px 8px;
+    border-bottom: 2px solid #f0c674;
+  }
+  .prod-table thead th:first-child {
+    border-top-left-radius: 8px;
+    text-align: left;
+    padding-left: 14px;
+  }
+  .prod-table thead th:last-child  { border-top-right-radius: 8px; }
+  .prod-table tbody td {
+    background: #f0f5fa;
+    padding: 9px 8px;
+    text-align: center;
+    border-bottom: 1px solid #e1eaf3;
+  }
+  .prod-table tbody td.row-label {
+    text-align: left;
+    padding-left: 14px;
+    font-weight: 600;
+    color: #1a2744;
+  }
+  .prod-table tbody tr:last-child td:first-child { border-bottom-left-radius: 8px; }
+  .prod-table tbody tr:last-child td:last-child  { border-bottom-right-radius: 8px; }
+
+  /* ── Per-question stacked layout ── */
+  .qa-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 4px; }
+  .qa-row {
+    display: grid;
+    grid-template-columns: 1fr 200px;
+    gap: 14px;
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #e1eaf3;
+    border-radius: 9px;
+    padding: 13px 16px;
+  }
+  .qa-row .qa-prompt {
+    font-size: 13.5px;
+    color: #1a2744;
+    line-height: 1.5;
+  }
+  .qa-row .qa-prompt strong { font-weight: 700; }
+  .qa-row .qa-prompt small {
+    display: block;
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 3px;
+  }
+  .qa-row .answer { display: flex; flex-direction: column; }
+  .qa-row .answer label {
+    font-size: 10.5px;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 4px;
+  }
+  .qa-row .answer input {
+    padding: 8px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .qa-row .answer input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .qa-row .answer input.correct {
+    border-color: #5a9e3a;
+    background: #f0f9e8;
+    color: #2d6a1f;
+  }
+  .qa-row .answer input.wrong {
+    border-color: #c94040;
+    background: #fff1f1;
+    color: #9b2020;
+  }
+  .corr-hint {
+    display: block;
+    font-size: 11px;
+    color: #5a9e3a;
+    font-weight: 600;
+    margin-top: 3px;
+    min-height: 14px;
+  }
+
+  /* Reveal animation */
+  .reveal {
+    display: none;
+    animation: slideIn 0.4s ease-out;
+  }
+  .reveal.show { display: block; }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Scenario cards (Step 3) ── */
+  .scenario-card {
+    background: #f8fafc;
+    border: 1px solid #e1eaf3;
+    border-radius: 9px;
+    padding: 16px 18px;
+    margin-bottom: 10px;
+  }
+  .scenario-card .scenario-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #7a5cb6;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 6px;
+  }
+  .scenario-card .scenario-text {
+    font-size: 13.5px;
+    color: #334155;
+    line-height: 1.6;
+    margin-bottom: 12px;
+  }
+  .scenario-btns {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .scenario-btns button {
+    flex: 1;
+    min-width: 80px;
+    background: #fff;
+    border: 1.5px solid #cbd5e1;
+    color: #1a2744;
+    padding: 9px 14px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    font-family: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .scenario-btns button:hover {
+    border-color: #7a5cb6;
+    background: #f5f3fa;
+  }
+  .scenario-btns button.selected {
+    background: #1a2744;
+    color: #fff;
+    border-color: #1a2744;
+    cursor: default;
+  }
+  .scenario-btns button.locked {
+    cursor: default;
+    opacity: 0.6;
+  }
+  .scenario-btns button.locked:hover {
+    border-color: #cbd5e1;
+    background: #fff;
+  }
+  .scenario-btns button.selected.locked:hover {
+    background: #1a2744;
+    border-color: #1a2744;
+  }
+  .scenario-feedback {
+    margin-top: 10px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.55;
+  }
+  .scenario-feedback.correct-fb {
+    background: #f0f9e8;
+    border: 1px solid #c4e0a3;
+    color: #2d6a1f;
+  }
+  .scenario-feedback.wrong-fb {
+    background: #fff1f1;
+    border: 1px solid #f0b0b0;
+    color: #9b2020;
+  }
+
+  .insight {
+    margin-top: 8px;
+    background: #eff6ff;
+    border: 1px solid #c7dcf5;
+    border-left: 4px solid #3b7dd8;
+    border-radius: 0 8px 8px 0;
+    padding: 11px 14px;
+    font-size: 13px;
+    line-height: 1.55;
+    color: #1a2744;
+  }
+  .insight strong { color: #1e40af; }
+  .insight.success {
+    background: #f0f9e8;
+    border-color: #c4e0a3;
+    border-left-color: #5a9e3a;
+  }
+  .insight.success strong { color: #2d6a1f; }
+
+  .footer {
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .check-btn {
+    background: #1a2744; color: #fff;
+    border: none; border-radius: 9px;
+    padding: 10px 24px; font-size: 14px;
+    cursor: pointer; font-family: inherit;
+    font-weight: 500;
+    transition: background .15s;
+  }
+  .check-btn:hover { background: #243660; }
+  .reset-btn {
+    font-size: 13px; color: #64748b;
+    background: none; border: none;
+    cursor: pointer; text-decoration: underline;
+    font-family: inherit;
+  }
+  .reveal-link {
+    margin-left: auto;
+    font-size: 12.5px;
+    color: #64748b;
+    background: none; border: none;
+    cursor: pointer; text-decoration: underline;
+    font-family: inherit;
+  }
+  .reveal-link:hover { color: #1a2744; }
+  .score-out {
+    font-size: 14px; font-weight: 600;
+    color: #1a2744;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 6px 14px;
+  }
+  .score-out:empty { display: none; }
+
+  /* Responsive */
+  @media (max-width: 700px) {
+    header { padding: 14px 16px; }
+    main { padding: 0 12px 40px; }
+    .part { padding: 18px 14px 18px; }
+    .prod-table thead th, .prod-table tbody td { font-size: 11.5px; padding: 7px 4px; }
+    .qa-row { grid-template-columns: 1fr; gap: 8px; }
+    .scenario-btns button { min-width: 60px; font-size: 12.5px; padding: 8px 10px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="header-left">
+    <h1>Predetermined Overhead Rates</h1>
+  </div>
+  <button class="qr-btn" onclick="showQR()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="2" height="2"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="19" width="3" height="2"/><rect x="19" y="19" width="2" height="2"/></svg>
+    Share with students
+  </button>
+</header>
+
+<!-- QR Modal -->
+<div class="qr-overlay" id="qr-overlay" onclick="hideQR(event)">
+  <div class="qr-modal">
+    <h2>Scan to open on your device</h2>
+    <p>Students can scan this QR code or type the URL to open the activity on their phone or laptop.</p>
+    <div id="qr-code"></div>
+    <div id="qr-url"></div>
+    <button class="qr-close" onclick="hideQR()">Close</button>
+  </div>
+</div>
+
+<!-- Main -->
+<main>
+
+  <!-- ───────── STEP 1 — Compute PDOH Rates ───────── -->
+  <section class="part">
+    <div class="part-header">
+      <span class="part-tag practice">Step 1</span>
+      <h2>Compute the two PDOH rates</h2>
+      <span class="subtitle">projected figures for the upcoming year</span>
+    </div>
+
+    <div class="setup-box">
+      <p>Coach's cost accounting team is setting overhead rates for the upcoming year. The controller has pulled the following data from last year's actuals and this year's budget:</p>
+
+      <table class="prod-table" style="margin-top:10px; margin-bottom:4px;">
+        <thead>
+          <tr>
+            <th></th>
+            <th>Prior Year (Actual)</th>
+            <th>Current Year (Projected)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="row-label">Total manufacturing overhead</td><td>$140,000</td><td>$150,000</td></tr>
+          <tr><td class="row-label">Total direct labor hours</td><td>42,000</td><td>50,000</td></tr>
+          <tr><td class="row-label">Total machine hours</td><td>25,000</td><td>30,000</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="prompt">Compute the predetermined overhead rate using each cost driver:</p>
+
+    <div class="qa-list">
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>PDOH rate per direct labor hour</strong></div>
+        <div class="answer">
+          <label>$ per DLH</label>
+          <input type="text" id="s1-dlh" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s1-dlh"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>PDOH rate per machine hour</strong></div>
+        <div class="answer">
+          <label>$ per MH</label>
+          <input type="text" id="s1-mh" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s1-mh"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep1()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep1()">Reset</button>
+      <span id="score1-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep2(true)" id="reveal-step2-btn">Skip ahead &rarr;</button>
+    </div>
+
+    <div id="step1-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 2 — Apply Overhead ───────── -->
+  <section class="part reveal" id="step2">
+    <div class="part-header">
+      <span class="part-tag explore">Step 2</span>
+      <h2>Apply overhead in January</h2>
+      <span class="subtitle">same month, two different answers</span>
+    </div>
+
+    <div class="setup-box">
+      <p>In January, Coach's handbag production line logged <strong>4,200 direct labor hours</strong> and <strong>2,800 machine hours</strong>.</p>
+    </div>
+
+    <p class="prompt">How much manufacturing overhead would be applied under each rate?</p>
+
+    <div class="qa-list">
+      <div class="qa-row">
+        <div class="qa-prompt">Applied MOH using the <strong>DLH rate</strong></div>
+        <div class="answer">
+          <label>Applied MOH</label>
+          <input type="text" id="s2-dlh" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s2-dlh"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt">Applied MOH using the <strong>MH rate</strong></div>
+        <div class="answer">
+          <label>Applied MOH</label>
+          <input type="text" id="s2-mh" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s2-mh"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep2()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep2()">Reset</button>
+      <span id="score2-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep3(true)" id="reveal-step3-btn">Skip ahead &rarr;</button>
+    </div>
+
+    <div id="step2-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 3 — Which driver? ───────── -->
+  <section class="part reveal" id="step3">
+    <div class="part-header">
+      <span class="part-tag solve">Step 3</span>
+      <h2>Which cost driver?</h2>
+      <span class="subtitle">five scenarios</span>
+    </div>
+
+    <div class="setup-box">
+      <p>The choice of cost driver shapes how overhead lands on individual products. For each scenario below, decide which driver best fits the production process described.</p>
+    </div>
+
+    <!-- Scenario 1 -->
+    <div class="scenario-card" id="sc-1">
+      <div class="scenario-label">Scenario 1 &mdash; Automated stitching line</div>
+      <div class="scenario-text">Coach is installing a new automated stitching system for its bestselling tote line. The machines run continuously during production with minimal operator involvement.</div>
+      <div class="scenario-btns">
+        <button onclick="pickScenario(1,'DLH')">DLH</button>
+        <button onclick="pickScenario(1,'MH')">MH</button>
+        <button onclick="pickScenario(1,'Unclear')">Unclear</button>
+      </div>
+      <div class="scenario-feedback" id="sc-1-fb" style="display:none;"></div>
+    </div>
+
+    <!-- Scenario 2 -->
+    <div class="scenario-card" id="sc-2">
+      <div class="scenario-label">Scenario 2 &mdash; Hand-finished luxury collection</div>
+      <div class="scenario-text">Coach's premium Heritage collection requires master artisans to hand-stitch and burnish each bag. Each bag takes 6&ndash;8 hours of skilled labor.</div>
+      <div class="scenario-btns">
+        <button onclick="pickScenario(2,'DLH')">DLH</button>
+        <button onclick="pickScenario(2,'MH')">MH</button>
+        <button onclick="pickScenario(2,'Unclear')">Unclear</button>
+      </div>
+      <div class="scenario-feedback" id="sc-2-fb" style="display:none;"></div>
+    </div>
+
+    <!-- Scenario 3 -->
+    <div class="scenario-card" id="sc-3">
+      <div class="scenario-label">Scenario 3 &mdash; Mixed production facility</div>
+      <div class="scenario-text">Coach's crossbody bag line uses automated cutting and a semi-automated sewing process, but each bag still requires 2 hours of hand-finishing and quality inspection.</div>
+      <div class="scenario-btns">
+        <button onclick="pickScenario(3,'DLH')">DLH</button>
+        <button onclick="pickScenario(3,'MH')">MH</button>
+        <button onclick="pickScenario(3,'Unclear')">Unclear</button>
+      </div>
+      <div class="scenario-feedback" id="sc-3-fb" style="display:none;"></div>
+    </div>
+
+    <!-- Scenario 4 -->
+    <div class="scenario-card" id="sc-4">
+      <div class="scenario-label">Scenario 4 &mdash; New robotic leather cutting</div>
+      <div class="scenario-text">Coach just invested $2M in robotic leather-cutting equipment for all product lines. Operators monitor the machines but rarely intervene.</div>
+      <div class="scenario-btns">
+        <button onclick="pickScenario(4,'DLH')">DLH</button>
+        <button onclick="pickScenario(4,'MH')">MH</button>
+        <button onclick="pickScenario(4,'Unclear')">Unclear</button>
+      </div>
+      <div class="scenario-feedback" id="sc-4-fb" style="display:none;"></div>
+    </div>
+
+    <!-- Scenario 5 -->
+    <div class="scenario-card" id="sc-5">
+      <div class="scenario-label">Scenario 5 &mdash; Custom monogramming department</div>
+      <div class="scenario-text">Coach's monogramming service is entirely manual &mdash; skilled workers use hand tools to personalize bags to customer specifications, one at a time.</div>
+      <div class="scenario-btns">
+        <button onclick="pickScenario(5,'DLH')">DLH</button>
+        <button onclick="pickScenario(5,'MH')">MH</button>
+        <button onclick="pickScenario(5,'Unclear')">Unclear</button>
+      </div>
+      <div class="scenario-feedback" id="sc-5-fb" style="display:none;"></div>
+    </div>
+
+    <div id="step3-summary" style="display:none;"></div>
+  </section>
+
+</main>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════════════════ */
+function parseNum(s) {
+  if (typeof s !== 'string') return NaN;
+  return parseFloat(s.replace(/[\$,\s%]/g, ''));
+}
+function fmtMoney(v, decimals) {
+  var d = (decimals === undefined) ? 0 : decimals;
+  var rounded = Math.round(v * 100) / 100;
+  var sign = rounded < 0 ? '-$' : '$';
+  return sign + Math.abs(rounded).toLocaleString('en-US', {
+    minimumFractionDigits: d,
+    maximumFractionDigits: d
+  });
+}
+function fmtUnits(v) {
+  return Math.round(v).toLocaleString('en-US');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   AUDIO
+═══════════════════════════════════════════════════════════════ */
+var audioCtx = null;
+function getAudio() {
+  if (!audioCtx) {
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (AC) audioCtx = new AC();
+  }
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+function playBell() {
+  var ctx = getAudio(); if (!ctx) return;
+  var now = ctx.currentTime;
+  [523.25, 659.25, 783.99].forEach(function(f) {
+    var osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = 'sine'; osc.frequency.value = f;
+    osc.connect(g).connect(ctx.destination);
+    g.gain.setValueAtTime(0, now);
+    g.gain.linearRampToValueAtTime(0.15, now + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 1.6);
+    osc.start(now); osc.stop(now + 1.7);
+  });
+}
+function playHorn() {
+  var ctx = getAudio(); if (!ctx) return;
+  var now = ctx.currentTime;
+  var notes = [
+    { f: 466.16, t: 0.00, d: 0.18 },
+    { f: 440.00, t: 0.20, d: 0.18 },
+    { f: 415.30, t: 0.40, d: 0.55 }
+  ];
+  notes.forEach(function(n) {
+    var osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(n.f, now + n.t);
+    if (n.d > 0.3) osc.frequency.exponentialRampToValueAtTime(n.f * 0.88, now + n.t + n.d);
+    osc.connect(g).connect(ctx.destination);
+    g.gain.setValueAtTime(0, now + n.t);
+    g.gain.linearRampToValueAtTime(0.12, now + n.t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, now + n.t + n.d);
+    osc.start(now + n.t); osc.stop(now + n.t + n.d + 0.05);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   EXPECTED ANSWERS
+═══════════════════════════════════════════════════════════════ */
+// Step 1: PDOH rates from PROJECTED figures
+var PROJ_MOH = 150000;
+var PROJ_DLH = 50000;
+var PROJ_MH  = 30000;
+var PDOH_DLH = PROJ_MOH / PROJ_DLH;  // $3.00
+var PDOH_MH  = PROJ_MOH / PROJ_MH;   // $5.00
+
+// Step 2: Apply overhead in January
+var JAN_DLH = 4200;
+var JAN_MH  = 2800;
+var APPLIED_DLH = JAN_DLH * PDOH_DLH;  // $12,600
+var APPLIED_MH  = JAN_MH * PDOH_MH;    // $14,000
+
+/* ═══════════════════════════════════════════════════════════════
+   GENERIC CHECKER
+═══════════════════════════════════════════════════════════════ */
+function checkGroup(spec, scoreId, allCorrectFn) {
+  var correct = 0, total = 0, blanks = 0;
+  spec.forEach(function(f) {
+    var inp  = document.getElementById(f.inputId);
+    var hint = document.getElementById(f.hintId);
+    inp.classList.remove('correct', 'wrong');
+    hint.textContent = '';
+    total++;
+    if (inp.value.trim() === '') { blanks++; return; }
+    var val = parseNum(inp.value);
+    var exp = f.expected;
+    var tol = f.tol;
+    if (!isNaN(val) && Math.abs(val - exp) <= tol) {
+      inp.classList.add('correct');
+      correct++;
+    } else {
+      inp.classList.add('wrong');
+      hint.textContent = '\u2192 ' + f.fmt(exp);
+    }
+  });
+  var out = document.getElementById(scoreId);
+  if (blanks === total) {
+    out.textContent = 'Fill in some answers first.';
+    return false;
+  }
+  out.textContent = correct + ' / ' + total + ' correct' + (blanks ? ' (' + blanks + ' blank)' : '');
+  if (correct === total) {
+    playBell();
+    if (allCorrectFn) allCorrectFn();
+    return true;
+  } else {
+    playHorn();
+    return false;
+  }
+}
+
+function resetGroup(spec, scoreId, extraResetFn) {
+  spec.forEach(function(f) {
+    var inp = document.getElementById(f.inputId);
+    var hint = document.getElementById(f.hintId);
+    inp.value = '';
+    inp.classList.remove('correct', 'wrong');
+    hint.textContent = '';
+  });
+  document.getElementById(scoreId).textContent = '';
+  if (extraResetFn) extraResetFn();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 1
+═══════════════════════════════════════════════════════════════ */
+var STEP1_SPEC = [
+  { inputId: 's1-dlh', hintId: 'hint-s1-dlh', expected: PDOH_DLH, tol: 0.05, fmt: function(v) { return fmtMoney(v, 2); } },
+  { inputId: 's1-mh',  hintId: 'hint-s1-mh',  expected: PDOH_MH,  tol: 0.05, fmt: function(v) { return fmtMoney(v, 2); } }
+];
+function checkStep1() {
+  var fb = document.getElementById('step1-insight');
+  fb.innerHTML = '';
+  checkGroup(STEP1_SPEC, 'score1-out', function() {
+    revealStep2(false);
+    fb.innerHTML = '<div class="insight success"><strong>Both rates are set from the projected budget, not last year\'s actuals.</strong> Prior-year data is useful context, but the PDOH rate looks forward.</div>';
+  });
+}
+function resetStep1() {
+  resetGroup(STEP1_SPEC, 'score1-out', function() {
+    document.getElementById('step1-insight').innerHTML = '';
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 2
+═══════════════════════════════════════════════════════════════ */
+var STEP2_SPEC = [
+  { inputId: 's2-dlh', hintId: 'hint-s2-dlh', expected: APPLIED_DLH, tol: 0.5, fmt: function(v) { return fmtMoney(v, 0); } },
+  { inputId: 's2-mh',  hintId: 'hint-s2-mh',  expected: APPLIED_MH,  tol: 0.5, fmt: function(v) { return fmtMoney(v, 0); } }
+];
+function checkStep2() {
+  var fb = document.getElementById('step2-insight');
+  fb.innerHTML = '';
+  checkGroup(STEP2_SPEC, 'score2-out', function() {
+    revealStep3(false);
+    fb.innerHTML = '<div class="insight success"><strong>Same month, $1,400 difference.</strong> January\'s production gets ' + fmtMoney(APPLIED_DLH, 0) + ' of overhead under the DLH rate vs. ' + fmtMoney(APPLIED_MH, 0) + ' under machine hours \u2014 the driver choice isn\'t just academic. Until variances are closed out, it shapes the product costs managers see and the perceived profitability they act on.</div>';
+  });
+}
+function resetStep2() {
+  resetGroup(STEP2_SPEC, 'score2-out', function() {
+    document.getElementById('step2-insight').innerHTML = '';
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 3 — Five scenarios
+═══════════════════════════════════════════════════════════════ */
+var SCENARIOS = [
+  {
+    id: 1,
+    correct: 'MH',
+    correctMsg: 'Machine hours \u2014 production is machine-driven with minimal operator involvement, so machine hours better capture resource consumption.',
+    wrongMsgs: {
+      'DLH': 'The scenario describes minimal operator involvement \u2014 labor hours wouldn\'t reflect how this line actually consumes overhead. Machine hours is the better fit here.',
+      'Unclear': 'With machines running continuously and minimal labor, there\'s a clear dominant driver. Machine hours tracks the resource consumption much more directly.'
+    }
+  },
+  {
+    id: 2,
+    correct: 'DLH',
+    correctMsg: 'Direct labor hours \u2014 production is entirely labor-intensive at 6\u20138 hours of skilled work per bag, so DLH reflects how overhead is consumed.',
+    wrongMsgs: {
+      'MH': 'Hand-stitching and burnishing are artisan labor, not machine processes. Direct labor hours is the driver that reflects this production method.',
+      'Unclear': 'When each bag requires 6\u20138 hours of hand labor with no mention of machinery, the dominant driver is clear \u2014 direct labor hours.'
+    }
+  },
+  {
+    id: 3,
+    correct: 'Unclear',
+    correctMsg: 'Unclear \u2014 significant machine and labor components are both present. Either driver could be reasonable depending on which actually drives overhead costs.',
+    wrongMsgs: {
+      'DLH': 'The 2 hours of hand-finishing is real, but the automated cutting and semi-automated sewing are also significant. With both heavily involved, neither driver clearly dominates.',
+      'MH': 'The automated steps are important, but each bag also requires 2 hours of hand-finishing. With substantial machine and labor components, the best driver isn\'t obvious.'
+    }
+  },
+  {
+    id: 4,
+    correct: 'MH',
+    correctMsg: 'Machine hours \u2014 a $2M capital-intensive automated process where operators rarely intervene. Overhead likely correlates with machine usage.',
+    wrongMsgs: {
+      'DLH': 'Operators monitor but rarely intervene \u2014 labor isn\'t driving this process. The $2M robotic investment means machine hours is the better cost driver.',
+      'Unclear': 'With a $2M robotic system and operators who rarely intervene, the production is clearly machine-driven. Machine hours is the stronger driver here.'
+    }
+  },
+  {
+    id: 5,
+    correct: 'DLH',
+    correctMsg: 'Direct labor hours \u2014 an entirely manual, one-at-a-time process with hand tools. DLH is the natural driver for labor-driven overhead.',
+    wrongMsgs: {
+      'MH': 'The monogramming is done entirely by hand with hand tools \u2014 no machines to track hours on. Direct labor hours is the clear driver.',
+      'Unclear': 'When a process is described as entirely manual with hand tools, there\'s no ambiguity \u2014 direct labor hours is the right driver.'
+    }
+  }
+];
+
+var scenarioAnswered = {};    // scenario id -> true once answered
+var scenarioFirstTry = {};    // scenario id -> true if first pick was correct
+
+function pickScenario(id, choice) {
+  if (scenarioAnswered[id]) return;
+  scenarioAnswered[id] = true;
+
+  var sc = SCENARIOS[id - 1];
+  var fbEl = document.getElementById('sc-' + id + '-fb');
+  var btns = document.querySelectorAll('#sc-' + id + ' .scenario-btns button');
+
+  // Mark selected button
+  btns.forEach(function(btn) {
+    if (btn.textContent.trim() === choice) {
+      btn.classList.add('selected');
+    }
+    btn.classList.add('locked');
+  });
+
+  fbEl.style.display = 'block';
+
+  if (choice === sc.correct) {
+    scenarioFirstTry[id] = true;
+    fbEl.className = 'scenario-feedback correct-fb';
+    fbEl.textContent = sc.correctMsg;
+  } else {
+    scenarioFirstTry[id] = false;
+    fbEl.className = 'scenario-feedback wrong-fb';
+    fbEl.textContent = sc.wrongMsgs[choice];
+  }
+
+  // Check if all 5 are done
+  var answeredCount = Object.keys(scenarioAnswered).length;
+  if (answeredCount === 5) {
+    playBell();
+    var firstTryCount = 0;
+    for (var i = 1; i <= 5; i++) {
+      if (scenarioFirstTry[i]) firstTryCount++;
+    }
+    var summaryEl = document.getElementById('step3-summary');
+    summaryEl.style.display = 'block';
+    summaryEl.innerHTML = '<div class="insight success"><strong>You got ' + firstTryCount + '/5 on your first try.</strong> The key takeaway: match the cost driver to the process that actually consumes the overhead. Labor-intensive work calls for DLH; automated lines call for machine hours.</div>';
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   REVEAL STEPS
+═══════════════════════════════════════════════════════════════ */
+var revealedSteps = new Set();
+function revealStep(stepNum, scroll) {
+  var el = document.getElementById('step' + stepNum);
+  if (!revealedSteps.has(stepNum)) {
+    el.classList.add('show');
+    revealedSteps.add(stepNum);
+    var btn = document.getElementById('reveal-step' + stepNum + '-btn');
+    if (btn) btn.style.display = 'none';
+  }
+  if (scroll) setTimeout(function() { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 60);
+}
+function revealStep2(scroll) { revealStep(2, scroll); }
+function revealStep3(scroll) { revealStep(3, scroll); }
+
+/* ═══════════════════════════════════════════════════════════════
+   QR / SHARE
+═══════════════════════════════════════════════════════════════ */
+function showQR() {
+  var url = location.href;
+  document.getElementById('qr-url').textContent = url;
+  var qrEl = document.getElementById('qr-code');
+  qrEl.innerHTML = '';
+  if (window.QRCode) {
+    new QRCode(qrEl, { text: url, width: 180, height: 180, colorDark: '#1a2744', colorLight: '#ffffff' });
+  }
+  document.getElementById('qr-overlay').classList.add('show');
+}
+function hideQR(ev) {
+  if (ev && ev.target.id !== 'qr-overlay' && ev.target.className !== 'qr-close') return;
+  document.getElementById('qr-overlay').classList.remove('show');
+}
+</script>
+
+</body>
+</html>
