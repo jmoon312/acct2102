@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Process Costing — Weighted Average</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  /* ── Reset & base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    background: #f4f0e8;
+    color: #1a2744;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    background: #1a2744;
+    color: #fff;
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .header-left h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+  .header-left p  { font-size: 13px; color: #a0aec0; margin-top: 2px; }
+
+  .qr-btn {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    transition: background .15s;
+  }
+  .qr-btn:hover { background: rgba(255,255,255,0.18); }
+
+  /* QR Modal */
+  .qr-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .qr-overlay.show { display: flex; }
+  .qr-modal {
+    background: #fff;
+    border-radius: 14px;
+    padding: 32px;
+    text-align: center;
+    max-width: 300px;
+    width: 90%;
+  }
+  .qr-modal h2 { font-size: 16px; font-weight: 600; color: #1a2744; margin-bottom: 6px; }
+  .qr-modal p  { font-size: 12px; color: #64748b; margin-bottom: 18px; line-height: 1.5; }
+  #qr-code { display: flex; justify-content: center; margin-bottom: 16px; }
+  #qr-url  { font-size: 11px; color: #94a3b8; word-break: break-all; margin-bottom: 18px; }
+  .qr-close {
+    background: #1a2744; color: #fff;
+    border: none; border-radius: 8px;
+    padding: 8px 24px; font-size: 13px;
+    cursor: pointer; font-family: inherit;
+  }
+
+  /* ── Main layout ── */
+  main {
+    max-width: 920px;
+    margin: 28px auto;
+    padding: 0 20px 48px;
+  }
+
+  .part {
+    background: #fff;
+    border: 1px solid #dde3ef;
+    border-radius: 12px;
+    padding: 22px 24px 24px;
+    margin-bottom: 22px;
+  }
+
+  .part-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .part-tag {
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    background: #1a2744;
+    padding: 3px 10px;
+    border-radius: 99px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+  .part-tag.practice { background: #D85A30; }
+  .part-tag.explore  { background: #3b7dd8; }
+  .part-tag.solve    { background: #7a5cb6; }
+  .part-tag.build    { background: #5a9e3a; }
+  .part-header h2 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -.01em;
+  }
+  .part-header .subtitle {
+    font-size: 13px;
+    color: #64748b;
+  }
+
+  .setup-box {
+    background: #f8f6f0;
+    border: 1px solid #e6dfd0;
+    border-radius: 9px;
+    padding: 14px 16px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: #334155;
+    margin-bottom: 16px;
+  }
+  .setup-box strong { color: #1a2744; }
+  .setup-box p + p { margin-top: 6px; }
+  .setup-box .meta-line {
+    margin-top: 10px;
+    font-size: 13px;
+    color: #475569;
+  }
+  .setup-box .meta-line strong { color: #1a2744; }
+
+  /* ── Data table inside setup box ── */
+  .data-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 10px 0 6px;
+    font-variant-numeric: tabular-nums;
+    font-size: 13px;
+  }
+  .data-table thead th {
+    background: #fde9c8;
+    color: #1a2744;
+    font-size: 12px;
+    font-weight: 700;
+    text-align: center;
+    padding: 9px 8px;
+    border-bottom: 2px solid #f0c674;
+  }
+  .data-table thead th:first-child {
+    border-top-left-radius: 8px;
+    text-align: left;
+    padding-left: 12px;
+  }
+  .data-table thead th:last-child { border-top-right-radius: 8px; }
+  .data-table tbody td {
+    background: #f0f5fa;
+    padding: 8px;
+    text-align: center;
+    border-bottom: 1px solid #e1eaf3;
+    color: #1a2744;
+  }
+  .data-table tbody td:first-child {
+    text-align: left;
+    padding-left: 12px;
+    font-weight: 600;
+  }
+  .data-table tbody td.dim { color: #94a3b8; }
+  .data-table tbody tr:last-child td:first-child { border-bottom-left-radius: 8px; }
+  .data-table tbody tr:last-child td:last-child  { border-bottom-right-radius: 8px; }
+
+  /* ── Read-only product table ── */
+  .prompt {
+    font-size: 14px;
+    color: #1a2744;
+    margin-bottom: 12px;
+    line-height: 1.55;
+  }
+  .prompt strong { font-weight: 700; }
+
+  .prod-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-bottom: 6px;
+    font-variant-numeric: tabular-nums;
+  }
+  .prod-table thead th {
+    background: #fde9c8;
+    color: #1a2744;
+    font-size: 12.5px;
+    font-weight: 700;
+    text-align: center;
+    padding: 10px 8px;
+    border-bottom: 2px solid #f0c674;
+  }
+  .prod-table thead th:first-child {
+    border-top-left-radius: 8px;
+    text-align: left;
+    padding-left: 14px;
+  }
+  .prod-table thead th:last-child  { border-top-right-radius: 8px; }
+  .prod-table tbody td {
+    background: #f0f5fa;
+    padding: 9px 8px;
+    text-align: center;
+    border-bottom: 1px solid #e1eaf3;
+  }
+  .prod-table tbody td.prod-name {
+    text-align: left;
+    padding-left: 14px;
+    font-weight: 600;
+    color: #1a2744;
+  }
+  .prod-table tbody tr:last-child td:first-child { border-bottom-left-radius: 8px; }
+  .prod-table tbody tr:last-child td:last-child  { border-bottom-right-radius: 8px; }
+
+  .prod-table input {
+    width: 100%;
+    max-width: 110px;
+    padding: 7px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-variant-numeric: tabular-nums;
+    transition: border-color .12s, background .12s;
+  }
+  .prod-table input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .prod-table input.correct {
+    border-color: #5a9e3a;
+    background: #f0f9e8;
+    color: #2d6a1f;
+    font-weight: 600;
+  }
+  .prod-table input.wrong {
+    border-color: #c94040;
+    background: #fff1f1;
+    color: #9b2020;
+  }
+  .corr-hint {
+    display: block;
+    font-size: 11px;
+    color: #5a9e3a;
+    font-weight: 600;
+    margin-top: 3px;
+    min-height: 14px;
+  }
+
+  /* ── Per-question stacked layout ── */
+  .qa-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 4px; }
+  .qa-row {
+    display: grid;
+    grid-template-columns: 1fr 200px;
+    gap: 14px;
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #e1eaf3;
+    border-radius: 9px;
+    padding: 13px 16px;
+  }
+  .qa-row .qa-prompt {
+    font-size: 13.5px;
+    color: #1a2744;
+    line-height: 1.5;
+  }
+  .qa-row .qa-prompt strong { font-weight: 700; }
+  .qa-row .qa-prompt small {
+    display: block;
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 3px;
+  }
+  .qa-row .answer { display: flex; flex-direction: column; }
+  .qa-row .answer label {
+    font-size: 10.5px;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 4px;
+  }
+  .qa-row .answer input {
+    padding: 8px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .qa-row .answer input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .qa-row .answer input.correct {
+    border-color: #5a9e3a;
+    background: #f0f9e8;
+    color: #2d6a1f;
+  }
+  .qa-row .answer input.wrong {
+    border-color: #c94040;
+    background: #fff1f1;
+    color: #9b2020;
+  }
+  .qa-row .answer .corr-hint { text-align: center; margin-top: 3px; }
+
+  /* Reveal animation */
+  .reveal {
+    display: none;
+    animation: slideIn 0.4s ease-out;
+  }
+  .reveal.show { display: block; }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Single-cell solve */
+  .single-solve {
+    display: grid;
+    grid-template-columns: 1fr 200px;
+    gap: 14px;
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #e1eaf3;
+    border-radius: 9px;
+    padding: 16px 18px;
+    margin-bottom: 10px;
+  }
+  .single-solve .solve-prompt {
+    font-size: 14px;
+    color: #1a2744;
+    line-height: 1.55;
+  }
+  .single-solve .solve-prompt strong { font-weight: 700; }
+  .single-solve .solve-prompt small {
+    display: block;
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 4px;
+  }
+  .single-solve .answer { display: flex; flex-direction: column; }
+  .single-solve .answer label {
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 4px;
+  }
+  .single-solve .answer input {
+    padding: 9px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 15px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .single-solve .answer input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .single-solve .answer input.correct {
+    border-color: #5a9e3a;
+    background: #f0f9e8;
+    color: #2d6a1f;
+  }
+  .single-solve .answer input.wrong {
+    border-color: #c94040;
+    background: #fff1f1;
+    color: #9b2020;
+  }
+
+  /* Reconciliation summary box */
+  .recon-box {
+    background: #f0f9e8;
+    border: 2px solid #5a9e3a;
+    border-radius: 9px;
+    padding: 14px 18px;
+    margin-top: 12px;
+    font-size: 14px;
+    color: #1a2744;
+    line-height: 1.6;
+    font-variant-numeric: tabular-nums;
+  }
+  .recon-box strong { color: #2d6a1f; }
+
+  .footer {
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .check-btn {
+    background: #1a2744; color: #fff;
+    border: none; border-radius: 9px;
+    padding: 10px 24px; font-size: 14px;
+    cursor: pointer; font-family: inherit;
+    font-weight: 500;
+    transition: background .15s;
+  }
+  .check-btn:hover { background: #243660; }
+  .reset-btn {
+    font-size: 13px; color: #64748b;
+    background: none; border: none;
+    cursor: pointer; text-decoration: underline;
+    font-family: inherit;
+  }
+  .reveal-link {
+    margin-left: auto;
+    font-size: 12.5px;
+    color: #64748b;
+    background: none; border: none;
+    cursor: pointer; text-decoration: underline;
+    font-family: inherit;
+  }
+  .reveal-link:hover { color: #1a2744; }
+  .score-out {
+    font-size: 14px; font-weight: 600;
+    color: #1a2744;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 6px 14px;
+  }
+  .score-out:empty { display: none; }
+
+  .insight {
+    margin-top: 8px;
+    background: #eff6ff;
+    border: 1px solid #c7dcf5;
+    border-left: 4px solid #3b7dd8;
+    border-radius: 0 8px 8px 0;
+    padding: 11px 14px;
+    font-size: 13px;
+    line-height: 1.55;
+    color: #1a2744;
+  }
+  .insight strong { color: #1e40af; }
+  .insight.success {
+    background: #f0f9e8;
+    border-color: #c4e0a3;
+    border-left-color: #5a9e3a;
+  }
+  .insight.success strong { color: #2d6a1f; }
+
+  /* Cost reminder mini-table */
+  .cost-reminder {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 6px 0 14px;
+    font-variant-numeric: tabular-nums;
+    font-size: 13px;
+  }
+  .cost-reminder thead th {
+    background: #f1eee4;
+    color: #475569;
+    font-size: 11.5px;
+    font-weight: 700;
+    text-align: center;
+    padding: 8px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    border-bottom: 1px solid #e6dfd0;
+  }
+  .cost-reminder thead th:first-child {
+    border-top-left-radius: 8px;
+    text-align: left;
+    padding-left: 12px;
+  }
+  .cost-reminder thead th:last-child { border-top-right-radius: 8px; }
+  .cost-reminder tbody td {
+    background: #fff;
+    padding: 8px;
+    text-align: center;
+    border-bottom: 1px solid #f0f3f8;
+    font-size: 13.5px;
+    color: #1a2744;
+  }
+  .cost-reminder tbody td:first-child {
+    text-align: left;
+    padding-left: 12px;
+    font-weight: 600;
+  }
+  .cost-reminder tbody tr.total-row td {
+    font-weight: 700;
+    border-top: 2px solid #e6dfd0;
+    background: #f8f6f0;
+  }
+  .cost-reminder tbody tr:last-child td:first-child { border-bottom-left-radius: 8px; }
+  .cost-reminder tbody tr:last-child td:last-child  { border-bottom-right-radius: 8px; }
+
+  /* Responsive */
+  @media (max-width: 700px) {
+    header { padding: 14px 16px; }
+    main { padding: 0 12px 40px; }
+    .part { padding: 18px 14px 18px; }
+    .data-table { font-size: 11.5px; }
+    .data-table thead th, .data-table tbody td { padding: 6px 4px; font-size: 11.5px; }
+    .qa-row { grid-template-columns: 1fr; gap: 8px; }
+    .single-solve { grid-template-columns: 1fr; gap: 8px; }
+    .cost-reminder { font-size: 11.5px; }
+    .cost-reminder thead th, .cost-reminder tbody td { padding: 6px 4px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="header-left">
+    <h1>Process Costing — Weighted Average</h1>
+  </div>
+  <button class="qr-btn" onclick="showQR()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="2" height="2"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="19" width="3" height="2"/><rect x="19" y="19" width="2" height="2"/></svg>
+    Share with students
+  </button>
+</header>
+
+<!-- QR Modal -->
+<div class="qr-overlay" id="qr-overlay" onclick="hideQR(event)">
+  <div class="qr-modal">
+    <h2>Scan to open on your device</h2>
+    <p>Students can scan this QR code or type the URL to open the activity on their phone or laptop.</p>
+    <div id="qr-code"></div>
+    <div id="qr-url"></div>
+    <button class="qr-close" onclick="hideQR()">Close</button>
+  </div>
+</div>
+
+<!-- Main -->
+<main>
+
+  <!-- ───────── SETUP — SunBrew Data ───────── -->
+  <section class="part">
+    <div class="part-header">
+      <span class="part-tag" style="background:#475569;">Setup</span>
+      <h2>SunBrew Coffee Roasters</h2>
+      <span class="subtitle">Roasting Department — weighted average method</span>
+    </div>
+
+    <div class="setup-box">
+      <p>SunBrew's roasting department processes green coffee beans into roasted coffee. The production manager needs a cost report for the month using the <strong>weighted average method</strong>.</p>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th></th>
+            <th>Units (lbs)</th>
+            <th>Materials</th>
+            <th>Conversion</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Beginning WIP (35% complete for conversion)</td>
+            <td>6,500</td>
+            <td>$9,750</td>
+            <td>$4,095</td>
+          </tr>
+          <tr>
+            <td>Started this month</td>
+            <td>45,500</td>
+            <td class="dim">--</td>
+            <td class="dim">--</td>
+          </tr>
+          <tr>
+            <td>Costs added this month</td>
+            <td class="dim">--</td>
+            <td>$70,980</td>
+            <td>$50,778</td>
+          </tr>
+          <tr>
+            <td>Completed &amp; transferred out</td>
+            <td>40,000</td>
+            <td class="dim">--</td>
+            <td class="dim">--</td>
+          </tr>
+          <tr>
+            <td>Ending WIP (30% complete for conversion)</td>
+            <td>12,000</td>
+            <td class="dim">--</td>
+            <td class="dim">--</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p class="meta-line"><strong>Materials</strong> (green coffee beans) are added at the <strong>beginning</strong> of the roasting process.</p>
+      <p class="meta-line"><strong>Conversion costs</strong> (roasting, cooling, quality testing) are incurred <strong>evenly throughout</strong> the process.</p>
+    </div>
+  </section>
+
+  <!-- ───────── STEP 1 — Units to Account For ───────── -->
+  <section class="part">
+    <div class="part-header">
+      <span class="part-tag practice">Step 1</span>
+      <h2>Units to account for</h2>
+      <span class="subtitle">verify that units in = units out</span>
+    </div>
+
+    <div class="qa-list">
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Total units to account for</strong><small>Beginning WIP + units started</small></div>
+        <div class="answer">
+          <label>Units in</label>
+          <input type="text" id="s1-in" inputmode="numeric" placeholder="lbs">
+          <span class="corr-hint" id="hint-s1-in"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Verify: completed + ending WIP</strong><small>These should match</small></div>
+        <div class="answer">
+          <label>Units out</label>
+          <input type="text" id="s1-out" inputmode="numeric" placeholder="lbs">
+          <span class="corr-hint" id="hint-s1-out"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep1()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep1()">Reset</button>
+      <span id="score1-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep2(true)" id="reveal-step2-btn">Skip ahead &rarr;</button>
+    </div>
+    <div id="step1-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 2 — Equivalent Units ───────── -->
+  <section class="part reveal" id="step2">
+    <div class="part-header">
+      <span class="part-tag explore">Step 2</span>
+      <h2>Equivalent units</h2>
+      <span class="subtitle">how much work was actually done</span>
+    </div>
+
+    <div class="qa-list">
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Equivalent units — Materials</strong><small>Completed &amp; transferred + ending WIP equivalent units for materials</small></div>
+        <div class="answer">
+          <label>EU — Materials</label>
+          <input type="text" id="s2-mat" inputmode="numeric" placeholder="EU">
+          <span class="corr-hint" id="hint-s2-mat"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Equivalent units — Conversion</strong><small>Completed &amp; transferred + ending WIP equivalent units for conversion</small></div>
+        <div class="answer">
+          <label>EU — Conversion</label>
+          <input type="text" id="s2-conv" inputmode="numeric" placeholder="EU">
+          <span class="corr-hint" id="hint-s2-conv"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep2()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep2()">Reset</button>
+      <span id="score2-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep3(true)" id="reveal-step3-btn">Skip ahead &rarr;</button>
+    </div>
+    <div id="step2-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 3 — Cost per EU ───────── -->
+  <section class="part reveal" id="step3">
+    <div class="part-header">
+      <span class="part-tag solve">Step 3</span>
+      <h2>Cost per equivalent unit</h2>
+      <span class="subtitle">blend beginning and current costs</span>
+    </div>
+
+    <p class="prompt">Total costs to account for (beginning WIP + costs added this month):</p>
+    <table class="cost-reminder">
+      <thead>
+        <tr>
+          <th></th>
+          <th>Materials</th>
+          <th>Conversion</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Beginning WIP</td>
+          <td>$9,750</td>
+          <td>$4,095</td>
+          <td>$13,845</td>
+        </tr>
+        <tr>
+          <td>Added this month</td>
+          <td>$70,980</td>
+          <td>$50,778</td>
+          <td>$121,758</td>
+        </tr>
+        <tr class="total-row">
+          <td>Total</td>
+          <td>$80,730</td>
+          <td>$54,873</td>
+          <td>$135,603</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="qa-list">
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Cost per EU — Materials</strong></div>
+        <div class="answer">
+          <label>$/EU</label>
+          <input type="text" id="s3-mat" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s3-mat"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Cost per EU — Conversion</strong></div>
+        <div class="answer">
+          <label>$/EU</label>
+          <input type="text" id="s3-conv" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s3-conv"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Total cost per equivalent unit</strong></div>
+        <div class="answer">
+          <label>$/EU</label>
+          <input type="text" id="s3-total" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s3-total"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep3()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep3()">Reset</button>
+      <span id="score3-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep4(true)" id="reveal-step4-btn">Skip ahead &rarr;</button>
+    </div>
+    <div id="step3-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 4 — Assign Costs ───────── -->
+  <section class="part reveal" id="step4">
+    <div class="part-header">
+      <span class="part-tag solve">Step 4</span>
+      <h2>Assign costs</h2>
+      <span class="subtitle">where did the $135,603 go?</span>
+    </div>
+
+    <div class="qa-list">
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Cost of units transferred out</strong><small>40,000 lbs completed and sent to finished goods</small></div>
+        <div class="answer">
+          <label>Transferred</label>
+          <input type="text" id="s4-trans" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s4-trans"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Ending WIP — Materials cost</strong><small>Materials cost assigned to the 12,000 lbs still in process</small></div>
+        <div class="answer">
+          <label>WIP Mat.</label>
+          <input type="text" id="s4-wip-mat" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s4-wip-mat"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Ending WIP — Conversion cost</strong><small>Conversion cost assigned to the 12,000 lbs still in process</small></div>
+        <div class="answer">
+          <label>WIP Conv.</label>
+          <input type="text" id="s4-wip-conv" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s4-wip-conv"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Total ending WIP</strong></div>
+        <div class="answer">
+          <label>Total WIP</label>
+          <input type="text" id="s4-wip-total" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s4-wip-total"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Total costs accounted for</strong><small>Should reconcile back to $135,603</small></div>
+        <div class="answer">
+          <label>Total</label>
+          <input type="text" id="s4-total" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s4-total"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep4()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep4()">Reset</button>
+      <span id="score4-out" class="score-out"></span>
+    </div>
+    <div id="step4-insight"></div>
+  </section>
+
+</main>
+
+<script>
+/* =================================================================
+   DATA — SunBrew Coffee Roasters, Roasting Department
+================================================================= */
+const BEG_UNITS    = 6500;
+const STARTED      = 45500;
+const COMPLETED    = 40000;
+const END_UNITS    = 12000;
+const END_CONV_PCT = 0.30;   // 30% complete for conversion
+const BEG_CONV_PCT = 0.35;   // 35% complete for conversion (not needed for weighted avg EU calc)
+
+const BEG_MAT  = 9750;
+const BEG_CONV = 4095;
+const ADD_MAT  = 70980;
+const ADD_CONV = 50778;
+
+// Derived
+const TOTAL_UNITS_IN  = BEG_UNITS + STARTED;        // 52,000
+const TOTAL_UNITS_OUT = COMPLETED + END_UNITS;       // 52,000
+
+// Materials added at beginning => ending WIP is 100% complete for materials
+const EU_MAT  = COMPLETED + END_UNITS * 1.0;         // 52,000
+const EU_CONV = COMPLETED + END_UNITS * END_CONV_PCT; // 43,600
+
+const TOTAL_MAT  = BEG_MAT  + ADD_MAT;  // 80,730
+const TOTAL_CONV = BEG_CONV + ADD_CONV;  // 54,873
+const GRAND_TOTAL = TOTAL_MAT + TOTAL_CONV; // 135,603
+
+const COST_PER_EU_MAT  = TOTAL_MAT  / EU_MAT;   // 1.5525
+const COST_PER_EU_CONV = TOTAL_CONV / EU_CONV;   // 1.258834862...
+const COST_PER_EU_TOTAL = COST_PER_EU_MAT + COST_PER_EU_CONV; // 2.811334862...
+
+// Step 4 assignments
+const TRANS_MAT  = COMPLETED * COST_PER_EU_MAT;              // 62,100
+const TRANS_CONV = COMPLETED * COST_PER_EU_CONV;              // 50,353.39...
+const TRANS_TOTAL = TRANS_MAT + TRANS_CONV;                    // 112,453.39...
+
+const WIP_MAT  = END_UNITS * 1.0 * COST_PER_EU_MAT;          // 18,630
+const WIP_CONV = END_UNITS * END_CONV_PCT * COST_PER_EU_CONV; // 4,531.80...
+const WIP_TOTAL = WIP_MAT + WIP_CONV;                         // 23,161.80...
+
+const TOTAL_ACCOUNTED = TRANS_TOTAL + WIP_TOTAL;              // ~135,615 (float) but should be ~135,603
+
+/* =================================================================
+   HELPERS
+================================================================= */
+function parseNum(s) {
+  if (typeof s !== 'string') return NaN;
+  return parseFloat(s.replace(/[\$,\s%]/g, ''));
+}
+function fmtMoney(v, decimals) {
+  const d = (decimals === undefined) ? 2 : decimals;
+  const rounded = Math.round(v * 100) / 100;
+  const sign = rounded < 0 ? '-$' : '$';
+  return sign + Math.abs(rounded).toLocaleString('en-US', {
+    minimumFractionDigits: d,
+    maximumFractionDigits: d
+  });
+}
+function fmtUnits(v) {
+  return Math.round(v).toLocaleString('en-US');
+}
+
+/* =================================================================
+   AUDIO
+================================================================= */
+let audioCtx = null;
+function getAudio() {
+  if (!audioCtx) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (AC) audioCtx = new AC();
+  }
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+function playBell() {
+  const ctx = getAudio(); if (!ctx) return;
+  const now = ctx.currentTime;
+  [523.25, 659.25, 783.99].forEach(f => {
+    const osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = 'sine'; osc.frequency.value = f;
+    osc.connect(g).connect(ctx.destination);
+    g.gain.setValueAtTime(0, now);
+    g.gain.linearRampToValueAtTime(0.15, now + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 1.6);
+    osc.start(now); osc.stop(now + 1.7);
+  });
+}
+function playHorn() {
+  const ctx = getAudio(); if (!ctx) return;
+  const now = ctx.currentTime;
+  const notes = [
+    { f: 466.16, t: 0.00, d: 0.18 },
+    { f: 440.00, t: 0.20, d: 0.18 },
+    { f: 415.30, t: 0.40, d: 0.55 }
+  ];
+  notes.forEach(({ f, t, d }) => {
+    const osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(f, now + t);
+    if (d > 0.3) osc.frequency.exponentialRampToValueAtTime(f * 0.88, now + t + d);
+    osc.connect(g).connect(ctx.destination);
+    g.gain.setValueAtTime(0, now + t);
+    g.gain.linearRampToValueAtTime(0.12, now + t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, now + t + d);
+    osc.start(now + t); osc.stop(now + t + d + 0.05);
+  });
+}
+
+/* =================================================================
+   GENERIC CHECKER
+================================================================= */
+function checkGroup(spec, scoreId, allCorrectFn) {
+  let correct = 0, total = 0, blanks = 0;
+  spec.forEach(f => {
+    const inp  = document.getElementById(f.inputId);
+    const hint = document.getElementById(f.hintId);
+    inp.classList.remove('correct', 'wrong');
+    hint.textContent = '';
+    total++;
+    if (inp.value.trim() === '') { blanks++; return; }
+    const val = parseNum(inp.value);
+    const exp = f.expected;
+    const tol = f.tol;
+    if (!isNaN(val) && Math.abs(val - exp) <= tol) {
+      inp.classList.add('correct');
+      correct++;
+    } else {
+      inp.classList.add('wrong');
+      hint.textContent = '\u2192 ' + f.fmt(exp);
+    }
+  });
+  const out = document.getElementById(scoreId);
+  if (blanks === total) {
+    out.textContent = 'Fill in some answers first.';
+    return false;
+  }
+  out.textContent = correct + ' / ' + total + ' correct' + (blanks ? ' (' + blanks + ' blank)' : '');
+  if (correct === total) {
+    playBell();
+    if (allCorrectFn) allCorrectFn();
+    return true;
+  } else {
+    playHorn();
+    return false;
+  }
+}
+
+function resetGroup(spec, scoreId, extraResetFn) {
+  spec.forEach(f => {
+    const inp = document.getElementById(f.inputId);
+    const hint = document.getElementById(f.hintId);
+    inp.value = '';
+    inp.classList.remove('correct', 'wrong');
+    hint.textContent = '';
+  });
+  document.getElementById(scoreId).textContent = '';
+  if (extraResetFn) extraResetFn();
+}
+
+/* =================================================================
+   STEP 1 — Units to Account For
+================================================================= */
+const STEP1_SPEC = [
+  { inputId: 's1-in',  hintId: 'hint-s1-in',  expected: TOTAL_UNITS_IN,  tol: 1, fmt: v => fmtUnits(v) + ' lbs' },
+  { inputId: 's1-out', hintId: 'hint-s1-out', expected: TOTAL_UNITS_OUT, tol: 1, fmt: v => fmtUnits(v) + ' lbs' }
+];
+function checkStep1() {
+  checkGroup(STEP1_SPEC, 'score1-out', () => {
+    document.getElementById('step1-insight').innerHTML =
+      '<div class="insight success">Both sides balance at <strong>52,000 lbs</strong> \u2014 every pound that entered the process is either done or still in progress.</div>';
+    revealStep2(false);
+  });
+}
+function resetStep1() {
+  resetGroup(STEP1_SPEC, 'score1-out', () => {
+    document.getElementById('step1-insight').innerHTML = '';
+  });
+}
+
+/* =================================================================
+   STEP 2 — Equivalent Units
+================================================================= */
+const STEP2_SPEC = [
+  { inputId: 's2-mat',  hintId: 'hint-s2-mat',  expected: EU_MAT,  tol: 1, fmt: v => fmtUnits(v) + ' EU' },
+  { inputId: 's2-conv', hintId: 'hint-s2-conv', expected: EU_CONV, tol: 1, fmt: v => fmtUnits(v) + ' EU' }
+];
+function checkStep2() {
+  checkGroup(STEP2_SPEC, 'score2-out', () => {
+    document.getElementById('step2-insight').innerHTML =
+      '<div class="insight success">Materials EU equals total units because beans are added at the start \u2014 ending WIP is <strong>100% complete for materials</strong> even though roasting is only 30% done.</div>';
+    revealStep3(false);
+  });
+}
+function resetStep2() {
+  resetGroup(STEP2_SPEC, 'score2-out', () => {
+    document.getElementById('step2-insight').innerHTML = '';
+  });
+}
+
+/* =================================================================
+   STEP 3 — Cost per EU
+================================================================= */
+const STEP3_SPEC = [
+  { inputId: 's3-mat',   hintId: 'hint-s3-mat',   expected: COST_PER_EU_MAT,   tol: 0.01, fmt: v => fmtMoney(v, 4) },
+  { inputId: 's3-conv',  hintId: 'hint-s3-conv',  expected: COST_PER_EU_CONV,  tol: 0.01, fmt: v => fmtMoney(v, 4) },
+  { inputId: 's3-total', hintId: 'hint-s3-total', expected: COST_PER_EU_TOTAL, tol: 0.02, fmt: v => fmtMoney(v, 2) }
+];
+function checkStep3() {
+  checkGroup(STEP3_SPEC, 'score3-out', () => {
+    document.getElementById('step3-insight').innerHTML =
+      '<div class="insight success">Cost per equivalent unit tells you what one fully-processed pound of coffee costs this month \u2014 roughly <strong>$2.81</strong> blending beginning and current period costs.</div>';
+    revealStep4(false);
+  });
+}
+function resetStep3() {
+  resetGroup(STEP3_SPEC, 'score3-out', () => {
+    document.getElementById('step3-insight').innerHTML = '';
+  });
+}
+
+/* =================================================================
+   STEP 4 — Assign Costs
+================================================================= */
+const STEP4_SPEC = [
+  { inputId: 's4-trans',     hintId: 'hint-s4-trans',     expected: TRANS_TOTAL, tol: 100, fmt: v => fmtMoney(v, 2) },
+  { inputId: 's4-wip-mat',  hintId: 'hint-s4-wip-mat',  expected: WIP_MAT,     tol: 50,  fmt: v => fmtMoney(v, 2) },
+  { inputId: 's4-wip-conv', hintId: 'hint-s4-wip-conv', expected: WIP_CONV,    tol: 10,  fmt: v => fmtMoney(v, 2) },
+  { inputId: 's4-wip-total', hintId: 'hint-s4-wip-total', expected: WIP_TOTAL,  tol: 50,  fmt: v => fmtMoney(v, 2) },
+  { inputId: 's4-total',    hintId: 'hint-s4-total',    expected: GRAND_TOTAL, tol: 100, fmt: v => fmtMoney(v, 2) }
+];
+function checkStep4() {
+  checkGroup(STEP4_SPEC, 'score4-out', () => {
+    const fb = document.getElementById('step4-insight');
+    fb.innerHTML =
+      '<div class="insight success">Every dollar of cost is assigned \u2014 either to the <strong>40,000 lbs</strong> shipped to finished goods or the <strong>12,000 lbs</strong> still being roasted. Small rounding differences are normal.</div>' +
+      '<div class="recon-box">' +
+        'Transferred to FG: <strong>' + fmtMoney(TRANS_TOTAL, 2) + '</strong> + ' +
+        'Ending WIP: <strong>' + fmtMoney(WIP_TOTAL, 2) + '</strong> = ' +
+        '<strong>' + fmtMoney(GRAND_TOTAL, 2) + '</strong> total costs accounted for' +
+      '</div>';
+  });
+}
+function resetStep4() {
+  resetGroup(STEP4_SPEC, 'score4-out', () => {
+    document.getElementById('step4-insight').innerHTML = '';
+  });
+}
+
+/* =================================================================
+   REVEAL STEPS
+================================================================= */
+const revealedSteps = new Set();
+function revealStep(stepNum, scroll) {
+  const el = document.getElementById('step' + stepNum);
+  if (!revealedSteps.has(stepNum)) {
+    el.classList.add('show');
+    revealedSteps.add(stepNum);
+    const btn = document.getElementById('reveal-step' + stepNum + '-btn');
+    if (btn) btn.style.display = 'none';
+  }
+  if (scroll) setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+}
+function revealStep2(scroll) { revealStep(2, scroll); }
+function revealStep3(scroll) { revealStep(3, scroll); }
+function revealStep4(scroll) { revealStep(4, scroll); }
+
+/* =================================================================
+   QR / SHARE
+================================================================= */
+function showQR() {
+  const url = location.href;
+  document.getElementById('qr-url').textContent = url;
+  const qrEl = document.getElementById('qr-code');
+  qrEl.innerHTML = '';
+  if (window.QRCode) {
+    new QRCode(qrEl, { text: url, width: 180, height: 180, colorDark: '#1a2744', colorLight: '#ffffff' });
+  }
+  document.getElementById('qr-overlay').classList.add('show');
+}
+function hideQR(ev) {
+  if (ev && ev.target.id !== 'qr-overlay' && ev.target.className !== 'qr-close') return;
+  document.getElementById('qr-overlay').classList.remove('show');
+}
+</script>
+
+</body>
+</html>
