@@ -1,0 +1,1736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cost Flow Pipeline</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  /* ── Reset & base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    background: #f4f0e8;
+    color: #1a2744;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    background: #1a2744;
+    color: #fff;
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .header-left h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+  .header-left p  { font-size: 13px; color: #a0aec0; margin-top: 2px; }
+
+  .qr-btn {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    transition: background .15s;
+  }
+  .qr-btn:hover { background: rgba(255,255,255,0.18); }
+
+  /* QR Modal */
+  .qr-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .qr-overlay.show { display: flex; }
+  .qr-modal {
+    background: #fff;
+    border-radius: 14px;
+    padding: 32px;
+    text-align: center;
+    max-width: 300px;
+    width: 90%;
+  }
+  .qr-modal h2 { font-size: 16px; font-weight: 600; color: #1a2744; margin-bottom: 6px; }
+  .qr-modal p  { font-size: 12px; color: #64748b; margin-bottom: 18px; line-height: 1.5; }
+  #qr-code { display: flex; justify-content: center; margin-bottom: 16px; }
+  #qr-url  { font-size: 11px; color: #94a3b8; word-break: break-all; margin-bottom: 18px; }
+  .qr-close {
+    background: #1a2744; color: #fff;
+    border: none; border-radius: 8px;
+    padding: 8px 24px; font-size: 13px;
+    cursor: pointer; font-family: inherit;
+  }
+
+  /* ── Main layout ── */
+  main {
+    max-width: 920px;
+    margin: 28px auto;
+    padding: 0 20px 48px;
+  }
+
+  .part {
+    background: #fff;
+    border: 1px solid #dde3ef;
+    border-radius: 12px;
+    padding: 22px 24px 24px;
+    margin-bottom: 22px;
+  }
+
+  .part-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .part-tag {
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    background: #1a2744;
+    padding: 3px 10px;
+    border-radius: 99px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+  .part-tag.practice { background: #D85A30; }
+  .part-tag.explore  { background: #3b7dd8; }
+  .part-tag.solve    { background: #7a5cb6; }
+  .part-tag.build    { background: #5a9e3a; }
+  .part-header h2 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -.01em;
+  }
+  .part-header .subtitle {
+    font-size: 13px;
+    color: #64748b;
+  }
+
+  .setup-box {
+    background: #f8f6f0;
+    border: 1px solid #e6dfd0;
+    border-radius: 9px;
+    padding: 14px 16px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: #334155;
+    margin-bottom: 16px;
+  }
+  .setup-box strong { color: #1a2744; }
+  .setup-box p + p { margin-top: 6px; }
+
+  .prompt {
+    font-size: 14px;
+    color: #1a2744;
+    margin-bottom: 12px;
+    line-height: 1.55;
+  }
+  .prompt strong { font-weight: 700; }
+
+  /* Reveal animation */
+  .reveal {
+    display: none;
+    animation: slideIn 0.4s ease-out;
+  }
+  .reveal.show { display: block; }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .footer {
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .check-btn {
+    background: #1a2744; color: #fff;
+    border: none; border-radius: 9px;
+    padding: 10px 24px; font-size: 14px;
+    cursor: pointer; font-family: inherit;
+    font-weight: 500;
+    transition: background .15s;
+  }
+  .check-btn:hover { background: #243660; }
+  .reset-btn {
+    font-size: 13px; color: #64748b;
+    background: none; border: none;
+    cursor: pointer; text-decoration: underline;
+    font-family: inherit;
+  }
+  .reveal-link {
+    margin-left: auto;
+    font-size: 12.5px;
+    color: #64748b;
+    background: none; border: none;
+    cursor: pointer; text-decoration: underline;
+    font-family: inherit;
+  }
+  .reveal-link:hover { color: #1a2744; }
+  .score-out {
+    font-size: 14px; font-weight: 600;
+    color: #1a2744;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 6px 14px;
+  }
+  .score-out:empty { display: none; }
+
+  .insight {
+    margin-top: 8px;
+    background: #eff6ff;
+    border: 1px solid #c7dcf5;
+    border-left: 4px solid #3b7dd8;
+    border-radius: 0 8px 8px 0;
+    padding: 11px 14px;
+    font-size: 13px;
+    line-height: 1.55;
+    color: #1a2744;
+  }
+  .insight strong { color: #1e40af; }
+  .insight.success {
+    background: #f0f9e8;
+    border-color: #c4e0a3;
+    border-left-color: #5a9e3a;
+  }
+  .insight.success strong { color: #2d6a1f; }
+
+  /* ═══════════════════════════════════════
+     STEP 1 — Drag & drop cost sorting
+  ═══════════════════════════════════════ */
+  .deck {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 18px;
+    min-height: 50px;
+  }
+  .cost-card {
+    background: #fff;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 12.5px;
+    color: #1a2744;
+    cursor: grab;
+    user-select: none;
+    transition: border-color .15s, background .15s, transform .15s, box-shadow .15s;
+    line-height: 1.4;
+    max-width: 280px;
+    position: relative;
+  }
+  .cost-card:hover { border-color: #94a3b8; box-shadow: 0 2px 6px rgba(0,0,0,.08); }
+  .cost-card.selected {
+    border-color: #3b7dd8;
+    background: #eff6ff;
+    box-shadow: 0 2px 8px rgba(59,125,216,.2);
+  }
+  .cost-card.dragging {
+    opacity: 0.4;
+    transform: scale(0.95);
+  }
+  .cost-card.locked {
+    cursor: default;
+    opacity: 0.7;
+    border-color: #c4e0a3;
+    background: #f0f9e8;
+  }
+  .cost-card .card-amt {
+    font-weight: 700;
+    color: #1a2744;
+    font-variant-numeric: tabular-nums;
+  }
+  .cost-card .card-hint {
+    display: none;
+    font-size: 11px;
+    color: #9b2020;
+    margin-top: 4px;
+    line-height: 1.35;
+  }
+  .cost-card.show-hint .card-hint { display: block; }
+
+  @keyframes flashGreen {
+    0% { background: #d4edda; }
+    100% { background: #f0f9e8; }
+  }
+  @keyframes flashRed {
+    0%, 40% { background: #fff1f1; border-color: #c94040; }
+    100% { background: #fff; border-color: #cbd5e1; }
+  }
+  .cost-card.flash-correct { animation: flashGreen .5s ease-out; }
+  .cost-card.flash-wrong { animation: flashRed .6s ease-out; }
+
+  .buckets-container {
+    margin-bottom: 10px;
+  }
+  .bucket-groups {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .bucket-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .bucket-group-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #94a3b8;
+    text-align: center;
+    padding: 0 4px;
+  }
+  .bucket-group-inner {
+    display: flex;
+    gap: 8px;
+  }
+  .buckets-row {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .bucket {
+    background: #f8fafc;
+    border: 2px dashed #cbd5e1;
+    border-radius: 10px;
+    padding: 10px 8px;
+    min-height: 120px;
+    text-align: center;
+    transition: border-color .15s, background .15s;
+    flex: 1;
+    min-width: 130px;
+  }
+  .bucket.drag-over {
+    border-color: #3b7dd8;
+    background: #eff6ff;
+    border-style: solid;
+  }
+  .bucket-label {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #1a2744;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    margin-bottom: 1px;
+  }
+  .bucket-sublabel {
+    font-size: 10px;
+    color: #94a3b8;
+    font-weight: 400;
+    margin-bottom: 4px;
+  }
+  .bucket-total {
+    font-size: 13px;
+    font-weight: 700;
+    color: #5a9e3a;
+    font-variant-numeric: tabular-nums;
+    margin-bottom: 6px;
+    min-height: 18px;
+  }
+  .bucket-items {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .bucket-item {
+    font-size: 11px;
+    color: #475569;
+    background: #e8f5e0;
+    border-radius: 5px;
+    padding: 3px 6px;
+    line-height: 1.3;
+  }
+
+  .progress-wrap {
+    margin-bottom: 14px;
+  }
+  .progress-label {
+    font-size: 12px; color: #94a3b8;
+    margin-bottom: 5px;
+  }
+  .progress-bar {
+    height: 4px; background: #e2e8f0;
+    border-radius: 99px; overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%; background: #D85A30;
+    border-radius: 99px;
+    width: 0%;
+    transition: width .3s;
+  }
+
+  /* ═══════════════════════════════════════
+     STEP 2 — Pipeline diagram
+  ═══════════════════════════════════════ */
+  .pipeline-wrap {
+    position: relative;
+    margin-bottom: 20px;
+  }
+  .pipeline-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    margin-bottom: 8px;
+  }
+  .pipe-bucket {
+    background: #f0f5fa;
+    border: 2px solid #dde3ef;
+    border-radius: 10px;
+    padding: 10px 12px;
+    text-align: center;
+    min-width: 100px;
+    position: relative;
+    transition: border-color .3s, background .3s;
+  }
+  .pipe-bucket.highlight {
+    border-color: #3b7dd8;
+    background: #eff6ff;
+  }
+  .pipe-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 2px;
+  }
+  .pipe-balance {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a2744;
+    font-variant-numeric: tabular-nums;
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  }
+  .pipe-balance.negative { color: #c94040; }
+  .pipe-arrow {
+    font-size: 20px;
+    color: #cbd5e1;
+    padding: 0 6px;
+    flex-shrink: 0;
+  }
+  .pipe-moh-connector {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: -6px;
+    margin-bottom: 8px;
+  }
+  .pipe-moh-arrow {
+    font-size: 16px;
+    color: #cbd5e1;
+    transform: rotate(180deg);
+  }
+  .pipe-moh-row {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    align-items: center;
+  }
+
+  /* ═══════════════════════════════════════
+     STEP 2 — Flow transaction grid UI
+  ═══════════════════════════════════════ */
+  .flow-transactions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .flow-tx {
+    background: #f8fafc;
+    border: 1px solid #e1eaf3;
+    border-radius: 9px;
+    padding: 14px 16px;
+  }
+  .flow-tx.completed {
+    background: #f0f9e8;
+    border-color: #c4e0a3;
+  }
+  .flow-desc {
+    font-size: 13.5px;
+    color: #1a2744;
+    line-height: 1.5;
+    margin-bottom: 10px;
+  }
+  .flow-desc strong { font-weight: 700; }
+
+  .flow-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr) auto;
+    gap: 6px;
+    align-items: end;
+  }
+  .flow-grid-cell {
+    text-align: center;
+  }
+  .flow-grid-cell label {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 3px;
+  }
+  .flow-grid-cell input {
+    width: 100%;
+    padding: 8px 4px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .flow-grid-cell input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .flow-grid-cell input.correct {
+    border-color: #5a9e3a;
+    background: #f0f9e8;
+    color: #2d6a1f;
+  }
+  .flow-grid-cell input.wrong {
+    border-color: #c94040;
+    background: #fff1f1;
+    color: #9b2020;
+  }
+  .flow-grid-cell input:disabled {
+    background: #f0f9e8;
+    color: #2d6a1f;
+    border-color: #c4e0a3;
+  }
+
+  .flow-check-btn {
+    background: #1a2744; color: #fff;
+    border: none; border-radius: 7px;
+    padding: 8px 16px; font-size: 13px;
+    cursor: pointer; font-family: inherit;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: background .15s;
+    align-self: end;
+  }
+  .flow-check-btn:hover { background: #243660; }
+  .flow-check-btn:disabled {
+    background: #94a3b8;
+    cursor: default;
+  }
+
+  /* ═══════════════════════════════════════
+     STEP 3 — MOH questions
+  ═══════════════════════════════════════ */
+  .qa-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 4px; }
+  .qa-row {
+    display: grid;
+    grid-template-columns: 1fr 200px;
+    gap: 14px;
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #e1eaf3;
+    border-radius: 9px;
+    padding: 13px 16px;
+  }
+  .qa-row .qa-prompt {
+    font-size: 13.5px;
+    color: #1a2744;
+    line-height: 1.5;
+  }
+  .qa-row .qa-prompt strong { font-weight: 700; }
+  .qa-row .answer { display: flex; flex-direction: column; }
+  .qa-row .answer label {
+    font-size: 10.5px;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 4px;
+  }
+  .qa-row .answer input {
+    padding: 8px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .qa-row .answer input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .qa-row .answer input.correct {
+    border-color: #5a9e3a;
+    background: #f0f9e8;
+    color: #2d6a1f;
+  }
+  .qa-row .answer input.wrong {
+    border-color: #c94040;
+    background: #fff1f1;
+    color: #9b2020;
+  }
+  .corr-hint {
+    display: block;
+    font-size: 11px;
+    color: #5a9e3a;
+    font-weight: 600;
+    margin-top: 3px;
+    min-height: 14px;
+  }
+
+  .intuition-box {
+    background: #f8fafc;
+    border: 1px solid #e1eaf3;
+    border-radius: 9px;
+    padding: 16px 18px;
+    margin-bottom: 14px;
+  }
+  .intuition-box .intuition-q {
+    font-size: 14px;
+    color: #1a2744;
+    margin-bottom: 12px;
+    line-height: 1.55;
+  }
+  .intuition-box .intuition-q strong { font-weight: 700; }
+  .intuition-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .intuition-buttons button {
+    flex: 1;
+    min-width: 130px;
+    background: #fff;
+    border: 1.5px solid #cbd5e1;
+    color: #1a2744;
+    padding: 12px 16px;
+    border-radius: 9px;
+    font-size: 14px;
+    font-family: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .intuition-buttons button:hover {
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .intuition-buttons button.selected {
+    background: #1a2744;
+    color: #fff;
+    border-color: #1a2744;
+  }
+
+  /* ═══════════════════════════════════════
+     STEP 4 — Build your own
+  ═══════════════════════════════════════ */
+  .params-card {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .params-card .param-row {
+    display: grid;
+    grid-template-columns: 1fr 140px;
+    gap: 10px;
+    align-items: center;
+    background: #f8f6f0;
+    border: 1px solid #e6dfd0;
+    border-radius: 8px;
+    padding: 10px 14px;
+  }
+  .params-card .param-row label {
+    font-size: 13.5px;
+    color: #1a2744;
+    font-weight: 500;
+  }
+  .params-card .param-row label small {
+    display: block;
+    font-size: 11.5px;
+    color: #64748b;
+    font-weight: 400;
+    margin-top: 1px;
+  }
+  .params-card .param-row input {
+    padding: 7px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-variant-numeric: tabular-nums;
+  }
+  .params-card .param-row input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .params-card .param-row input.changed {
+    border-color: #D85A30;
+    background: #fff7f0;
+  }
+
+  .build-solve {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .build-solve .solve-card {
+    background: #fff;
+    border: 1px solid #dde3ef;
+    border-radius: 9px;
+    padding: 12px 14px;
+  }
+  .build-solve .solve-card label {
+    display: block;
+    font-size: 12px;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 6px;
+  }
+  .build-solve .solve-card input {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 15px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .build-solve .solve-card input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .build-solve .solve-card input.correct {
+    border-color: #5a9e3a;
+    background: #f0f9e8;
+    color: #2d6a1f;
+  }
+  .build-solve .solve-card input.wrong {
+    border-color: #c94040;
+    background: #fff1f1;
+    color: #9b2020;
+  }
+
+  /* ── Balance update animation ── */
+  @keyframes balancePulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.12); }
+    100% { transform: scale(1); }
+  }
+  .pipe-balance.pulse {
+    animation: balancePulse 0.4s ease-out;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 700px) {
+    header { padding: 14px 16px; }
+    main { padding: 0 12px 40px; }
+    .part { padding: 18px 14px 18px; }
+    .buckets-row { grid-template-columns: repeat(2, 1fr); }
+    .bucket-group-inner { flex-wrap: wrap; }
+    .bucket { min-width: 110px; }
+    .cost-card { max-width: 100%; }
+    .pipeline-row { flex-wrap: wrap; gap: 6px; }
+    .pipe-bucket { min-width: 80px; padding: 8px 6px; }
+    .pipe-balance { font-size: 13px; }
+    .pipe-arrow { font-size: 16px; padding: 0 3px; }
+    .flow-grid { grid-template-columns: repeat(3, 1fr); }
+    .flow-grid-cell:last-child { grid-column: 1 / -1; }
+    .qa-row { grid-template-columns: 1fr; gap: 8px; }
+    .params-card { grid-template-columns: 1fr; }
+    .build-solve { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="header-left">
+    <h1>Cost Flow Pipeline</h1>
+    <p>Chapter 5 &mdash; Manufacturing cost flows</p>
+  </div>
+  <button class="qr-btn" onclick="showQR()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="2" height="2"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="19" width="3" height="2"/><rect x="19" y="19" width="2" height="2"/></svg>
+    Share with students
+  </button>
+</header>
+
+<!-- QR Modal -->
+<div class="qr-overlay" id="qr-overlay" onclick="hideQR(event)">
+  <div class="qr-modal">
+    <h2>Scan to open on your device</h2>
+    <p>Students can scan this QR code or type the URL to open the activity on their phone or laptop.</p>
+    <div id="qr-code"></div>
+    <div id="qr-url"></div>
+    <button class="qr-close" onclick="hideQR()">Close</button>
+  </div>
+</div>
+
+<!-- Main -->
+<main>
+
+  <!-- ───────── STEP 1 — Sort the Costs ───────── -->
+  <section class="part">
+    <div class="part-header">
+      <span class="part-tag practice">Step 1</span>
+      <h2>Sort the Costs</h2>
+      <span class="subtitle">classify each cost into the right account</span>
+    </div>
+
+    <div class="setup-box">
+      <p>Riverside Manufacturing produces custom furniture. The following costs were incurred this month. Riverside maintains separate inventory accounts for direct materials (<strong>Raw Materials</strong>) and indirect materials (<strong>Manufacturing Supplies</strong>). Classify each cost into the correct account.</p>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-label" id="s1-progress-label">0 of 12 sorted</div>
+      <div class="progress-bar"><div class="progress-fill" id="s1-progress-fill"></div></div>
+    </div>
+
+    <div class="deck" id="card-deck"></div>
+
+    <div class="buckets-container">
+      <div class="bucket-groups">
+        <div class="bucket-group">
+          <div class="bucket-group-label">Material Inventories</div>
+          <div class="bucket-group-inner">
+            <div class="bucket" id="bucket-rm" onclick="clickBucket('rm')">
+              <div class="bucket-label">Raw Materials</div>
+              <div class="bucket-sublabel">direct materials</div>
+              <div class="bucket-total" id="bucket-total-rm"></div>
+              <div class="bucket-items" id="bucket-items-rm"></div>
+            </div>
+            <div class="bucket" id="bucket-supplies" onclick="clickBucket('supplies')">
+              <div class="bucket-label">Mfg. Supplies</div>
+              <div class="bucket-sublabel">indirect materials</div>
+              <div class="bucket-total" id="bucket-total-supplies"></div>
+              <div class="bucket-items" id="bucket-items-supplies"></div>
+            </div>
+          </div>
+        </div>
+        <div class="bucket-group">
+          <div class="bucket-group-label">Production</div>
+          <div class="bucket-group-inner">
+            <div class="bucket" id="bucket-wip" onclick="clickBucket('wip')">
+              <div class="bucket-label">Work-in-Process</div>
+              <div class="bucket-sublabel">direct labor</div>
+              <div class="bucket-total" id="bucket-total-wip"></div>
+              <div class="bucket-items" id="bucket-items-wip"></div>
+            </div>
+            <div class="bucket" id="bucket-moh" onclick="clickBucket('moh')">
+              <div class="bucket-label">MOH</div>
+              <div class="bucket-sublabel">indirect factory costs</div>
+              <div class="bucket-total" id="bucket-total-moh"></div>
+              <div class="bucket-items" id="bucket-items-moh"></div>
+            </div>
+          </div>
+        </div>
+        <div class="bucket-group">
+          <div class="bucket-group-label">Period</div>
+          <div class="bucket-group-inner">
+            <div class="bucket" id="bucket-period" onclick="clickBucket('period')">
+              <div class="bucket-label">Period Expense</div>
+              <div class="bucket-sublabel">selling &amp; admin</div>
+              <div class="bucket-total" id="bucket-total-period"></div>
+              <div class="bucket-items" id="bucket-items-period"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <span id="s1-score" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep(2, true)" id="reveal-step2-btn">Skip ahead &rarr;</button>
+    </div>
+
+    <div id="s1-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 2 — Flow Costs Through the Pipeline ───────── -->
+  <section class="part reveal" id="step2">
+    <div class="part-header">
+      <span class="part-tag explore">Step 2</span>
+      <h2>Flow Costs Through the Pipeline</h2>
+      <span class="subtitle">process this month's production transactions</span>
+    </div>
+
+    <div class="setup-box">
+      <p>Now process the month's production flows. Riverside's beginning balances: <strong>Raw Materials $6,000</strong>, <strong>Manufacturing Supplies $400</strong>, <strong>WIP $10,500</strong>, <strong>Finished Goods $8,200</strong>. The predetermined overhead rate is <strong>$14.00 per machine hour</strong>. This month: <strong>950 machine hours</strong> were used.</p>
+    </div>
+
+    <!-- Pipeline diagram -->
+    <div class="pipeline-wrap">
+      <div class="pipeline-row">
+        <div class="pipe-bucket" id="pipe-rm">
+          <div class="pipe-label">Raw Materials</div>
+          <div class="pipe-balance" id="pipe-bal-rm">$26,200</div>
+        </div>
+        <div class="pipe-arrow">&rarr;</div>
+        <div class="pipe-bucket" id="pipe-wip">
+          <div class="pipe-label">WIP</div>
+          <div class="pipe-balance" id="pipe-bal-wip">$23,500</div>
+        </div>
+        <div class="pipe-arrow">&rarr;</div>
+        <div class="pipe-bucket" id="pipe-fg">
+          <div class="pipe-label">Finished Goods</div>
+          <div class="pipe-balance" id="pipe-bal-fg">$8,200</div>
+        </div>
+        <div class="pipe-arrow">&rarr;</div>
+        <div class="pipe-bucket" id="pipe-cogs">
+          <div class="pipe-label">COGS</div>
+          <div class="pipe-balance" id="pipe-bal-cogs">$0</div>
+        </div>
+      </div>
+      <div class="pipe-moh-connector">
+        <div class="pipe-moh-arrow">&darr;</div>
+      </div>
+      <div class="pipe-moh-row">
+        <div class="pipe-bucket" id="pipe-supplies">
+          <div class="pipe-label">Supplies</div>
+          <div class="pipe-balance" id="pipe-bal-supplies">$1,050</div>
+        </div>
+        <div class="pipe-arrow">&rarr;</div>
+        <div class="pipe-bucket" id="pipe-moh">
+          <div class="pipe-label">MOH</div>
+          <div class="pipe-balance" id="pipe-bal-moh">$12,600</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Flow transactions -->
+    <div class="flow-transactions" id="flow-transactions">
+
+      <!-- Flow A -->
+      <div class="flow-tx" id="flow-a">
+        <div class="flow-desc">Oak lumber (<strong>$12,000</strong>) and hardware (<strong>$4,500</strong>) are requisitioned for production.</div>
+        <div class="flow-grid">
+          <div class="flow-grid-cell"><label>RM</label><input type="text" id="flow-a-rm" inputmode="decimal" placeholder="0"></div>
+          <div class="flow-grid-cell"><label>Supplies</label><input type="text" id="flow-a-supplies" inputmode="decimal" placeholder="0"></div>
+          <div class="flow-grid-cell"><label>MOH</label><input type="text" id="flow-a-moh" inputmode="decimal" placeholder="0"></div>
+          <div class="flow-grid-cell"><label>WIP</label><input type="text" id="flow-a-wip" inputmode="decimal" placeholder="0"></div>
+          <div class="flow-grid-cell"><label>FG</label><input type="text" id="flow-a-fg" inputmode="decimal" placeholder="0"></div>
+          <div class="flow-grid-cell"><label>COGS</label><input type="text" id="flow-a-cogs" inputmode="decimal" placeholder="0"></div>
+          <button class="flow-check-btn" onclick="checkFlow('a')">Check</button>
+        </div>
+      </div>
+
+      <!-- Flow B (hidden) -->
+      <div class="flow-tx" id="flow-b" style="display:none;">
+        <div class="flow-desc">Manufacturing supplies used during production this month: <strong>$800</strong>.</div>
+        <div class="flow-grid">
+          <div class="flow-grid-cell"><label>RM</label><input type="text" id="flow-b-rm" inputmode="decimal" placeholder="0"></div>
+          <div class="flow-grid-cell"><label>Supplies</label><input type="text" id="flow-b-supplies" inputmode="decimal" placeholder="0"></div>
+          <div class="flow-grid-cell"><label>MOH</label><input type="text" id="flow-b-moh" inputmode="decimal" placeholder="0"></div>
+          <div class="flow-grid-cell"><label>WIP</label><input type="text" id="flow-b-wip" inputmode="decimal" placeholder="0"></div>
+          <div class="flow-grid-cell"><label>FG</label><input type="text" id="flow-b-fg" inputmode="decimal" placeholder="0"></div>
+          <div class="flow-grid-cell"><label>COGS</label><input type="text" id="flow-b-cogs" inputmode="decimal" placeholder="0"></div>
+          <button class="flow-check-btn" onclick="checkFlow('b')">Check</button>
+        </div>
+      </div>
+
+      <!-- Flow C (hidden) -->
+      <div class="flow-tx" id="flow-c" style="display:none;">
+        <div class="flow-desc">Manufacturing overhead is applied. PDOH rate: <strong>$14.00/MH</strong>. Machine hours this month: <strong>950</strong>.</div>
+        <div class="flow-grid">
+          <div class="flow-grid-cell"><label>RM</label><input type="text" id="flow-c-rm" inputmode="decimal" placeholder="0"></div>
+          <div class="flow-grid-cell"><label>Supplies</label><input type="text" id="flow-c-supplies" inputmode="decimal" placeholder="0"></div>
+          <div class="flow-grid-cell"><label>MOH</label><input type="text" id="flow-c-moh" inputmode="decimal" placeholder="0"></div>
+          <div class="flow-grid-cell"><label>WIP</label><input type="text" id="flow-c-wip" inputmode="decimal" placeholder="0"></div>
+          <div class="flow-grid-cell"><label>FG</label><input type="text" id="flow-c-fg" inputmode="decimal" placeholder="0"></div>
+          <div class="flow-grid-cell"><label>COGS</label><input type="text" id="flow-c-cogs" inputmode="decimal" placeholder="0"></div>
+          <button class="flow-check-btn" onclick="checkFlow('c')">Check</button>
+        </div>
+      </div>
+
+      <!-- Flow D (hidden) -->
+      <div class="flow-tx" id="flow-d" style="display:none;">
+        <div class="flow-desc">Jobs 301, 302, and 303 are completed with total costs of <strong>$48,000</strong>.</div>
+        <div class="flow-grid">
+          <div class="flow-grid-cell"><label>RM</label><input type="text" id="flow-d-rm" inputmode="decimal" placeholder="0"></div>
+          <div class="flow-grid-cell"><label>Supplies</label><input type="text" id="flow-d-supplies" inputmode="decimal" placeholder="0"></div>
+          <div class="flow-grid-cell"><label>MOH</label><input type="text" id="flow-d-moh" inputmode="decimal" placeholder="0"></div>
+          <div class="flow-grid-cell"><label>WIP</label><input type="text" id="flow-d-wip" inputmode="decimal" placeholder="0"></div>
+          <div class="flow-grid-cell"><label>FG</label><input type="text" id="flow-d-fg" inputmode="decimal" placeholder="0"></div>
+          <div class="flow-grid-cell"><label>COGS</label><input type="text" id="flow-d-cogs" inputmode="decimal" placeholder="0"></div>
+          <button class="flow-check-btn" onclick="checkFlow('d')">Check</button>
+        </div>
+      </div>
+
+      <!-- Flow E (hidden) -->
+      <div class="flow-tx" id="flow-e" style="display:none;">
+        <div class="flow-desc">Jobs 301 and 303 are sold to customers. Their combined production cost was <strong>$42,500</strong>.</div>
+        <div class="flow-grid">
+          <div class="flow-grid-cell"><label>RM</label><input type="text" id="flow-e-rm" inputmode="decimal" placeholder="0"></div>
+          <div class="flow-grid-cell"><label>Supplies</label><input type="text" id="flow-e-supplies" inputmode="decimal" placeholder="0"></div>
+          <div class="flow-grid-cell"><label>MOH</label><input type="text" id="flow-e-moh" inputmode="decimal" placeholder="0"></div>
+          <div class="flow-grid-cell"><label>WIP</label><input type="text" id="flow-e-wip" inputmode="decimal" placeholder="0"></div>
+          <div class="flow-grid-cell"><label>FG</label><input type="text" id="flow-e-fg" inputmode="decimal" placeholder="0"></div>
+          <div class="flow-grid-cell"><label>COGS</label><input type="text" id="flow-e-cogs" inputmode="decimal" placeholder="0"></div>
+          <button class="flow-check-btn" onclick="checkFlow('e')">Check</button>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="footer">
+      <span id="s2-score" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep(3, true)" id="reveal-step3-btn">Skip ahead &rarr;</button>
+    </div>
+
+    <div id="s2-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 3 — Over/Underapplied Overhead ───────── -->
+  <section class="part reveal" id="step3">
+    <div class="part-header">
+      <span class="part-tag solve">Step 3</span>
+      <h2>What's Left in MOH?</h2>
+      <span class="subtitle">over- or underapplied overhead</span>
+    </div>
+
+    <div class="setup-box">
+      <p>All production flows are processed. Take a look at the MOH account balance and determine whether overhead was overapplied or underapplied this month.</p>
+    </div>
+
+    <div class="qa-list">
+      <div class="qa-row">
+        <div class="qa-prompt">What is the <strong>ending balance</strong> in Manufacturing Overhead?</div>
+        <div class="answer">
+          <label>MOH balance</label>
+          <input type="text" id="s3-bal" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s3-bal"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="intuition-box" style="margin-top: 10px;">
+      <div class="intuition-q">Is overhead <strong>overapplied</strong> or <strong>underapplied</strong>?</div>
+      <div class="intuition-buttons">
+        <button id="s3-over" onclick="pickMOH('over')">Overapplied</button>
+        <button id="s3-under" onclick="pickMOH('under')">Underapplied</button>
+      </div>
+    </div>
+
+    <div class="qa-list" style="margin-top: 10px;">
+      <div class="qa-row">
+        <div class="qa-prompt">By <strong>how much</strong>?</div>
+        <div class="answer">
+          <label>Amount</label>
+          <input type="text" id="s3-amt" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s3-amt"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep3()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep3()">Reset</button>
+      <span id="s3-score" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep(4, true)" id="reveal-step4-btn">Skip ahead &rarr;</button>
+    </div>
+
+    <div id="s3-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 4 — Build Your Own ───────── -->
+  <section class="part reveal" id="step4">
+    <div class="part-header">
+      <span class="part-tag build">Step 4</span>
+      <h2>Build Your Own Scenario</h2>
+      <span class="subtitle">change the inputs and compute the results</span>
+    </div>
+
+    <div class="setup-box">
+      <p>Next month, Riverside expects different activity levels. Set your own PDOH rate and month's activity, then compute the results.</p>
+    </div>
+
+    <div class="params-card">
+      <div class="param-row">
+        <label>Estimated annual overhead</label>
+        <input type="text" id="bv-est-oh" inputmode="decimal" value="$160,000">
+      </div>
+      <div class="param-row">
+        <label>Estimated annual MH</label>
+        <input type="text" id="bv-est-mh" inputmode="numeric" value="10,000">
+      </div>
+      <div class="param-row">
+        <label>Actual overhead this month</label>
+        <input type="text" id="bv-act-oh" inputmode="decimal" value="$14,200">
+      </div>
+      <div class="param-row">
+        <label>Actual MH this month</label>
+        <input type="text" id="bv-act-mh" inputmode="numeric" value="900">
+      </div>
+    </div>
+
+    <div class="build-solve">
+      <div class="solve-card">
+        <label>PDOH Rate ($/MH)</label>
+        <input type="text" id="bv-pdoh" inputmode="decimal" placeholder="$">
+      </div>
+      <div class="solve-card">
+        <label>Applied Overhead</label>
+        <input type="text" id="bv-applied" inputmode="decimal" placeholder="$">
+      </div>
+      <div class="solve-card">
+        <label>Over/Underapplied</label>
+        <input type="text" id="bv-variance" inputmode="decimal" placeholder="$ (+ over, - under)">
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep4()">Check</button>
+      <button class="reset-btn" onclick="resetStep4()">Reset to original</button>
+      <span id="s4-score" class="score-out"></span>
+    </div>
+
+    <div id="s4-feedback"></div>
+  </section>
+
+</main>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   AUDIO
+═══════════════════════════════════════════════════════════════ */
+let audioCtx = null;
+function getAudio() {
+  if (!audioCtx) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (AC) audioCtx = new AC();
+  }
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+function playBell() {
+  const ctx = getAudio(); if (!ctx) return;
+  const now = ctx.currentTime;
+  [523.25, 659.25, 783.99].forEach(f => {
+    const osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = 'sine'; osc.frequency.value = f;
+    osc.connect(g).connect(ctx.destination);
+    g.gain.setValueAtTime(0, now);
+    g.gain.linearRampToValueAtTime(0.15, now + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 1.6);
+    osc.start(now); osc.stop(now + 1.7);
+  });
+}
+function playHorn() {
+  const ctx = getAudio(); if (!ctx) return;
+  const now = ctx.currentTime;
+  const notes = [
+    { f: 466.16, t: 0.00, d: 0.18 },
+    { f: 440.00, t: 0.20, d: 0.18 },
+    { f: 415.30, t: 0.40, d: 0.55 }
+  ];
+  notes.forEach(({ f, t, d }) => {
+    const osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(f, now + t);
+    if (d > 0.3) osc.frequency.exponentialRampToValueAtTime(f * 0.88, now + t + d);
+    osc.connect(g).connect(ctx.destination);
+    g.gain.setValueAtTime(0, now + t);
+    g.gain.linearRampToValueAtTime(0.12, now + t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, now + t + d);
+    osc.start(now + t); osc.stop(now + t + d + 0.05);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════════════════ */
+function parseNum(s) {
+  if (typeof s !== 'string') return NaN;
+  let clean = s.replace(/[\$,\s]/g, '');
+  // Handle Unicode minus (−)
+  clean = clean.replace(/\u2212/g, '-');
+  // Handle parenthetical negatives: (50) → -50
+  if (/^\(.*\)$/.test(clean)) clean = '-' + clean.slice(1, -1);
+  return parseFloat(clean);
+}
+function fmtMoney(v, decimals) {
+  const d = (decimals === undefined) ? 0 : decimals;
+  const rounded = Math.round(v * 100) / 100;
+  const sign = rounded < 0 ? '-$' : '$';
+  return sign + Math.abs(rounded).toLocaleString('en-US', {
+    minimumFractionDigits: d,
+    maximumFractionDigits: d
+  });
+}
+function fmtUnits(v) {
+  return Math.round(v).toLocaleString('en-US');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   REVEAL STEPS
+═══════════════════════════════════════════════════════════════ */
+const revealedSteps = new Set();
+function revealStep(stepNum, scroll) {
+  const el = document.getElementById('step' + stepNum);
+  if (!el) return;
+  if (!revealedSteps.has(stepNum)) {
+    el.classList.add('show');
+    revealedSteps.add(stepNum);
+    const btn = document.getElementById('reveal-step' + stepNum + '-btn');
+    if (btn) btn.style.display = 'none';
+  }
+  if (scroll) setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 1 — Cost Sorting
+═══════════════════════════════════════════════════════════════ */
+const COST_CARDS = [
+  { id: 1,  text: 'Oak lumber purchased',                         amt: 18000, bucket: 'rm',     hint: 'Direct material purchased goes to Raw Materials.' },
+  { id: 2,  text: 'Assembly line workers wages (Job 301)',         amt: 8400,  bucket: 'wip',    hint: 'This worker is on a specific job \u2014 that\'s direct labor.' },
+  { id: 3,  text: 'Factory supervisor salary',                    amt: 5200,  bucket: 'moh',    hint: 'A supervisor oversees the whole factory, not one job.' },
+  { id: 4,  text: 'Sales team commissions',                       amt: 3800,  bucket: 'period', hint: 'Selling costs are period expenses, not product costs.' },
+  { id: 5,  text: 'Sandpaper, glue, and stain',                   amt: 650,   bucket: 'supplies', hint: 'These are indirect materials \u2014 they go to the Supplies inventory, not Raw Materials.' },
+  { id: 6,  text: 'Depreciation on CNC router',                   amt: 2400,  bucket: 'moh',    hint: 'Factory equipment depreciation is overhead.' },
+  { id: 7,  text: 'Hardware (hinges, handles) purchased',         amt: 2200,  bucket: 'rm',     hint: 'These go directly into the product \u2014 direct materials.' },
+  { id: 8,  text: 'Office rent (corporate HQ)',                   amt: 4000,  bucket: 'period', hint: 'Corporate office costs are not factory costs.' },
+  { id: 9,  text: 'Factory electricity bill',                     amt: 1900,  bucket: 'moh',    hint: 'Factory utilities are manufacturing overhead.' },
+  { id: 10, text: 'Finishing specialist wages (Job 302)',          amt: 4600,  bucket: 'wip',    hint: 'Direct labor on a specific job goes to WIP.' },
+  { id: 11, text: 'Delivery truck fuel',                          amt: 800,   bucket: 'period', hint: 'Delivery is a selling cost, not a product cost.' },
+  { id: 12, text: 'Factory maintenance crew wages',               amt: 3100,  bucket: 'moh',    hint: 'Maintenance supports the whole factory \u2014 indirect labor.' }
+];
+
+let selectedCard = null;
+let sortedCards = {};  // cardId → bucketKey
+let wrongAttempts = {}; // cardId → count
+let firstTryCount = 0;
+
+function shuffleArray(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function initStep1() {
+  const deck = document.getElementById('card-deck');
+  deck.innerHTML = '';
+  const shuffled = shuffleArray(COST_CARDS);
+  shuffled.forEach(c => {
+    const el = document.createElement('div');
+    el.className = 'cost-card';
+    el.id = 'card-' + c.id;
+    el.innerHTML = '<span>' + c.text + ': </span><span class="card-amt">' + fmtMoney(c.amt) + '</span><div class="card-hint" id="card-hint-' + c.id + '"></div>';
+    el.onclick = function() { clickCard(c.id); };
+    // Drag support (desktop)
+    el.draggable = true;
+    el.addEventListener('dragstart', function(e) {
+      if (sortedCards[c.id]) { e.preventDefault(); return; }
+      e.dataTransfer.setData('text/plain', c.id);
+      e.dataTransfer.effectAllowed = 'move';
+      selectedCard = c.id;
+      el.classList.add('dragging');
+      renderStep1();
+    });
+    el.addEventListener('dragend', function() {
+      el.classList.remove('dragging');
+    });
+    deck.appendChild(el);
+  });
+  renderStep1();
+}
+
+function clickCard(id) {
+  if (sortedCards[id]) return; // already placed
+  if (selectedCard === id) {
+    selectedCard = null;
+  } else {
+    selectedCard = id;
+  }
+  renderStep1();
+}
+
+function clickBucket(bucketKey) {
+  if (selectedCard === null) return;
+  const card = COST_CARDS.find(function(c) { return c.id === selectedCard; });
+  if (!card) return;
+
+  if (card.bucket === bucketKey) {
+    // Correct
+    sortedCards[card.id] = bucketKey;
+    if (!wrongAttempts[card.id]) firstTryCount++;
+    var cardEl = document.getElementById('card-' + card.id);
+    cardEl.classList.add('flash-correct');
+    cardEl.classList.remove('show-hint');
+    selectedCard = null;
+    playBell();
+    renderStep1();
+
+    // Check if all sorted
+    var sorted = Object.keys(sortedCards).length;
+    if (sorted === COST_CARDS.length) {
+      document.getElementById('s1-score').textContent = 'You sorted all 12 costs \u2014 ' + firstTryCount + ' on the first try.';
+      document.getElementById('s1-insight').innerHTML = '<div class="insight success"><strong>All sorted.</strong> Riverside tracks direct materials in Raw Materials and indirect materials in Supplies \u2014 both are inventory accounts. Direct labor goes straight to WIP, indirect factory costs go to MOH, and selling &amp; admin costs are period expenses.</div>';
+      revealStep(2, false);
+    }
+  } else {
+    // Wrong
+    wrongAttempts[card.id] = (wrongAttempts[card.id] || 0) + 1;
+    var cardEl = document.getElementById('card-' + card.id);
+    cardEl.classList.add('flash-wrong', 'show-hint');
+    var hintEl = document.getElementById('card-hint-' + card.id);
+    hintEl.textContent = card.hint;
+    setTimeout(function() { cardEl.classList.remove('flash-wrong'); }, 600);
+    selectedCard = null;
+    playHorn();
+    renderStep1();
+  }
+}
+
+// Wire up drag-over/drop on each bucket
+function initBucketDrag() {
+  var bucketKeys = ['rm', 'supplies', 'wip', 'moh', 'period'];
+  bucketKeys.forEach(function(bk) {
+    var el = document.getElementById('bucket-' + bk);
+    el.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      el.classList.add('drag-over');
+    });
+    el.addEventListener('dragleave', function() {
+      el.classList.remove('drag-over');
+    });
+    el.addEventListener('drop', function(e) {
+      e.preventDefault();
+      el.classList.remove('drag-over');
+      clickBucket(bk);
+    });
+  });
+}
+
+function renderStep1() {
+  var sorted = Object.keys(sortedCards).length;
+  document.getElementById('s1-progress-label').textContent = sorted + ' of 12 sorted';
+  document.getElementById('s1-progress-fill').style.width = Math.round(sorted / 12 * 100) + '%';
+
+  // Update card states
+  COST_CARDS.forEach(function(c) {
+    var el = document.getElementById('card-' + c.id);
+    if (!el) return;
+    el.classList.toggle('selected', selectedCard === c.id);
+    el.classList.toggle('locked', !!sortedCards[c.id]);
+    if (sortedCards[c.id]) {
+      el.style.display = 'none';
+    } else {
+      el.style.display = '';
+    }
+  });
+
+  // Update bucket contents and totals
+  var bucketKeys = ['rm', 'supplies', 'wip', 'moh', 'period'];
+  bucketKeys.forEach(function(bk) {
+    var items = COST_CARDS.filter(function(c) { return sortedCards[c.id] === bk; });
+    var total = items.reduce(function(s, c) { return s + c.amt; }, 0);
+    var totalEl = document.getElementById('bucket-total-' + bk);
+    totalEl.textContent = total > 0 ? fmtMoney(total) : '';
+    var itemsEl = document.getElementById('bucket-items-' + bk);
+    itemsEl.innerHTML = items.map(function(c) { return '<div class="bucket-item">' + c.text + ': ' + fmtMoney(c.amt) + '</div>'; }).join('');
+
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 2 — Flow Transactions (multi-column grid)
+═══════════════════════════════════════════════════════════════ */
+// Pipeline balances — starting (beginning + Step 1 additions)
+var pipeState = {
+  rm:       26200,   // 6,000 + 20,200
+  supplies: 1050,    // 400 + 650
+  moh:      12600,   // 0 + 12,600
+  wip:      23500,   // 10,500 + 13,000
+  fg:       8200,
+  cogs:     0
+};
+
+// Flow definitions: key → expected values for each account column
+// Positive = increase, negative = decrease, 0 = no change
+var FLOW_DEFS = {
+  a: { rm: -16500, supplies: 0, moh: 0,      wip: 16500, fg: 0,     cogs: 0 },
+  b: { rm: 0,      supplies: -800, moh: 800,  wip: 0,     fg: 0,     cogs: 0 },
+  c: { rm: 0,      supplies: 0, moh: -13300,  wip: 13300, fg: 0,     cogs: 0 },
+  d: { rm: 0,      supplies: 0, moh: 0,       wip: -48000, fg: 48000, cogs: 0 },
+  e: { rm: 0,      supplies: 0, moh: 0,       wip: 0,     fg: -42500, cogs: 42500 }
+};
+
+var FLOW_ORDER = ['a', 'b', 'c', 'd', 'e'];
+var flowIndex = 0;
+
+function renderPipeline() {
+  var ids = ['rm', 'supplies', 'moh', 'wip', 'fg', 'cogs'];
+  ids.forEach(function(id) {
+    var el = document.getElementById('pipe-bal-' + id);
+    el.textContent = fmtMoney(pipeState[id]);
+    el.classList.toggle('negative', pipeState[id] < 0);
+  });
+}
+
+function pulseBalance(acctId) {
+  var el = document.getElementById('pipe-bal-' + acctId);
+  el.classList.remove('pulse');
+  // Force reflow
+  void el.offsetWidth;
+  el.classList.add('pulse');
+}
+
+function checkFlow(key) {
+  var def = FLOW_DEFS[key];
+  if (!def) return;
+
+  var cols = ['rm', 'supplies', 'moh', 'wip', 'fg', 'cogs'];
+  var allCorrect = true;
+
+  cols.forEach(function(col) {
+    var inp = document.getElementById('flow-' + key + '-' + col);
+    var raw = inp.value.trim();
+    var expected = def[col];
+    var entered = (raw === '' || raw === '0') ? 0 : parseNum(raw);
+    if (isNaN(entered)) entered = -99999; // force wrong
+
+    inp.classList.remove('correct', 'wrong');
+
+    if (Math.abs(entered - expected) <= 1) {
+      inp.classList.add('correct');
+    } else {
+      inp.classList.add('wrong');
+      allCorrect = false;
+    }
+  });
+
+  if (allCorrect) {
+    // Apply changes to pipeState
+    cols.forEach(function(col) {
+      pipeState[col] += def[col];
+    });
+
+    // Highlight affected pipe buckets
+    cols.forEach(function(col) {
+      if (def[col] !== 0) {
+        var pipeEl = document.getElementById('pipe-' + col);
+        if (pipeEl) {
+          pipeEl.classList.add('highlight');
+          setTimeout(function() { pipeEl.classList.remove('highlight'); }, 800);
+        }
+        pulseBalance(col);
+      }
+    });
+
+    renderPipeline();
+
+    // Mark transaction completed, disable inputs
+    var txEl = document.getElementById('flow-' + key);
+    txEl.classList.add('completed');
+    cols.forEach(function(col) {
+      document.getElementById('flow-' + key + '-' + col).disabled = true;
+    });
+    txEl.querySelector('.flow-check-btn').disabled = true;
+
+    playBell();
+
+    // Show next flow
+    flowIndex++;
+    if (flowIndex < FLOW_ORDER.length) {
+      var nextKey = FLOW_ORDER[flowIndex];
+      var nextEl = document.getElementById('flow-' + nextKey);
+      nextEl.style.display = '';
+      nextEl.style.animation = 'slideIn 0.4s ease-out';
+    } else {
+      // All done
+      document.getElementById('s2-score').textContent = 'All 5 flows processed.';
+      document.getElementById('s2-insight').innerHTML = '<div class="insight success"><strong>Pipeline complete.</strong> Ending balances: RM ' + fmtMoney(pipeState.rm) + ', Supplies ' + fmtMoney(pipeState.supplies) + ', WIP ' + fmtMoney(pipeState.wip) + ', FG ' + fmtMoney(pipeState.fg) + ', COGS ' + fmtMoney(pipeState.cogs) + '. Notice MOH has a small debit balance left \u2014 that\'s next.</div>';
+      revealStep(3, false);
+    }
+  } else {
+    playHorn();
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 3 — Over/Underapplied Overhead
+═══════════════════════════════════════════════════════════════ */
+// After all flows: MOH = 12,600 + 800 - 13,300 = 100 (debit balance)
+// Underapplied by $100
+let mohChoice = null;
+
+function pickMOH(choice) {
+  mohChoice = choice;
+  document.getElementById('s3-over').classList.toggle('selected', choice === 'over');
+  document.getElementById('s3-under').classList.toggle('selected', choice === 'under');
+}
+
+function checkStep3() {
+  const balInp = document.getElementById('s3-bal');
+  const amtInp = document.getElementById('s3-amt');
+  const hintBal = document.getElementById('hint-s3-bal');
+  const hintAmt = document.getElementById('hint-s3-amt');
+  const out = document.getElementById('s3-score');
+  const fb = document.getElementById('s3-insight');
+
+  balInp.classList.remove('correct', 'wrong');
+  amtInp.classList.remove('correct', 'wrong');
+  hintBal.textContent = '';
+  hintAmt.textContent = '';
+  out.textContent = '';
+  fb.innerHTML = '';
+
+  let correct = 0;
+  let total = 3;
+  let blanks = 0;
+
+  // Check balance: expected $100 (debit balance)
+  const balVal = parseNum(balInp.value);
+  if (balInp.value.trim() === '') {
+    blanks++;
+  } else if (!isNaN(balVal) && Math.abs(balVal - 100) <= 0.50) {
+    balInp.classList.add('correct');
+    correct++;
+  } else {
+    balInp.classList.add('wrong');
+    hintBal.textContent = '\u2192 $100 (debit balance)';
+  }
+
+  // Check over/under
+  if (mohChoice === null) {
+    blanks++;
+  } else if (mohChoice === 'under') {
+    correct++;
+  }
+  // mohChoice === 'over' is wrong, no need to mark
+
+  // Check amount: $100
+  const amtVal = parseNum(amtInp.value);
+  if (amtInp.value.trim() === '') {
+    blanks++;
+  } else if (!isNaN(amtVal) && Math.abs(amtVal - 100) <= 0.50) {
+    amtInp.classList.add('correct');
+    correct++;
+  } else {
+    amtInp.classList.add('wrong');
+    hintAmt.textContent = '\u2192 $100';
+  }
+
+  if (blanks === total) {
+    out.textContent = 'Fill in some answers first.';
+    return;
+  }
+
+  out.textContent = correct + ' / ' + total + ' correct' + (blanks ? ' (' + blanks + ' blank)' : '');
+
+  if (correct === total) {
+    playBell();
+    fb.innerHTML = '<div class="insight success"><strong>Underapplied by $100.</strong> Riverside applied $13,300 of overhead to WIP but incurred $13,400 in actual overhead costs. The $100 shortfall is typically closed to Cost of Goods Sold at period end.</div>';
+    revealStep(4, false);
+  } else {
+    playHorn();
+  }
+}
+
+function resetStep3() {
+  ['s3-bal', 's3-amt'].forEach(function(id) {
+    var el = document.getElementById(id);
+    el.value = '';
+    el.classList.remove('correct', 'wrong');
+  });
+  document.getElementById('hint-s3-bal').textContent = '';
+  document.getElementById('hint-s3-amt').textContent = '';
+  document.getElementById('s3-score').textContent = '';
+  document.getElementById('s3-insight').innerHTML = '';
+  mohChoice = null;
+  document.getElementById('s3-over').classList.remove('selected');
+  document.getElementById('s3-under').classList.remove('selected');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 4 — Build Your Own
+═══════════════════════════════════════════════════════════════ */
+const BV4_DEFAULTS = {
+  estOH: 160000,
+  estMH: 10000,
+  actOH: 14200,
+  actMH: 900
+};
+
+function readBV4() {
+  return {
+    estOH: parseNum(document.getElementById('bv-est-oh').value),
+    estMH: parseNum(document.getElementById('bv-est-mh').value),
+    actOH: parseNum(document.getElementById('bv-act-oh').value),
+    actMH: parseNum(document.getElementById('bv-act-mh').value)
+  };
+}
+
+function checkStep4() {
+  const vals = readBV4();
+  const pdohEl = document.getElementById('bv-pdoh');
+  const appliedEl = document.getElementById('bv-applied');
+  const varianceEl = document.getElementById('bv-variance');
+  const out = document.getElementById('s4-score');
+  const fb = document.getElementById('s4-feedback');
+
+  pdohEl.classList.remove('correct', 'wrong');
+  appliedEl.classList.remove('correct', 'wrong');
+  varianceEl.classList.remove('correct', 'wrong');
+  out.textContent = '';
+  fb.innerHTML = '';
+
+  if (isNaN(vals.estOH) || isNaN(vals.estMH) || isNaN(vals.actOH) || isNaN(vals.actMH) || vals.estMH === 0) {
+    fb.innerHTML = '<div class="insight">Make sure all input fields have valid numbers and estimated MH is not zero.</div>';
+    return;
+  }
+
+  const pdoh = Math.round(vals.estOH / vals.estMH * 100) / 100;
+  const applied = Math.round(pdoh * vals.actMH * 100) / 100;
+  // Positive = overapplied, negative = underapplied
+  const variance = Math.round((applied - vals.actOH) * 100) / 100;
+
+  const pdohGuess = pdohEl.value.trim();
+  const appliedGuess = appliedEl.value.trim();
+  const varianceGuess = varianceEl.value.trim();
+
+  if (!pdohGuess && !appliedGuess && !varianceGuess) {
+    fb.innerHTML = '<div class="insight">Enter at least one answer before checking.</div>';
+    return;
+  }
+
+  let allCorrect = true;
+  const parts = [];
+
+  if (pdohGuess) {
+    const v = parseNum(pdohGuess);
+    const tol = Math.max(0.05, Math.abs(pdoh) * 0.001);
+    if (!isNaN(v) && Math.abs(v - pdoh) <= tol) {
+      pdohEl.classList.add('correct'); parts.push('PDOH Rate');
+    } else {
+      pdohEl.classList.add('wrong'); allCorrect = false;
+    }
+  }
+  if (appliedGuess) {
+    const v = parseNum(appliedGuess);
+    const tol = Math.max(0.5, Math.abs(applied) * 0.001);
+    if (!isNaN(v) && Math.abs(v - applied) <= tol) {
+      appliedEl.classList.add('correct'); parts.push('Applied OH');
+    } else {
+      appliedEl.classList.add('wrong'); allCorrect = false;
+    }
+  }
+  if (varianceGuess) {
+    const v = parseNum(varianceGuess);
+    const tol = Math.max(0.5, Math.abs(variance) * 0.005);
+    if (!isNaN(v) && Math.abs(v - variance) <= tol) {
+      varianceEl.classList.add('correct'); parts.push('Variance');
+    } else {
+      varianceEl.classList.add('wrong'); allCorrect = false;
+    }
+  }
+
+  const overUnder = variance > 0 ? 'overapplied' : variance < 0 ? 'underapplied' : 'exactly applied';
+  const totalsLine = 'PDOH: <strong>' + fmtMoney(pdoh, 2) + '/MH</strong> &middot; Applied: <strong>' + fmtMoney(applied) + '</strong> &middot; Actual: <strong>' + fmtMoney(vals.actOH) + '</strong> &middot; ' + fmtMoney(Math.abs(variance)) + ' <strong>' + overUnder + '</strong>';
+
+  if (allCorrect && parts.length > 0) {
+    out.textContent = parts.join(' + ') + ' correct';
+    fb.innerHTML = '<div class="insight success">' + totalsLine + '</div>';
+    playBell();
+  } else {
+    out.textContent = parts.length > 0 ? parts.join(' + ') + ' correct (some wrong)' : 'Not quite.';
+    fb.innerHTML = '<div class="insight">' + totalsLine + '</div>';
+    playHorn();
+  }
+}
+
+function resetStep4() {
+  document.getElementById('bv-est-oh').value = '$160,000';
+  document.getElementById('bv-est-mh').value = '10,000';
+  document.getElementById('bv-act-oh').value = '$14,200';
+  document.getElementById('bv-act-mh').value = '900';
+  ['bv-pdoh', 'bv-applied', 'bv-variance'].forEach(function(id) {
+    var el = document.getElementById(id);
+    el.value = '';
+    el.classList.remove('correct', 'wrong');
+  });
+  document.getElementById('s4-score').textContent = '';
+  document.getElementById('s4-feedback').innerHTML = '';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   QR / SHARE
+═══════════════════════════════════════════════════════════════ */
+function showQR() {
+  const url = location.href;
+  document.getElementById('qr-url').textContent = url;
+  const qrEl = document.getElementById('qr-code');
+  qrEl.innerHTML = '';
+  if (window.QRCode) {
+    new QRCode(qrEl, { text: url, width: 180, height: 180, colorDark: '#1a2744', colorLight: '#ffffff' });
+  }
+  document.getElementById('qr-overlay').classList.add('show');
+}
+function hideQR(ev) {
+  if (ev && ev.target.id !== 'qr-overlay' && ev.target.className !== 'qr-close') return;
+  document.getElementById('qr-overlay').classList.remove('show');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', function() {
+  initStep1();
+  initBucketDrag();
+  renderPipeline();
+});
+</script>
+
+</body>
+</html>
