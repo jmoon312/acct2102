@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Exam 1 Study Guide — Chapters 1–4</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  /* ── Reset & base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    background: #f4f0e8;
+    color: #1a2744;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    background: #1a2744;
+    color: #fff;
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .header-left h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+  .header-left p  { font-size: 13px; color: #a0aec0; margin-top: 2px; }
+
+  .qr-btn {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    transition: background .15s;
+  }
+  .qr-btn:hover { background: rgba(255,255,255,0.18); }
+
+  /* QR Modal */
+  .qr-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .qr-overlay.show { display: flex; }
+  .qr-modal {
+    background: #fff;
+    border-radius: 14px;
+    padding: 32px;
+    text-align: center;
+    max-width: 300px;
+    width: 90%;
+  }
+  .qr-modal h2 { font-size: 16px; font-weight: 600; color: #1a2744; margin-bottom: 6px; }
+  .qr-modal p  { font-size: 12px; color: #64748b; margin-bottom: 18px; line-height: 1.5; }
+  #qr-code { display: flex; justify-content: center; margin-bottom: 16px; }
+  #qr-url  { font-size: 11px; color: #94a3b8; word-break: break-all; margin-bottom: 18px; }
+  .qr-close {
+    background: #1a2744; color: #fff;
+    border: none; border-radius: 8px;
+    padding: 8px 24px; font-size: 13px;
+    cursor: pointer; font-family: inherit;
+  }
+
+  /* ── Main layout ── */
+  main {
+    max-width: 920px;
+    margin: 28px auto;
+    padding: 0 20px 48px;
+  }
+
+  /* ── Chapter nav ── */
+  .chapter-nav {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 22px;
+  }
+  .chapter-nav a {
+    display: inline-block;
+    padding: 7px 16px;
+    background: #fff;
+    border: 1px solid #dde3ef;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1a2744;
+    text-decoration: none;
+    transition: background .15s, border-color .15s;
+  }
+  .chapter-nav a:hover {
+    background: #e9eef7;
+    border-color: #b8c4d8;
+  }
+
+  /* ── Cards ── */
+  .part {
+    background: #fff;
+    border: 1px solid #dde3ef;
+    border-radius: 12px;
+    padding: 22px 24px 24px;
+    margin-bottom: 22px;
+  }
+
+  .part-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .part-tag {
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    background: #1a2744;
+    padding: 3px 10px;
+    border-radius: 99px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+  .part-tag.ch1 { background: #3b7dd8; }
+  .part-tag.ch2 { background: #D85A30; }
+  .part-tag.ch3 { background: #5a9e3a; }
+  .part-tag.ch4 { background: #8b5cf6; }
+  .part-tag.formulas { background: #1a2744; }
+  .part-tag.practice { background: #c77900; }
+  .part-header h2 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -.01em;
+  }
+
+  /* ── Content styling ── */
+  .section-intro {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #334155;
+    margin-bottom: 16px;
+  }
+
+  h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a2744;
+    margin: 18px 0 8px;
+  }
+  h3:first-of-type { margin-top: 6px; }
+
+  .concept-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 12px;
+  }
+  .concept-list li {
+    position: relative;
+    padding: 6px 0 6px 20px;
+    font-size: 14px;
+    line-height: 1.55;
+    color: #334155;
+  }
+  .concept-list li::before {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 13px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #94a3b8;
+  }
+  .concept-list li strong { color: #1a2744; }
+
+  /* ── Callout boxes ── */
+  .callout {
+    background: #f8f6f0;
+    border: 1px solid #e6dfd0;
+    border-radius: 9px;
+    padding: 14px 16px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: #334155;
+    margin: 12px 0 16px;
+  }
+  .callout strong { color: #1a2744; }
+  .callout p + p { margin-top: 6px; }
+
+  .callout.formula-box {
+    background: #eef3fb;
+    border-color: #c5d5ed;
+    font-family: 'SF Mono', 'Consolas', 'Menlo', monospace;
+    font-size: 13px;
+  }
+  .callout.formula-box .formula-label {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-weight: 700;
+    color: #1a2744;
+    font-size: 13px;
+    margin-bottom: 4px;
+  }
+
+  /* ── Tables ── */
+  .compare-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+    margin: 10px 0 14px;
+  }
+  .compare-table th {
+    background: #e9eef7;
+    font-size: 12.5px;
+    font-weight: 700;
+    text-align: left;
+    padding: 8px 12px;
+    border-bottom: 2px solid #cbd5e1;
+  }
+  .compare-table td {
+    padding: 7px 12px;
+    border-bottom: 1px solid #f0f3f8;
+    vertical-align: top;
+  }
+  .compare-table tr:last-child td { border-bottom: none; }
+
+  /* ── Decision framework table ── */
+  .decision-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+    margin: 10px 0 14px;
+  }
+  .decision-table th {
+    background: #f3eefe;
+    font-size: 12.5px;
+    font-weight: 700;
+    text-align: left;
+    padding: 8px 12px;
+    border-bottom: 2px solid #c4b5fd;
+  }
+  .decision-table td {
+    padding: 7px 12px;
+    border-bottom: 1px solid #f0f3f8;
+    vertical-align: top;
+  }
+  .decision-table td:first-child { font-weight: 600; white-space: nowrap; }
+  .decision-table tr:last-child td { border-bottom: none; }
+
+  /* ── Practice links ── */
+  .practice-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 10px 0 4px;
+  }
+  .practice-links a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    background: #f8f6f0;
+    border: 1px solid #e6dfd0;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1a2744;
+    text-decoration: none;
+    transition: background .15s, border-color .15s;
+  }
+  .practice-links a:hover {
+    background: #eee9dd;
+    border-color: #d4cbb6;
+  }
+  .practice-links a::before {
+    content: '\2794';
+    font-size: 11px;
+  }
+
+  /* ── Collapsible sections ── */
+  .collapse-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a2744;
+    padding: 4px 0;
+    margin: 18px 0 8px;
+  }
+  .collapse-toggle:first-of-type { margin-top: 6px; }
+  .collapse-toggle .arrow {
+    display: inline-block;
+    font-size: 12px;
+    transition: transform .2s;
+    color: #94a3b8;
+  }
+  .collapse-toggle.open .arrow { transform: rotate(90deg); }
+  .collapsible {
+    display: none;
+    padding: 0;
+  }
+  .collapsible.open { display: block; }
+
+  /* ── Formula reference card ── */
+  .formula-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 10px 0;
+  }
+  @media (max-width: 640px) {
+    .formula-grid { grid-template-columns: 1fr; }
+  }
+  .formula-card {
+    background: #eef3fb;
+    border: 1px solid #c5d5ed;
+    border-radius: 9px;
+    padding: 12px 14px;
+  }
+  .formula-card .fc-title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: #64748b;
+    margin-bottom: 5px;
+  }
+  .formula-card .fc-eq {
+    font-family: 'SF Mono', 'Consolas', 'Menlo', monospace;
+    font-size: 13px;
+    color: #1a2744;
+    line-height: 1.5;
+  }
+
+  /* ── Utility ── */
+  .mt-0 { margin-top: 0; }
+  .mb-sm { margin-bottom: 6px; }
+</style>
+</head>
+<body>
+
+<!-- ═══ Header ═══ -->
+<header>
+  <div class="header-left">
+    <h1>Exam 1 Study Guide</h1>
+    <p>ACCT 2102 &mdash; Chapters 1&ndash;4</p>
+  </div>
+  <button class="qr-btn" onclick="showQR()">
+    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="3" height="3"/><line x1="21" y1="14" x2="21" y2="17"/><line x1="17" y1="21" x2="21" y2="21"/></svg>
+    Share
+  </button>
+</header>
+
+<!-- QR Overlay -->
+<div class="qr-overlay" id="qr-overlay" onclick="hideQR(event)">
+  <div class="qr-modal">
+    <h2>Scan to open</h2>
+    <p>Open this study guide on your phone or share with a classmate.</p>
+    <div id="qr-code"></div>
+    <div id="qr-url"></div>
+    <button class="qr-close" onclick="hideQR(event)">Close</button>
+  </div>
+</div>
+
+<!-- ═══ Main ═══ -->
+<main>
+
+<!-- Jump nav -->
+<nav class="chapter-nav">
+  <a href="#ch1">Ch 1</a>
+  <a href="#ch2">Ch 2</a>
+  <a href="#ch3">Ch 3</a>
+  <a href="#ch4">Ch 4</a>
+  <a href="#formulas">Formulas</a>
+  <a href="#practice">Practice</a>
+</nav>
+
+<!-- ═══════════════════════════════════════════
+     INTRO
+═══════════════════════════════════════════ -->
+<div class="part">
+  <div class="part-header">
+    <span class="part-tag">Guide</span>
+    <h2>How to Use This Guide</h2>
+  </div>
+  <p class="section-intro">
+    This guide covers <strong>Chapters 1&ndash;4</strong> of our course material. Each section highlights the key
+    concepts, definitions, and analytical techniques from that chapter. At the bottom you'll find a
+    <strong>formula quick-reference</strong> and links to all of the <strong>interactive practice activities</strong>
+    we've used in class. Use the jump links above to navigate between chapters.
+  </p>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     CHAPTER 1
+═══════════════════════════════════════════ -->
+<div class="part" id="ch1">
+  <div class="part-header">
+    <span class="part-tag ch1">Chapter 1</span>
+    <h2>Managerial Accounting: An Overview</h2>
+  </div>
+
+  <button class="collapse-toggle open" onclick="toggle(this)"><span class="arrow">&#9654;</span> Financial vs. Managerial Accounting</button>
+  <div class="collapsible open">
+    <ul class="concept-list">
+      <li><strong>Financial accounting</strong> communicates information to <em>external</em> users (shareholders, creditors). It is historical, aggregate, and must follow GAAP.</li>
+      <li><strong>Managerial accounting</strong> communicates information to <em>internal</em> users (managers). It is future-oriented, created as needed for decision-making, and has no required standards.</li>
+      <li>Financial accounting produces periodic reports about assets, obligations, and performance. Managerial accounting produces special-purpose information and reports.</li>
+    </ul>
+    <div class="callout">
+      <strong>Think about it:</strong> Financial accounting answers "How did we do?" Managerial accounting answers "What should we do next?"
+    </div>
+  </div>
+
+  <button class="collapse-toggle open" onclick="toggle(this)"><span class="arrow">&#9654;</span> Mission, Goals, and Strategy</button>
+  <div class="collapsible open">
+    <ul class="concept-list">
+      <li><strong>Mission</strong> &mdash; the broad purpose of the organization.</li>
+      <li><strong>Goals</strong> &mdash; specific, measurable targets that support the mission.</li>
+      <li><strong>Strategy</strong> &mdash; the plan for achieving goals. Three strategic positions:
+        <ul class="concept-list" style="margin-top:4px;margin-bottom:0">
+          <li><strong>Cost leadership</strong> &mdash; lowest cost in the industry (e.g., Wal-Mart)</li>
+          <li><strong>Product/service differentiation</strong> &mdash; unique features that justify a premium (e.g., BMW)</li>
+          <li><strong>Market niche</strong> &mdash; focused segment with tailored offerings (e.g., a regional airline combining leisure + cargo)</li>
+        </ul>
+      </li>
+      <li>Performance measures should align with the company's chosen strategy.</li>
+    </ul>
+  </div>
+
+  <button class="collapse-toggle open" onclick="toggle(this)"><span class="arrow">&#9654;</span> The Value Chain</button>
+  <div class="collapsible open">
+    <ul class="concept-list">
+      <li>The <strong>value chain</strong> is the set of value-producing activities from sourcing raw materials through delivery to the final consumer.</li>
+      <li>Exploiting the value chain means finding opportunities to reduce cost, improve quality, or enhance service across <em>all</em> linked activities &mdash; not just internal operations.</li>
+      <li><strong>Value-added perspective</strong> focuses only on internal processes. The <strong>value chain perspective</strong> extends upstream (suppliers) and downstream (customers) for a fuller picture.</li>
+      <li>Organizations may keep activities in-house to maintain a <strong>core competency</strong>, control quality, or assure supply &mdash; even when an outside provider could do it cheaper.</li>
+    </ul>
+  </div>
+
+  <button class="collapse-toggle open" onclick="toggle(this)"><span class="arrow">&#9654;</span> Trends in Managerial Accounting</button>
+  <div class="collapsible open">
+    <ul class="concept-list">
+      <li>Key dimensions of competition: <strong>quality</strong>, <strong>price</strong> (initial + ongoing operating cost), and <strong>service/support</strong>.</li>
+      <li>Growing use of data analytics, process improvement, and strategic thinking in the managerial accountant's role.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     CHAPTER 2
+═══════════════════════════════════════════ -->
+<div class="part" id="ch2">
+  <div class="part-header">
+    <span class="part-tag ch2">Chapter 2</span>
+    <h2>Cost Behavior, Activity Analysis &amp; Cost Estimation</h2>
+  </div>
+
+  <button class="collapse-toggle open" onclick="toggle(this)"><span class="arrow">&#9654;</span> Cost Behavior Patterns</button>
+  <div class="collapsible open">
+    <ul class="concept-list">
+      <li><strong>Variable costs</strong> &mdash; change in total proportionally with activity (constant per unit). Example: direct materials.</li>
+      <li><strong>Fixed costs</strong> &mdash; stay constant in total within the relevant range (decrease per unit as volume rises). Example: rent.</li>
+      <li><strong>Mixed costs</strong> &mdash; contain both a fixed and a variable component. Equation: <em>Y = a + bX</em>.</li>
+      <li><strong>Step costs</strong> &mdash; fixed within a narrow range, then jump to a new level (e.g., adding a supervisor for every 500 units of capacity).</li>
+      <li>The <strong>relevant range</strong> is the span of activity over which cost behavior assumptions hold. Outside this range, per-unit variable costs or total fixed costs may shift.</li>
+    </ul>
+  </div>
+
+  <button class="collapse-toggle open" onclick="toggle(this)"><span class="arrow">&#9654;</span> Committed vs. Discretionary Fixed Costs</button>
+  <div class="collapsible open">
+    <ul class="concept-list">
+      <li><strong>Committed fixed costs</strong> result from long-term decisions that cannot be easily changed. Examples: depreciation on a factory, a multi-year contract salary, long-term lease payments.</li>
+      <li><strong>Discretionary fixed costs</strong> result from annual or short-term spending decisions that management can adjust. Examples: advertising, charitable donations, employee travel for development seminars, cancellable service contracts.</li>
+      <li>The key question: <em>Can management easily change or eliminate this cost in the short run?</em> If yes, discretionary. If it's locked in by a prior commitment, committed.</li>
+    </ul>
+  </div>
+
+  <button class="collapse-toggle open" onclick="toggle(this)"><span class="arrow">&#9654;</span> Cost Estimation: Total Cost Equation</button>
+  <div class="collapsible open">
+    <div class="callout formula-box">
+      <div class="formula-label">Total Cost Equation</div>
+      Y = a + bX<br>
+      where a = total fixed costs, b = variable cost per unit, X = activity level
+    </div>
+    <ul class="concept-list">
+      <li><strong>Average cost per unit</strong> = Total cost / Units = (a/X) + b. As volume increases, the fixed-cost-per-unit piece (a/X) shrinks, so average cost decreases.</li>
+      <li>To find the volume where average cost equals a target: set (a/X) + b = target and solve for X.</li>
+    </ul>
+  </div>
+
+  <button class="collapse-toggle open" onclick="toggle(this)"><span class="arrow">&#9654;</span> Three Estimation Methods</button>
+  <div class="collapsible open">
+    <table class="compare-table">
+      <thead>
+        <tr><th>Method</th><th>How It Works</th><th>Strengths / Limits</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>High-Low</strong></td>
+          <td>Uses only the highest and lowest activity-level observations to compute b, then solves for a.</td>
+          <td>Simple and fast. Uses only 2 data points &mdash; sensitive to outliers and ignores the rest of the data.</td>
+        </tr>
+        <tr>
+          <td><strong>Scatter Diagram</strong></td>
+          <td>Plot all observations; visually fit a line. Helps spot outliers and non-linearity.</td>
+          <td>Good diagnostic tool. Subjective &mdash; different people draw different lines.</td>
+        </tr>
+        <tr>
+          <td><strong>Least-Squares Regression</strong></td>
+          <td>Statistically fits a line by minimizing the sum of squared residuals. Uses all data points.</td>
+          <td>Objective, uses all data, provides R&sup2; (goodness of fit). Sensitive to outliers; results only valid within the relevant range.</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="callout formula-box">
+      <div class="formula-label">High-Low Method</div>
+      b = (Cost<sub>high</sub> &minus; Cost<sub>low</sub>) / (Units<sub>high</sub> &minus; Units<sub>low</sub>)<br>
+      a = Total cost at either point &minus; (b &times; Units at that point)
+    </div>
+  </div>
+
+  <button class="collapse-toggle open" onclick="toggle(this)"><span class="arrow">&#9654;</span> Difficulties in Cost Estimation</button>
+  <div class="collapsible open">
+    <ul class="concept-list">
+      <li>The cost model is a <em>tool</em>, not a decision &mdash; always sanity-check the output.</li>
+      <li>Linearity is an assumption. Real costs may be curvilinear, especially outside the relevant range.</li>
+      <li>Changes in production technology make historical cost data less reliable for predicting future costs. New technology requires re-identification of the appropriate cost driver.</li>
+      <li>When prices of raw materials or labor are rapidly increasing, cost estimations based on prior periods will <em>underestimate</em> future costs.</li>
+      <li>The shorter the time period, the harder it is to appropriately match activity and cost (timing mismatches between when costs are incurred and when activity occurs).</li>
+    </ul>
+  </div>
+
+  <button class="collapse-toggle open" onclick="toggle(this)"><span class="arrow">&#9654;</span> Direct vs. Indirect Costs</button>
+  <div class="collapsible open">
+    <ul class="concept-list">
+      <li><strong>Direct costs</strong> are traceable to a specific cost object. <strong>Indirect costs</strong> are shared across multiple cost objects and must be allocated.</li>
+      <li>Manufacturing cost components: <strong>direct materials</strong>, <strong>direct labor</strong>, and <strong>manufacturing overhead</strong> (indirect).</li>
+      <li>The direct/indirect classification depends on the <strong>cost object</strong>. A cost that is direct to a division may be indirect to a specific product within that division.</li>
+      <li>Variable/fixed and direct/indirect are <em>independent dimensions</em>. A cost can be any combination: variable-direct (hourly production wages for that store), variable-indirect (a percentage-based fee allocated across products), fixed-direct (a store manager's salary for that specific store), or fixed-indirect (corporate HQ insurance).</li>
+    </ul>
+  </div>
+
+  <h3>Practice Activities</h3>
+  <div class="practice-links">
+    <a href="https://jmoon312.github.io/acct2102/cost-behavior-matching.html" target="_blank">Cost Behavior Matching</a>
+    <a href="https://jmoon312.github.io/acct2102/cost-function-step.html" target="_blank">Cost Functions &amp; Step Costs</a>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     CHAPTER 3
+═══════════════════════════════════════════ -->
+<div class="part" id="ch3">
+  <div class="part-header">
+    <span class="part-tag ch3">Chapter 3</span>
+    <h2>Cost-Volume-Profit Analysis</h2>
+  </div>
+
+  <button class="collapse-toggle open" onclick="toggle(this)"><span class="arrow">&#9654;</span> The Profit Equation</button>
+  <div class="collapsible open">
+    <div class="callout formula-box">
+      <div class="formula-label">Profit Equation</div>
+      Profit = (Price &times; Q) &minus; (Variable Cost per Unit &times; Q) &minus; Fixed Costs
+    </div>
+    <ul class="concept-list">
+      <li>This is the foundation of CVP analysis. Given any four of the five variables (profit, price, VC/unit, Q, fixed costs), you can solve for the fifth.</li>
+      <li>To build this equation, you need to separate mixed costs into their fixed and variable components (using the methods from Chapter 2).</li>
+    </ul>
+  </div>
+
+  <button class="collapse-toggle open" onclick="toggle(this)"><span class="arrow">&#9654;</span> Contribution Income Statement</button>
+  <div class="collapsible open">
+    <ul class="concept-list">
+      <li>The <strong>functional (GAAP) income statement</strong> groups costs by function: Cost of Goods Sold, then Selling &amp; Administrative. Used for external reporting.</li>
+      <li>The <strong>contribution income statement</strong> groups costs by behavior: all variable costs first, then all fixed costs. Used for internal CVP analysis.</li>
+    </ul>
+    <div class="callout">
+      <strong>Contribution format:</strong><br>
+      Sales<br>
+      &minus; Variable costs (manufacturing + selling &amp; admin)<br>
+      = <strong>Contribution Margin</strong><br>
+      &minus; Fixed costs (manufacturing + selling &amp; admin)<br>
+      = Net Income
+    </div>
+    <ul class="concept-list">
+      <li><strong>Contribution margin (CM)</strong> = Sales &minus; Variable Costs. It represents the amount available to cover fixed costs and generate profit.</li>
+      <li><strong>CM per unit</strong> = Price &minus; Variable Cost per Unit.</li>
+      <li><strong>CM ratio</strong> = CM / Sales = CM per unit / Price. Useful for dollar-based analysis: if sales increase by $1, profit increases by the CM ratio.</li>
+      <li><strong>Converting from functional to contribution format:</strong> You must know what percentage of each functional line (COGS, S&amp;A) is variable vs. fixed, then regroup accordingly.</li>
+    </ul>
+  </div>
+
+  <button class="collapse-toggle open" onclick="toggle(this)"><span class="arrow">&#9654;</span> Break-Even &amp; Target Profit</button>
+  <div class="collapsible open">
+    <div class="callout formula-box">
+      <div class="formula-label">Break-Even &amp; Target Profit</div>
+      Break-even units = Fixed Costs / CM per unit<br>
+      Target profit units = (Fixed Costs + Target Profit) / CM per unit
+    </div>
+    <ul class="concept-list">
+      <li>At break-even, total revenue = total costs and profit = 0.</li>
+      <li><strong>Sensitivity analysis:</strong> flex one variable at a time (price, VC, FC, or volume) and re-solve. If volume increases by N units, profit increases by N &times; CM per unit.</li>
+    </ul>
+  </div>
+
+  <button class="collapse-toggle open" onclick="toggle(this)"><span class="arrow">&#9654;</span> CVP Assumptions</button>
+  <div class="collapsible open">
+    <ul class="concept-list">
+      <li>All costs can be accurately classified as either fixed or variable.</li>
+      <li>Cost behavior is linear within the relevant range (constant VC per unit, constant total FC).</li>
+      <li>Revenue behavior is linear (constant selling price per unit).</li>
+      <li>Analysis is for a <strong>single product</strong> or a <strong>constant sales mix</strong>.</li>
+    </ul>
+    <div class="callout">
+      <strong>What does a change in variable costs do?</strong> A reduction in variable costs increases the CM per unit, which changes the slope of the total cost line and reduces the break-even point &mdash; <em>but only if fixed costs remain constant</em>. If fixed costs increase by an offsetting amount, break-even may not change.
+    </div>
+  </div>
+
+  <button class="collapse-toggle open" onclick="toggle(this)"><span class="arrow">&#9654;</span> Multi-Product CVP (Sales Mix)</button>
+  <div class="collapsible open">
+    <div class="callout formula-box">
+      <div class="formula-label">Weighted-Average Contribution Margin</div>
+      WACM = &Sigma;(CM per unit<sub>i</sub> &times; Sales mix %<sub>i</sub>)<br>
+      Break-even units = Fixed Costs / WACM<br>
+      Then split total units by the sales mix percentages.
+    </div>
+    <ul class="concept-list">
+      <li>A <strong>shift in the sales mix</strong> toward the higher-CM product lowers the break-even point; a shift toward the lower-CM product raises it.</li>
+      <li>Sales mix analysis is important in any multiple-product or service organization. A basic CVP assumption is that the sales mix is constant; in practice, mix shifts can have a significant impact on profitability.</li>
+      <li>You can also use a dollar-based approach: compute the <strong>weighted-average CM ratio</strong> and divide fixed costs by it to get break-even in dollars.</li>
+    </ul>
+  </div>
+
+  <button class="collapse-toggle open" onclick="toggle(this)"><span class="arrow">&#9654;</span> Operating Leverage</button>
+  <div class="collapsible open">
+    <div class="callout formula-box">
+      <div class="formula-label">Degree of Operating Leverage</div>
+      DOL = Contribution Margin / Net Income
+    </div>
+    <ul class="concept-list">
+      <li>Operating leverage measures how sensitive profit is to changes in sales volume.</li>
+      <li>A firm with <strong>high fixed costs</strong> (high leverage) sees profits amplified in both directions &mdash; larger gains when sales rise, larger losses when sales fall.</li>
+      <li>Use DOL as a multiplier: if DOL = 3 and sales increase by 10%, profit increases by approximately 30%.</li>
+    </ul>
+  </div>
+
+  <button class="collapse-toggle open" onclick="toggle(this)"><span class="arrow">&#9654;</span> CVP with Income Taxes</button>
+  <div class="collapsible open">
+    <div class="callout formula-box">
+      <div class="formula-label">Target Profit with Taxes</div>
+      Required pre-tax profit = Target after-tax profit / (1 &minus; tax rate)<br>
+      Target units = (Fixed Costs + Required pre-tax profit) / CM per unit
+    </div>
+    <ul class="concept-list">
+      <li>Taxes don't change the break-even point (no tax when profit = 0).</li>
+      <li>For target after-tax profit: gross up the target to a pre-tax amount, then use the standard target-profit formula.</li>
+    </ul>
+  </div>
+
+  <h3>Practice Activities</h3>
+  <div class="practice-links">
+    <a href="https://jmoon312.github.io/acct2102/profit-formula.html" target="_blank">Profit Formula</a>
+    <a href="https://jmoon312.github.io/acct2102/sensitivity-analysis.html" target="_blank">Sensitivity Analysis</a>
+    <a href="https://jmoon312.github.io/acct2102/multiproduct-cvp.html" target="_blank">Multi-Product CVP</a>
+    <a href="https://jmoon312.github.io/acct2102/mix-leverage-taxes.html" target="_blank">Mix, Leverage &amp; Taxes</a>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     CHAPTER 4
+═══════════════════════════════════════════ -->
+<div class="part" id="ch4">
+  <div class="part-header">
+    <span class="part-tag ch4">Chapter 4</span>
+    <h2>Relevant Costs &amp; Differential Analysis</h2>
+  </div>
+
+  <button class="collapse-toggle open" onclick="toggle(this)"><span class="arrow">&#9654;</span> Relevant vs. Irrelevant Costs</button>
+  <div class="collapsible open">
+    <ul class="concept-list">
+      <li><strong>Relevant costs/revenues</strong> are <em>future</em> amounts that <em>differ</em> between alternatives.</li>
+      <li><strong>Sunk costs</strong> are costs already incurred &mdash; they are <em>never</em> relevant regardless of the decision.</li>
+      <li><strong>Opportunity costs</strong> (the benefit forgone by not choosing the next-best alternative) are <em>always</em> relevant.</li>
+      <li><strong>Outlay costs</strong> are relevant when they differ between alternatives.</li>
+      <li>Fixed costs are <em>not automatically irrelevant</em>. If a fixed cost can be avoided by choosing one alternative, it is relevant. Variable costs may be irrelevant if they are the same under both alternatives (e.g., same activity level).</li>
+    </ul>
+  </div>
+
+  <button class="collapse-toggle open" onclick="toggle(this)"><span class="arrow">&#9654;</span> Differential Analysis Framework</button>
+  <div class="collapsible open">
+    <ul class="concept-list">
+      <li>Differential analysis compares only the <em>differences</em> between alternatives &mdash; costs and revenues that are the same under both options can be ignored.</li>
+      <li>Always consider <strong>qualitative factors</strong> (employee morale, customer relationships, brand reputation, supply reliability) alongside the numbers.</li>
+    </ul>
+  </div>
+
+  <button class="collapse-toggle open" onclick="toggle(this)"><span class="arrow">&#9654;</span> Decision Types: Cheatsheet</button>
+  <div class="collapsible open">
+    <table class="decision-table">
+      <thead>
+        <tr><th>Decision</th><th>Key Comparison</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Profit plan changes / Discontinue a segment</td>
+          <td>Lost contribution margin vs. avoidable fixed costs. Keep the segment if CM exceeds avoidable FC.</td>
+        </tr>
+        <tr>
+          <td>Special order</td>
+          <td>Incremental revenue vs. incremental costs. Accept if the order's revenue covers its variable costs (and any additional fixed costs) <em>and</em> excess capacity exists. At full capacity, include the opportunity cost of displaced regular sales.</td>
+        </tr>
+        <tr>
+          <td>Outsourcing (make or buy)</td>
+          <td>Avoidable production costs vs. purchase price + opportunity costs. Outsource if buying is cheaper after accounting for any freed-up capacity value (e.g., renting out space).</td>
+        </tr>
+        <tr>
+          <td>Sell or process further</td>
+          <td>Additional revenue from further processing vs. additional processing cost. Joint costs incurred <em>before</em> the split-off point are sunk and irrelevant.</td>
+        </tr>
+        <tr>
+          <td>Constrained resource</td>
+          <td>Maximize <strong>CM per unit of the scarce resource</strong>, not CM per unit of product.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <button class="collapse-toggle open" onclick="toggle(this)"><span class="arrow">&#9654;</span> Special Orders in Detail</button>
+  <div class="collapsible open">
+    <ul class="concept-list">
+      <li>Compare the special order price to the <em>incremental cost per unit</em> (usually variable manufacturing costs, possibly with adjustments for savings on selling expenses, etc.).</li>
+      <li>Fixed costs are typically irrelevant <em>if</em> excess capacity exists (they don't change).</li>
+      <li>If the order requires using capacity currently serving regular customers, include the <strong>opportunity cost</strong> of lost regular-price sales.</li>
+      <li>For long-term special orders, use <em>full cost</em> (including allocated fixed costs) as a pricing floor, and consider cost escalation clauses.</li>
+    </ul>
+  </div>
+
+  <button class="collapse-toggle open" onclick="toggle(this)"><span class="arrow">&#9654;</span> Outsourcing (Make or Buy)</button>
+  <div class="collapsible open">
+    <ul class="concept-list">
+      <li>List all costs currently incurred to make the product. Identify which are <strong>avoidable</strong> (would disappear if you stop making it).</li>
+      <li>Compare avoidable costs to the outside purchase price.</li>
+      <li>Add any <strong>opportunity cost</strong> of freed capacity (e.g., rent out the space, use it for another product).</li>
+      <li>Organizations sometimes keep production in-house even at higher cost to maintain a <strong>core competency</strong>, assure supply, or control quality.</li>
+    </ul>
+  </div>
+
+  <button class="collapse-toggle open" onclick="toggle(this)"><span class="arrow">&#9654;</span> Sell or Process Further &amp; Joint Costs</button>
+  <div class="collapsible open">
+    <ul class="concept-list">
+      <li><strong>Joint costs</strong> are costs incurred <em>before</em> the split-off point when producing multiple products simultaneously (e.g., crude oil refining, cattle processing, sawmill operations).</li>
+      <li>Joint costs are sunk for the sell-or-process-further decision &mdash; they've already been incurred regardless of what you do after the split-off.</li>
+      <li>Process further only if <strong>incremental revenue > incremental processing cost</strong>.</li>
+    </ul>
+  </div>
+
+  <button class="collapse-toggle open" onclick="toggle(this)"><span class="arrow">&#9654;</span> Theory of Constraints</button>
+  <div class="collapsible open">
+    <ul class="concept-list">
+      <li>Identify the <strong>bottleneck</strong> &mdash; the constrained resource that limits overall throughput.</li>
+      <li>Maximize throughput at the bottleneck by scheduling the highest-CM-per-constraint-unit products first.</li>
+      <li>Management should <em>not</em> encourage full utilization of non-bottleneck resources (this just builds excess inventory without increasing output).</li>
+      <li>Short-term: schedule around the constraint. Long-term: invest to expand the bottleneck. Eliminating one bottleneck creates the next one.</li>
+    </ul>
+  </div>
+
+  <h3>Practice Activities</h3>
+  <div class="practice-links">
+    <a href="https://jmoon312.github.io/acct2102/differential-analysis.html" target="_blank">Differential Analysis</a>
+    <a href="https://jmoon312.github.io/acct2102/outsourcing-capacity.html" target="_blank">Outsourcing &amp; Capacity</a>
+    <a href="https://jmoon312.github.io/acct2102/differential-capstone.html" target="_blank">Differential Capstone</a>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     FORMULA QUICK REFERENCE
+═══════════════════════════════════════════ -->
+<div class="part" id="formulas">
+  <div class="part-header">
+    <span class="part-tag formulas">Reference</span>
+    <h2>Formula Quick Reference</h2>
+  </div>
+
+  <div class="formula-grid">
+    <div class="formula-card">
+      <div class="fc-title">Total Cost (Mixed)</div>
+      <div class="fc-eq">Y = a + bX</div>
+    </div>
+    <div class="formula-card">
+      <div class="fc-title">High-Low: Variable Cost</div>
+      <div class="fc-eq">b = &Delta;Cost / &Delta;Activity</div>
+    </div>
+    <div class="formula-card">
+      <div class="fc-title">Profit Equation</div>
+      <div class="fc-eq">Profit = (P &times; Q) &minus; (VC &times; Q) &minus; FC</div>
+    </div>
+    <div class="formula-card">
+      <div class="fc-title">Contribution Margin</div>
+      <div class="fc-eq">CM = Sales &minus; Variable Costs<br>CM/unit = P &minus; VC/unit<br>CM ratio = CM / Sales</div>
+    </div>
+    <div class="formula-card">
+      <div class="fc-title">Break-Even (Units)</div>
+      <div class="fc-eq">BE = FC / CM per unit</div>
+    </div>
+    <div class="formula-card">
+      <div class="fc-title">Target Profit (Units)</div>
+      <div class="fc-eq">(FC + Target Profit) / CM per unit</div>
+    </div>
+    <div class="formula-card">
+      <div class="fc-title">Multi-Product Break-Even</div>
+      <div class="fc-eq">WACM = &Sigma;(CM<sub>i</sub> &times; mix%<sub>i</sub>)<br>BE = FC / WACM</div>
+    </div>
+    <div class="formula-card">
+      <div class="fc-title">Operating Leverage</div>
+      <div class="fc-eq">DOL = CM / Net Income</div>
+    </div>
+    <div class="formula-card">
+      <div class="fc-title">Target Profit with Taxes</div>
+      <div class="fc-eq">Pre-tax = After-tax / (1 &minus; t)<br>Units = (FC + Pre-tax) / CM per unit</div>
+    </div>
+    <div class="formula-card">
+      <div class="fc-title">Average Cost per Unit</div>
+      <div class="fc-eq">Avg = (a / X) + b</div>
+    </div>
+    <div class="formula-card">
+      <div class="fc-title">Sell or Process Further</div>
+      <div class="fc-eq">Process if: &Delta;Revenue > &Delta;Cost<br>(Joint costs are sunk)</div>
+    </div>
+    <div class="formula-card">
+      <div class="fc-title">Constrained Resource</div>
+      <div class="fc-eq">Maximize CM per unit of<br>scarce resource</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     PRACTICE HUB
+═══════════════════════════════════════════ -->
+<div class="part" id="practice">
+  <div class="part-header">
+    <span class="part-tag practice">Practice</span>
+    <h2>All Practice Activities</h2>
+  </div>
+  <p class="section-intro">
+    These are the interactive activities from class. Each one lets you work through problems
+    and check your answers. They're organized by chapter &mdash; start with the topics you find
+    most challenging.
+  </p>
+
+  <h3>Chapter 2 &mdash; Cost Behavior &amp; Estimation</h3>
+  <div class="practice-links">
+    <a href="https://jmoon312.github.io/acct2102/cost-behavior-matching.html" target="_blank">Cost Behavior Matching</a>
+    <a href="https://jmoon312.github.io/acct2102/cost-function-step.html" target="_blank">Cost Functions &amp; Step Costs</a>
+  </div>
+
+  <h3>Chapter 3 &mdash; CVP Analysis</h3>
+  <div class="practice-links">
+    <a href="https://jmoon312.github.io/acct2102/profit-formula.html" target="_blank">Profit Formula</a>
+    <a href="https://jmoon312.github.io/acct2102/sensitivity-analysis.html" target="_blank">Sensitivity Analysis</a>
+    <a href="https://jmoon312.github.io/acct2102/multiproduct-cvp.html" target="_blank">Multi-Product CVP</a>
+    <a href="https://jmoon312.github.io/acct2102/mix-leverage-taxes.html" target="_blank">Mix, Leverage &amp; Taxes</a>
+  </div>
+
+  <h3>Chapter 4 &mdash; Differential Analysis</h3>
+  <div class="practice-links">
+    <a href="https://jmoon312.github.io/acct2102/differential-analysis.html" target="_blank">Differential Analysis</a>
+    <a href="https://jmoon312.github.io/acct2102/outsourcing-capacity.html" target="_blank">Outsourcing &amp; Capacity</a>
+    <a href="https://jmoon312.github.io/acct2102/differential-capstone.html" target="_blank">Differential Capstone</a>
+  </div>
+
+  <h3>Slide Deck Worked Examples</h3>
+  <div class="callout">
+    <p>Review these worked examples from the lecture slides for additional practice:</p>
+    <ul class="concept-list" style="margin-bottom:0">
+      <li><strong>Ch 2:</strong> Cereal box production high-low calculation (slides 26&ndash;29), FIXthat4U average cost analysis (slides 14&ndash;21)</li>
+      <li><strong>Ch 3:</strong> Jeni's Ice Cream bar break-even and target profit (slides 10&ndash;11, 24&ndash;27), multi-product popsicle expansion (slides 31&ndash;38), FactoryFit vs. PrintOnDemand operating leverage (slides 40&ndash;42)</li>
+      <li><strong>Ch 4:</strong> HP adapter three-alternative analysis (slides 13&ndash;19), HP special order with/without capacity (slides 22&ndash;27), HP outsourcing with opportunity cost (slides 29&ndash;32), HP sell-or-process photo paper (slides 34&ndash;35), HP printer constrained resource (slides 39&ndash;40)</li>
+    </ul>
+  </div>
+</div>
+
+</main>
+
+<!-- ═══ Scripts ═══ -->
+<script>
+/* ── Collapsible sections ── */
+function toggle(btn) {
+  btn.classList.toggle('open');
+  const content = btn.nextElementSibling;
+  content.classList.toggle('open');
+}
+
+/* ── QR / Share ── */
+function showQR() {
+  const url = location.href;
+  document.getElementById('qr-url').textContent = url;
+  const qrEl = document.getElementById('qr-code');
+  qrEl.innerHTML = '';
+  if (window.QRCode) {
+    new QRCode(qrEl, { text: url, width: 180, height: 180, colorDark: '#1a2744', colorLight: '#ffffff' });
+  }
+  document.getElementById('qr-overlay').classList.add('show');
+}
+function hideQR(ev) {
+  if (ev && ev.target.id !== 'qr-overlay' && ev.target.className !== 'qr-close') return;
+  document.getElementById('qr-overlay').classList.remove('show');
+}
+</script>
+
+</body>
+</html>
