@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Customer Profitability Analysis</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    background: #f4f0e8;
+    color: #1a2744;
+    min-height: 100vh;
+  }
+
+  header {
+    background: #1a2744;
+    color: #fff;
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .header-left h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+  .header-left p  { font-size: 13px; color: #a0aec0; margin-top: 2px; }
+
+  .qr-btn {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    transition: background .15s;
+  }
+  .qr-btn:hover { background: rgba(255,255,255,0.18); }
+
+  .qr-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .qr-overlay.show { display: flex; }
+  .qr-modal {
+    background: #fff;
+    border-radius: 14px;
+    padding: 32px;
+    text-align: center;
+    max-width: 300px;
+    width: 90%;
+  }
+  .qr-modal h2 { font-size: 16px; font-weight: 600; color: #1a2744; margin-bottom: 6px; }
+  .qr-modal p  { font-size: 12px; color: #64748b; margin-bottom: 18px; line-height: 1.5; }
+  #qr-code { display: flex; justify-content: center; margin-bottom: 16px; }
+  #qr-url  { font-size: 11px; color: #94a3b8; word-break: break-all; margin-bottom: 18px; }
+  .qr-close {
+    background: #1a2744; color: #fff;
+    border: none; border-radius: 8px;
+    padding: 8px 24px; font-size: 13px;
+    cursor: pointer; font-family: inherit;
+  }
+
+  main {
+    max-width: 920px;
+    margin: 28px auto;
+    padding: 0 20px 48px;
+  }
+
+  .part {
+    background: #fff;
+    border: 1px solid #dde3ef;
+    border-radius: 12px;
+    padding: 22px 24px 24px;
+    margin-bottom: 22px;
+  }
+
+  .part-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .part-tag {
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    background: #1a2744;
+    padding: 3px 10px;
+    border-radius: 99px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+  .part-tag.practice { background: #D85A30; }
+  .part-tag.explore  { background: #3b7dd8; }
+  .part-tag.solve    { background: #7a5cb6; }
+  .part-tag.build    { background: #5a9e3a; }
+  .part-header h2 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -.01em;
+  }
+  .part-header .subtitle {
+    font-size: 13px;
+    color: #64748b;
+  }
+
+  .setup-box {
+    background: #f8f6f0;
+    border: 1px solid #e6dfd0;
+    border-radius: 9px;
+    padding: 14px 16px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: #334155;
+    margin-bottom: 16px;
+  }
+  .setup-box strong { color: #1a2744; }
+  .setup-box p + p { margin-top: 6px; }
+
+  .prompt {
+    font-size: 14px;
+    color: #1a2744;
+    margin-bottom: 12px;
+    line-height: 1.55;
+  }
+  .prompt strong { font-weight: 700; }
+
+  .prod-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-bottom: 6px;
+    font-variant-numeric: tabular-nums;
+  }
+  .prod-table thead th {
+    background: #fde9c8;
+    color: #1a2744;
+    font-size: 12.5px;
+    font-weight: 700;
+    text-align: center;
+    padding: 10px 8px;
+    border-bottom: 2px solid #f0c674;
+  }
+  .prod-table thead th:first-child {
+    border-top-left-radius: 8px;
+    text-align: left;
+    padding-left: 14px;
+  }
+  .prod-table thead th:last-child  { border-top-right-radius: 8px; }
+  .prod-table tbody td {
+    background: #f0f5fa;
+    padding: 9px 8px;
+    text-align: center;
+    border-bottom: 1px solid #e1eaf3;
+  }
+  .prod-table tbody td.row-label {
+    text-align: left;
+    padding-left: 14px;
+    font-weight: 600;
+    color: #1a2744;
+  }
+  .prod-table tbody td.given {
+    color: #64748b;
+    font-style: italic;
+  }
+  .prod-table tbody td.negative {
+    color: #9b2020;
+    font-weight: 600;
+  }
+  .prod-table tbody tr:last-child td:first-child { border-bottom-left-radius: 8px; }
+  .prod-table tbody tr:last-child td:last-child  { border-bottom-right-radius: 8px; }
+  .prod-table tbody tr.totals-row td {
+    background: #e9eef7;
+    font-weight: 700;
+    border-top: 2px solid #cbd5e1;
+  }
+
+  .qa-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 4px; }
+  .qa-row {
+    display: grid;
+    grid-template-columns: 1fr 200px;
+    gap: 14px;
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #e1eaf3;
+    border-radius: 9px;
+    padding: 13px 16px;
+  }
+  .qa-row .qa-prompt {
+    font-size: 13.5px;
+    color: #1a2744;
+    line-height: 1.5;
+  }
+  .qa-row .qa-prompt strong { font-weight: 700; }
+  .qa-row .qa-prompt small {
+    display: block;
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 3px;
+  }
+  .qa-row .answer { display: flex; flex-direction: column; }
+  .qa-row .answer label {
+    font-size: 10.5px;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 4px;
+  }
+  .qa-row .answer input {
+    padding: 8px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .qa-row .answer input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .qa-row .answer input.correct {
+    border-color: #5a9e3a;
+    background: #f0f9e8;
+    color: #2d6a1f;
+  }
+  .qa-row .answer input.wrong {
+    border-color: #c94040;
+    background: #fff1f1;
+    color: #9b2020;
+  }
+  .corr-hint {
+    display: block;
+    font-size: 11px;
+    color: #5a9e3a;
+    font-weight: 600;
+    margin-top: 3px;
+    min-height: 14px;
+  }
+
+  .reveal { display: none; animation: slideIn 0.4s ease-out; }
+  .reveal.show { display: block; }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Intuition card */
+  .intuition-card {
+    background: #f8fafc;
+    border: 1px solid #e1eaf3;
+    border-radius: 9px;
+    padding: 16px 18px;
+    margin-bottom: 14px;
+  }
+  .intuition-card .intuition-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #7a5cb6;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 6px;
+  }
+  .intuition-card .intuition-text {
+    font-size: 13.5px;
+    color: #334155;
+    line-height: 1.6;
+    margin-bottom: 12px;
+  }
+  .intuition-btns {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .intuition-btns button {
+    flex: 1;
+    min-width: 150px;
+    background: #fff;
+    border: 1.5px solid #cbd5e1;
+    color: #1a2744;
+    padding: 11px 14px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    font-family: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .15s;
+    line-height: 1.4;
+  }
+  .intuition-btns button:hover {
+    border-color: #7a5cb6;
+    background: #f5f3fa;
+  }
+  .intuition-btns button.selected {
+    background: #1a2744;
+    color: #fff;
+    border-color: #1a2744;
+    cursor: default;
+  }
+  .intuition-btns button.locked {
+    cursor: default;
+    opacity: 0.6;
+  }
+  .intuition-btns button.locked:hover {
+    border-color: #cbd5e1;
+    background: #fff;
+  }
+  .intuition-btns button.selected.locked:hover {
+    background: #1a2744;
+    border-color: #1a2744;
+  }
+  .intuition-feedback {
+    margin-top: 10px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.55;
+    background: #eff6ff;
+    border: 1px solid #c7dcf5;
+    color: #1a2744;
+  }
+
+  .insight {
+    margin-top: 8px;
+    background: #eff6ff;
+    border: 1px solid #c7dcf5;
+    border-left: 4px solid #3b7dd8;
+    border-radius: 0 8px 8px 0;
+    padding: 11px 14px;
+    font-size: 13px;
+    line-height: 1.55;
+    color: #1a2744;
+  }
+  .insight strong { color: #1e40af; }
+  .insight.success {
+    background: #f0f9e8;
+    border-color: #c4e0a3;
+    border-left-color: #5a9e3a;
+  }
+  .insight.success strong { color: #2d6a1f; }
+  .insight.warn {
+    background: #fff7e6;
+    border-color: #f5d491;
+    border-left-color: #d97706;
+  }
+  .insight.warn strong { color: #9a3412; }
+
+  .footer {
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .check-btn {
+    background: #1a2744; color: #fff;
+    border: none; border-radius: 9px;
+    padding: 10px 24px; font-size: 14px;
+    cursor: pointer; font-family: inherit;
+    font-weight: 500;
+    transition: background .15s;
+  }
+  .check-btn:hover { background: #243660; }
+  .reset-btn {
+    font-size: 13px; color: #64748b;
+    background: none; border: none;
+    cursor: pointer; text-decoration: underline;
+    font-family: inherit;
+  }
+  .reveal-link {
+    margin-left: auto;
+    font-size: 12.5px;
+    color: #64748b;
+    background: none; border: none;
+    cursor: pointer; text-decoration: underline;
+    font-family: inherit;
+  }
+  .reveal-link:hover { color: #1a2744; }
+  .score-out {
+    font-size: 14px; font-weight: 600;
+    color: #1a2744;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 6px 14px;
+  }
+  .score-out:empty { display: none; }
+
+  @media (max-width: 700px) {
+    header { padding: 14px 16px; }
+    main { padding: 0 12px 40px; }
+    .part { padding: 18px 14px 18px; }
+    .prod-table thead th, .prod-table tbody td { font-size: 11px; padding: 6px 4px; }
+    .qa-row { grid-template-columns: 1fr; gap: 8px; }
+    .intuition-btns button { min-width: 110px; font-size: 12.5px; padding: 9px 10px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>Customer Profitability Analysis</h1>
+  </div>
+  <button class="qr-btn" onclick="showQR()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="2" height="2"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="19" width="3" height="2"/><rect x="19" y="19" width="2" height="2"/></svg>
+    Share with students
+  </button>
+</header>
+
+<div class="qr-overlay" id="qr-overlay" onclick="hideQR(event)">
+  <div class="qr-modal">
+    <h2>Scan to open on your device</h2>
+    <p>Students can scan this QR code or type the URL to open the activity on their phone or laptop.</p>
+    <div id="qr-code"></div>
+    <div id="qr-url"></div>
+    <button class="qr-close" onclick="hideQR()">Close</button>
+  </div>
+</div>
+
+<main>
+
+  <!-- ───────── STEP 1 — Activity costs for BuildRight ───────── -->
+  <section class="part">
+    <div class="part-header">
+      <span class="part-tag practice">Step 1</span>
+      <h2>Activity costs for BuildRight Construction</h2>
+      <span class="subtitle">apply each rate to the customer's driver activity</span>
+    </div>
+
+    <div class="setup-box">
+      <p><strong>Marietta Plumbing Supply</strong> is a wholesale plumbing distributor serving Atlanta-area contractors. The cost team has built an ABC model with five customer-facing activities:</p>
+      <table class="prod-table" style="margin-top:10px; margin-bottom:10px;">
+        <thead>
+          <tr>
+            <th>Activity</th>
+            <th>Cost driver</th>
+            <th>Rate</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="row-label">Sales rep visits</td><td>Visits</td><td>$300 / visit</td></tr>
+          <tr><td class="row-label">Remote contact (phone/email)</td><td>Contacts</td><td>$25 / contact</td></tr>
+          <tr><td class="row-label">Order processing &amp; shipping</td><td>Orders</td><td>$100 / order</td></tr>
+          <tr><td class="row-label">Custom kitting</td><td>Kitting requests</td><td>$80 / request</td></tr>
+          <tr><td class="row-label">Billing &amp; collection</td><td>Invoices</td><td>$30 / invoice</td></tr>
+        </tbody>
+      </table>
+      <p>The first customer up for review is <strong>BuildRight Construction</strong> &mdash; a large commercial builder. Last year's activity with BuildRight:</p>
+      <table class="prod-table" style="margin-top:10px;">
+        <thead>
+          <tr>
+            <th>Activity</th>
+            <th>BuildRight driver activity</th>
+            <th>Rate</th>
+            <th>Cost</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="row-label">Sales rep visits</td><td>3 visits</td><td>$300</td><td>?</td></tr>
+          <tr><td class="row-label">Remote contact</td><td>10 contacts</td><td>$25</td><td class="given">$250</td></tr>
+          <tr><td class="row-label">Order processing &amp; shipping</td><td>8 orders</td><td>$100</td><td>?</td></tr>
+          <tr><td class="row-label">Custom kitting</td><td>2 requests</td><td>$80</td><td class="given">$160</td></tr>
+          <tr><td class="row-label">Billing &amp; collection</td><td>8 invoices</td><td>$30</td><td class="given">$240</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="prompt">Fill in the two unknown line costs and the total activity cost.</p>
+
+    <div class="qa-list">
+      <div class="qa-row">
+        <div class="qa-prompt">Cost of <strong>sales rep visits</strong> for BuildRight</div>
+        <div class="answer">
+          <label>$ / year</label>
+          <input type="text" id="s1-visits" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s1-visits"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt">Cost of <strong>order processing &amp; shipping</strong> for BuildRight</div>
+        <div class="answer">
+          <label>$ / year</label>
+          <input type="text" id="s1-orders" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s1-orders"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Total activity cost</strong> for BuildRight<small>sum of all five activities</small></div>
+        <div class="answer">
+          <label>$ / year</label>
+          <input type="text" id="s1-total" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s1-total"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep1()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep1()">Reset</button>
+      <span id="score1-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep2(true)" id="reveal-step2-btn">Skip ahead &rarr;</button>
+    </div>
+
+    <div id="step1-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 2 — BuildRight profitability ───────── -->
+  <section class="part reveal" id="step2">
+    <div class="part-header">
+      <span class="part-tag explore">Step 2</span>
+      <h2>BuildRight profitability</h2>
+      <span class="subtitle">customer profit and profitability ratio</span>
+    </div>
+
+    <div class="setup-box">
+      <p>Sales and cost-of-goods-sold figures for BuildRight, from the accounting system:</p>
+      <table class="prod-table" style="margin-top:10px;">
+        <thead>
+          <tr><th>BuildRight Construction &mdash; last year</th><th></th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="row-label">Customer sales</td><td>$120,000</td></tr>
+          <tr><td class="row-label">Cost of goods sold</td><td>$90,000</td></tr>
+          <tr><td class="row-label">Customer activity cost (Step 1)</td><td>$2,350</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="prompt">Build BuildRight's customer profitability statement.</p>
+
+    <div class="qa-list">
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Gross profit on sales</strong><small>sales &minus; COGS</small></div>
+        <div class="answer">
+          <label>$</label>
+          <input type="text" id="s2-gp" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s2-gp"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Customer profitability</strong><small>gross profit &minus; customer activity cost</small></div>
+        <div class="answer">
+          <label>$</label>
+          <input type="text" id="s2-profit" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s2-profit"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Profitability ratio</strong><small>customer profitability &divide; customer sales</small></div>
+        <div class="answer">
+          <label>%</label>
+          <input type="text" id="s2-ratio" inputmode="decimal" placeholder="%">
+          <span class="corr-hint" id="hint-s2-ratio"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep2()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep2()">Reset</button>
+      <span id="score2-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep3(true)" id="reveal-step3-btn">Skip ahead &rarr;</button>
+    </div>
+
+    <div id="step2-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 3 — SmallHands ───────── -->
+  <section class="part reveal" id="step3">
+    <div class="part-header">
+      <span class="part-tag solve">Step 3</span>
+      <h2>SmallHands Renovation &mdash; same analysis, different result</h2>
+      <span class="subtitle">a small customer with a heavy service profile</span>
+    </div>
+
+    <div class="setup-box">
+      <p>Next up is <strong>SmallHands Renovation</strong>, a small residential remodeler. Smaller orders, but lots of them &mdash; and lots of phone calls and custom requests. Here's the activity profile alongside the sales data:</p>
+      <table class="prod-table" style="margin-top:10px; margin-bottom:10px;">
+        <thead>
+          <tr>
+            <th>Activity</th>
+            <th>SmallHands driver activity</th>
+            <th>Rate</th>
+            <th>Cost</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="row-label">Sales rep visits</td><td>6 visits</td><td>$300</td><td class="given">$1,800</td></tr>
+          <tr><td class="row-label">Remote contact</td><td>30 contacts</td><td>$25</td><td class="given">$750</td></tr>
+          <tr><td class="row-label">Order processing &amp; shipping</td><td>25 orders</td><td>$100</td><td class="given">$2,500</td></tr>
+          <tr><td class="row-label">Custom kitting</td><td>15 requests</td><td>$80</td><td class="given">$1,200</td></tr>
+          <tr><td class="row-label">Billing &amp; collection</td><td>25 invoices</td><td>$30</td><td class="given">$750</td></tr>
+        </tbody>
+      </table>
+      <table class="prod-table">
+        <thead>
+          <tr><th>SmallHands &mdash; last year</th><th></th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="row-label">Customer sales</td><td>$18,000</td></tr>
+          <tr><td class="row-label">Cost of goods sold</td><td>$14,000</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="prompt">Complete the profitability analysis for SmallHands.</p>
+
+    <div class="qa-list">
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Total customer activity cost</strong><small>sum the five activity costs above</small></div>
+        <div class="answer">
+          <label>$ / year</label>
+          <input type="text" id="s3-activity" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s3-activity"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Customer profitability</strong><small>can be negative &mdash; enter with a minus sign if so</small></div>
+        <div class="answer">
+          <label>$</label>
+          <input type="text" id="s3-profit" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s3-profit"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Profitability ratio</strong></div>
+        <div class="answer">
+          <label>%</label>
+          <input type="text" id="s3-ratio" inputmode="decimal" placeholder="%">
+          <span class="corr-hint" id="hint-s3-ratio"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep3()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep3()">Reset</button>
+      <span id="score3-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep4(true)" id="reveal-step4-btn">Skip ahead &rarr;</button>
+    </div>
+
+    <div id="step3-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 4 — Compare and decide ───────── -->
+  <section class="part reveal" id="step4">
+    <div class="part-header">
+      <span class="part-tag solve">Step 4</span>
+      <h2>Three customers, one decision</h2>
+      <span class="subtitle">portfolio view and the SmallHands question</span>
+    </div>
+
+    <div class="setup-box">
+      <p>Marietta's controller has now finished all three customer analyses. ABC Plumbing (a mid-sized contractor) has already been worked up &mdash; here's the full portfolio:</p>
+      <table class="prod-table" style="margin-top:10px;">
+        <thead>
+          <tr>
+            <th>Customer</th>
+            <th>Sales</th>
+            <th>Gross profit</th>
+            <th>Activity cost</th>
+            <th>Customer profit</th>
+            <th>Ratio</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="row-label">BuildRight Construction</td><td>$120,000</td><td>$30,000</td><td>$2,350</td><td>$27,650</td><td>23.0%</td></tr>
+          <tr><td class="row-label">ABC Plumbing Contractors</td><td>$55,000</td><td>$13,000</td><td>$3,535</td><td>$9,465</td><td>17.2%</td></tr>
+          <tr><td class="row-label">SmallHands Renovation</td><td>$18,000</td><td>$4,000</td><td>$7,000</td><td class="negative">($3,000)</td><td class="negative">&minus;16.7%</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="intuition-card">
+      <div class="intuition-label">Strategic call</div>
+      <div class="intuition-text">SmallHands generates $18,000 of revenue but loses $3,000 once you account for service activity. What's the right move for Marietta?</div>
+      <div class="intuition-btns">
+        <button onclick="pickIntuition('terminate')">Terminate the relationship</button>
+        <button onclick="pickIntuition('fix')">Try to make it profitable</button>
+        <button onclick="pickIntuition('keep')">Keep it &mdash; small customers add up</button>
+      </div>
+      <div class="intuition-feedback" id="int-fb" style="display:none;"></div>
+    </div>
+
+    <p class="prompt">Quantify the portfolio. What's at stake?</p>
+
+    <div class="qa-list">
+      <div class="qa-row">
+        <div class="qa-prompt">If Marietta <strong>terminates SmallHands</strong>, how much does annual profit change?<small>positive = profit goes up</small></div>
+        <div class="answer">
+          <label>$ / year</label>
+          <input type="text" id="s4-terminate" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s4-terminate"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Total customer profitability</strong> across all three customers (the current portfolio)</div>
+        <div class="answer">
+          <label>$ / year</label>
+          <input type="text" id="s4-current" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s4-current"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Portfolio profit if Marietta keeps only the two profitable customers</strong></div>
+        <div class="answer">
+          <label>$ / year</label>
+          <input type="text" id="s4-trim" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s4-trim"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep4()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep4()">Reset</button>
+      <span id="score4-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep5(true)" id="reveal-step5-btn">Skip ahead &rarr;</button>
+    </div>
+
+    <div id="step4-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 5 — Save SmallHands ───────── -->
+  <section class="part reveal" id="step5">
+    <div class="part-header">
+      <span class="part-tag build">Step 5</span>
+      <h2>Can Marietta save SmallHands?</h2>
+      <span class="subtitle">operational changes before termination</span>
+    </div>
+
+    <div class="setup-box">
+      <p>Before terminating, Marietta's sales VP proposes a deal: SmallHands consolidates to fewer, larger orders, accepts standard product kits instead of custom kitting, and shifts to monthly invoicing. The estimated new activity profile (sales and COGS unchanged):</p>
+      <table class="prod-table" style="margin-top:10px;">
+        <thead>
+          <tr>
+            <th>Activity</th>
+            <th>Old driver</th>
+            <th>Proposed driver</th>
+            <th>New cost</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="row-label">Sales rep visits</td><td>6</td><td>3</td><td class="given">$900</td></tr>
+          <tr><td class="row-label">Remote contact</td><td>30</td><td>12</td><td class="given">$300</td></tr>
+          <tr><td class="row-label">Order processing &amp; shipping</td><td>25</td><td>8</td><td class="given">$800</td></tr>
+          <tr><td class="row-label">Custom kitting</td><td>15</td><td>5</td><td class="given">$400</td></tr>
+          <tr><td class="row-label">Billing &amp; collection</td><td>25</td><td>12</td><td class="given">$360</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="prompt">Compute SmallHands' new profitability under the proposed terms.</p>
+
+    <div class="qa-list">
+      <div class="qa-row">
+        <div class="qa-prompt">New <strong>total activity cost</strong></div>
+        <div class="answer">
+          <label>$ / year</label>
+          <input type="text" id="s5-activity" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s5-activity"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt">New <strong>customer profitability</strong></div>
+        <div class="answer">
+          <label>$</label>
+          <input type="text" id="s5-profit" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s5-profit"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt">New <strong>profitability ratio</strong></div>
+        <div class="answer">
+          <label>%</label>
+          <input type="text" id="s5-ratio" inputmode="decimal" placeholder="%">
+          <span class="corr-hint" id="hint-s5-ratio"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep5()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep5()">Reset</button>
+      <span id="score5-out" class="score-out"></span>
+    </div>
+
+    <div id="step5-insight"></div>
+  </section>
+
+</main>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════════════════ */
+function parseNum(s) {
+  if (typeof s !== 'string') return NaN;
+  return parseFloat(s.replace(/[\$,\s%]/g, ''));
+}
+function parsePercent(s) {
+  var v = parseNum(s);
+  if (isNaN(v)) return NaN;
+  return Math.abs(v) <= 1 ? v : v / 100;
+}
+function fmtMoney(v, decimals) {
+  var d = (decimals === undefined) ? 0 : decimals;
+  var rounded = Math.round(v * 100) / 100;
+  var sign = rounded < 0 ? '-$' : '$';
+  return sign + Math.abs(rounded).toLocaleString('en-US', {
+    minimumFractionDigits: d,
+    maximumFractionDigits: d
+  });
+}
+function fmtPct(v) {
+  return (v * 100).toFixed(1) + '%';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   AUDIO
+═══════════════════════════════════════════════════════════════ */
+var audioCtx = null;
+function getAudio() {
+  if (!audioCtx) {
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (AC) audioCtx = new AC();
+  }
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+function playBell() {
+  var ctx = getAudio(); if (!ctx) return;
+  var now = ctx.currentTime;
+  [523.25, 659.25, 783.99].forEach(function(f) {
+    var osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = 'sine'; osc.frequency.value = f;
+    osc.connect(g).connect(ctx.destination);
+    g.gain.setValueAtTime(0, now);
+    g.gain.linearRampToValueAtTime(0.15, now + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 1.6);
+    osc.start(now); osc.stop(now + 1.7);
+  });
+}
+function playHorn() {
+  var ctx = getAudio(); if (!ctx) return;
+  var now = ctx.currentTime;
+  var notes = [
+    { f: 466.16, t: 0.00, d: 0.18 },
+    { f: 440.00, t: 0.20, d: 0.18 },
+    { f: 415.30, t: 0.40, d: 0.55 }
+  ];
+  notes.forEach(function(n) {
+    var osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(n.f, now + n.t);
+    if (n.d > 0.3) osc.frequency.exponentialRampToValueAtTime(n.f * 0.88, now + n.t + n.d);
+    osc.connect(g).connect(ctx.destination);
+    g.gain.setValueAtTime(0, now + n.t);
+    g.gain.linearRampToValueAtTime(0.12, now + n.t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, now + n.t + n.d);
+    osc.start(now + n.t); osc.stop(now + n.t + n.d + 0.05);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   EXPECTED ANSWERS
+═══════════════════════════════════════════════════════════════ */
+// Activity rates
+var R_VISIT = 300, R_CONTACT = 25, R_ORDER = 100, R_KITTING = 80, R_INVOICE = 30;
+
+// BuildRight
+var BR = { visits: 3, contacts: 10, orders: 8, kitting: 2, invoices: 8, sales: 120000, cogs: 90000 };
+var BR_VISITS = BR.visits * R_VISIT;       // $900
+var BR_ORDERS = BR.orders * R_ORDER;       // $800
+var BR_ACTIVITY = BR.visits*R_VISIT + BR.contacts*R_CONTACT + BR.orders*R_ORDER + BR.kitting*R_KITTING + BR.invoices*R_INVOICE;  // $2,350
+var BR_GP = BR.sales - BR.cogs;            // $30,000
+var BR_PROFIT = BR_GP - BR_ACTIVITY;       // $27,650
+var BR_RATIO = BR_PROFIT / BR.sales;       // 0.23042
+
+// SmallHands
+var SH = { visits: 6, contacts: 30, orders: 25, kitting: 15, invoices: 25, sales: 18000, cogs: 14000 };
+var SH_ACTIVITY = SH.visits*R_VISIT + SH.contacts*R_CONTACT + SH.orders*R_ORDER + SH.kitting*R_KITTING + SH.invoices*R_INVOICE;  // $7,000
+var SH_GP = SH.sales - SH.cogs;            // $4,000
+var SH_PROFIT = SH_GP - SH_ACTIVITY;       // -$3,000
+var SH_RATIO = SH_PROFIT / SH.sales;       // -0.16667
+
+// ABC Plumbing (precomputed shown in table)
+var ABC_PROFIT = 9465;
+
+// Step 4 totals
+var TERMINATE_GAIN = -SH_PROFIT;                       // $3,000
+var PORTFOLIO_CURRENT = BR_PROFIT + ABC_PROFIT + SH_PROFIT;  // $34,115
+var PORTFOLIO_TRIMMED = BR_PROFIT + ABC_PROFIT;        // $37,115
+
+// Step 5 — SmallHands consolidates
+var SH_NEW = { visits: 3, contacts: 12, orders: 8, kitting: 5, invoices: 12 };
+var SH_ACTIVITY_NEW = SH_NEW.visits*R_VISIT + SH_NEW.contacts*R_CONTACT + SH_NEW.orders*R_ORDER + SH_NEW.kitting*R_KITTING + SH_NEW.invoices*R_INVOICE;  // $2,760
+var SH_PROFIT_NEW = SH_GP - SH_ACTIVITY_NEW;            // $1,240
+var SH_RATIO_NEW = SH_PROFIT_NEW / SH.sales;            // 0.06889
+
+/* ═══════════════════════════════════════════════════════════════
+   GENERIC CHECKER
+═══════════════════════════════════════════════════════════════ */
+function checkGroup(spec, scoreId, allCorrectFn) {
+  var correct = 0, total = 0, blanks = 0;
+  spec.forEach(function(f) {
+    var inp  = document.getElementById(f.inputId);
+    var hint = document.getElementById(f.hintId);
+    inp.classList.remove('correct', 'wrong');
+    hint.textContent = '';
+    total++;
+    if (inp.value.trim() === '') { blanks++; return; }
+    var parse = f.parse || parseNum;
+    var val = parse(inp.value);
+    var exp = f.expected;
+    var tol = f.tol;
+    if (!isNaN(val) && Math.abs(val - exp) <= tol) {
+      inp.classList.add('correct');
+      correct++;
+    } else {
+      inp.classList.add('wrong');
+      hint.textContent = '→ ' + f.fmt(exp);
+    }
+  });
+  var out = document.getElementById(scoreId);
+  if (blanks === total) {
+    out.textContent = 'Fill in some answers first.';
+    return false;
+  }
+  out.textContent = correct + ' / ' + total + ' correct' + (blanks ? ' (' + blanks + ' blank)' : '');
+  if (correct === total) { playBell(); if (allCorrectFn) allCorrectFn(); return true; }
+  playHorn();
+  return false;
+}
+function resetGroup(spec, scoreId, extraResetFn) {
+  spec.forEach(function(f) {
+    var inp = document.getElementById(f.inputId);
+    var hint = document.getElementById(f.hintId);
+    inp.value = '';
+    inp.classList.remove('correct', 'wrong');
+    hint.textContent = '';
+  });
+  document.getElementById(scoreId).textContent = '';
+  if (extraResetFn) extraResetFn();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 1
+═══════════════════════════════════════════════════════════════ */
+var STEP1_SPEC = [
+  { inputId: 's1-visits', hintId: 'hint-s1-visits', expected: BR_VISITS,   tol: 0.5, fmt: function(v){ return fmtMoney(v,0); } },
+  { inputId: 's1-orders', hintId: 'hint-s1-orders', expected: BR_ORDERS,   tol: 0.5, fmt: function(v){ return fmtMoney(v,0); } },
+  { inputId: 's1-total',  hintId: 'hint-s1-total',  expected: BR_ACTIVITY, tol: 0.5, fmt: function(v){ return fmtMoney(v,0); } }
+];
+function checkStep1() {
+  var fb = document.getElementById('step1-insight'); fb.innerHTML = '';
+  checkGroup(STEP1_SPEC, 'score1-out', function() {
+    revealStep2(false);
+    fb.innerHTML = '<div class="insight success"><strong>$2,350 of activity cost for BuildRight.</strong> Three visits, eight orders, light remote contact — for a $120k account, that\'s a low-touch customer. Step 2 turns this into a profitability number.</div>';
+  });
+}
+function resetStep1() { resetGroup(STEP1_SPEC, 'score1-out', function(){ document.getElementById('step1-insight').innerHTML=''; }); }
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 2
+═══════════════════════════════════════════════════════════════ */
+var STEP2_SPEC = [
+  { inputId: 's2-gp',     hintId: 'hint-s2-gp',     expected: BR_GP,     tol: 5,     fmt: function(v){ return fmtMoney(v,0); } },
+  { inputId: 's2-profit', hintId: 'hint-s2-profit', expected: BR_PROFIT, tol: 5,     fmt: function(v){ return fmtMoney(v,0); } },
+  { inputId: 's2-ratio',  hintId: 'hint-s2-ratio',  expected: BR_RATIO,  tol: 0.005, parse: parsePercent, fmt: fmtPct }
+];
+function checkStep2() {
+  var fb = document.getElementById('step2-insight'); fb.innerHTML = '';
+  checkGroup(STEP2_SPEC, 'score2-out', function() {
+    revealStep3(false);
+    fb.innerHTML = '<div class="insight success"><strong>23% profitability ratio.</strong> BuildRight is a star account — high gross profit, low service intensity. The next customer looks very different.</div>';
+  });
+}
+function resetStep2() { resetGroup(STEP2_SPEC, 'score2-out', function(){ document.getElementById('step2-insight').innerHTML=''; }); }
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 3 — SmallHands
+═══════════════════════════════════════════════════════════════ */
+var STEP3_SPEC = [
+  { inputId: 's3-activity', hintId: 'hint-s3-activity', expected: SH_ACTIVITY, tol: 5,     fmt: function(v){ return fmtMoney(v,0); } },
+  { inputId: 's3-profit',   hintId: 'hint-s3-profit',   expected: SH_PROFIT,   tol: 5,     fmt: function(v){ return fmtMoney(v,0); } },
+  { inputId: 's3-ratio',    hintId: 'hint-s3-ratio',    expected: SH_RATIO,    tol: 0.005, parse: parsePercent, fmt: fmtPct }
+];
+function checkStep3() {
+  var fb = document.getElementById('step3-insight'); fb.innerHTML = '';
+  checkGroup(STEP3_SPEC, 'score3-out', function() {
+    revealStep4(false);
+    fb.innerHTML = '<div class="insight warn"><strong>SmallHands is losing Marietta $3,000 a year.</strong> The customer ordered $18,000 of product but consumed $7,000 of activity — visits, phone calls, small-order processing, custom kitting. Under traditional costing (overhead allocated by sales), SmallHands would have looked fine. ABC drags the truth out.</div>';
+  });
+}
+function resetStep3() { resetGroup(STEP3_SPEC, 'score3-out', function(){ document.getElementById('step3-insight').innerHTML=''; }); }
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 4 — Compare + intuition
+═══════════════════════════════════════════════════════════════ */
+var intuitionAnswered = false;
+var INTUITION_MSGS = {
+  terminate: 'A defensible call. Marietta gains $3,000 annually and frees up activity capacity for better customers. But before terminating, most controllers first ask whether the customer relationship can be repriced or restructured — that\'s what Step 5 tests.',
+  fix:       'The textbook \"first-try\" answer. The losses are driven by activity volume (too many small orders, lots of custom kitting). If SmallHands accepts process changes — fewer, larger orders, standard kits, monthly billing — the math could flip. Step 5 runs that scenario.',
+  keep:      'This is the trap. \"Small customers add up\" feels intuitive, but it ignores activity cost. SmallHands generates $18k of revenue while losing $3k of bottom line. Keeping it as-is means actively subsidizing a money-losing account. Either change the relationship or end it.'
+};
+function pickIntuition(choice) {
+  if (intuitionAnswered) return;
+  intuitionAnswered = true;
+
+  var fbEl = document.getElementById('int-fb');
+  var btns = document.querySelectorAll('.intuition-btns button');
+  btns.forEach(function(btn) {
+    var text = btn.textContent.trim().toLowerCase();
+    var thisChoice = text.indexOf('terminate') === 0 ? 'terminate'
+                   : text.indexOf('try') === 0 ? 'fix'
+                   : 'keep';
+    if (thisChoice === choice) btn.classList.add('selected');
+    btn.classList.add('locked');
+  });
+
+  fbEl.style.display = 'block';
+  fbEl.textContent = INTUITION_MSGS[choice];
+}
+
+var STEP4_SPEC = [
+  { inputId: 's4-terminate', hintId: 'hint-s4-terminate', expected: TERMINATE_GAIN,     tol: 5, fmt: function(v){ return fmtMoney(v,0); } },
+  { inputId: 's4-current',   hintId: 'hint-s4-current',   expected: PORTFOLIO_CURRENT,  tol: 5, fmt: function(v){ return fmtMoney(v,0); } },
+  { inputId: 's4-trim',      hintId: 'hint-s4-trim',      expected: PORTFOLIO_TRIMMED,  tol: 5, fmt: function(v){ return fmtMoney(v,0); } }
+];
+function checkStep4() {
+  var fb = document.getElementById('step4-insight'); fb.innerHTML = '';
+  checkGroup(STEP4_SPEC, 'score4-out', function() {
+    revealStep5(false);
+    fb.innerHTML = '<div class="insight success"><strong>Marietta is $3,000 better off without SmallHands.</strong> That\'s the case for terminating. But notice: SmallHands\' problem isn\'t the customer, it\'s the consumption pattern. If Marietta could reshape the relationship — fewer orders, less custom work — the same revenue could pencil out. Step 5 runs that scenario.</div>';
+  });
+}
+function resetStep4() { resetGroup(STEP4_SPEC, 'score4-out', function(){ document.getElementById('step4-insight').innerHTML=''; }); }
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 5 — Save SmallHands
+═══════════════════════════════════════════════════════════════ */
+var STEP5_SPEC = [
+  { inputId: 's5-activity', hintId: 'hint-s5-activity', expected: SH_ACTIVITY_NEW, tol: 5,     fmt: function(v){ return fmtMoney(v,0); } },
+  { inputId: 's5-profit',   hintId: 'hint-s5-profit',   expected: SH_PROFIT_NEW,   tol: 5,     fmt: function(v){ return fmtMoney(v,0); } },
+  { inputId: 's5-ratio',    hintId: 'hint-s5-ratio',    expected: SH_RATIO_NEW,    tol: 0.005, parse: parsePercent, fmt: fmtPct }
+];
+function checkStep5() {
+  var fb = document.getElementById('step5-insight'); fb.innerHTML = '';
+  checkGroup(STEP5_SPEC, 'score5-out', function() {
+    fb.innerHTML = '<div class="insight success"><strong>From &minus;$3,000 to +$1,240 &mdash; without changing a dollar of sales.</strong> Cutting activity cost from $7,000 to $2,760 flips SmallHands from a money-loser into a marginal contributor. The relationship is still less profitable than BuildRight (6.9% vs 23%), but it\'s no longer subsidized by the rest of the portfolio. ABC tells you not just <em>which</em> customers lose money — it tells you <em>why</em>, and which levers (fewer touches? standard kits? consolidated invoicing?) actually move the needle.</div>';
+  });
+}
+function resetStep5() { resetGroup(STEP5_SPEC, 'score5-out', function(){ document.getElementById('step5-insight').innerHTML=''; }); }
+
+/* ═══════════════════════════════════════════════════════════════
+   REVEAL STEPS
+═══════════════════════════════════════════════════════════════ */
+var revealedSteps = new Set();
+function revealStep(stepNum, scroll) {
+  var el = document.getElementById('step' + stepNum);
+  if (!revealedSteps.has(stepNum)) {
+    el.classList.add('show');
+    revealedSteps.add(stepNum);
+    var btn = document.getElementById('reveal-step' + stepNum + '-btn');
+    if (btn) btn.style.display = 'none';
+  }
+  if (scroll) setTimeout(function() { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 60);
+}
+function revealStep2(scroll) { revealStep(2, scroll); }
+function revealStep3(scroll) { revealStep(3, scroll); }
+function revealStep4(scroll) { revealStep(4, scroll); }
+function revealStep5(scroll) { revealStep(5, scroll); }
+
+/* ═══════════════════════════════════════════════════════════════
+   QR / SHARE
+═══════════════════════════════════════════════════════════════ */
+function showQR() {
+  var url = location.href;
+  document.getElementById('qr-url').textContent = url;
+  var qrEl = document.getElementById('qr-code');
+  qrEl.innerHTML = '';
+  if (window.QRCode) {
+    new QRCode(qrEl, { text: url, width: 180, height: 180, colorDark: '#1a2744', colorLight: '#ffffff' });
+  }
+  document.getElementById('qr-overlay').classList.add('show');
+}
+function hideQR(ev) {
+  if (ev && ev.target.id !== 'qr-overlay' && ev.target.className !== 'qr-close') return;
+  document.getElementById('qr-overlay').classList.remove('show');
+}
+</script>
+
+</body>
+</html>

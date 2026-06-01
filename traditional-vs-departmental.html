@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Traditional vs. Departmental Costing</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  /* ── Reset & base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    background: #f4f0e8;
+    color: #1a2744;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    background: #1a2744;
+    color: #fff;
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .header-left h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+  .header-left p  { font-size: 13px; color: #a0aec0; margin-top: 2px; }
+
+  .qr-btn {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    transition: background .15s;
+  }
+  .qr-btn:hover { background: rgba(255,255,255,0.18); }
+
+  /* QR Modal */
+  .qr-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .qr-overlay.show { display: flex; }
+  .qr-modal {
+    background: #fff;
+    border-radius: 14px;
+    padding: 32px;
+    text-align: center;
+    max-width: 300px;
+    width: 90%;
+  }
+  .qr-modal h2 { font-size: 16px; font-weight: 600; color: #1a2744; margin-bottom: 6px; }
+  .qr-modal p  { font-size: 12px; color: #64748b; margin-bottom: 18px; line-height: 1.5; }
+  #qr-code { display: flex; justify-content: center; margin-bottom: 16px; }
+  #qr-url  { font-size: 11px; color: #94a3b8; word-break: break-all; margin-bottom: 18px; }
+  .qr-close {
+    background: #1a2744; color: #fff;
+    border: none; border-radius: 8px;
+    padding: 8px 24px; font-size: 13px;
+    cursor: pointer; font-family: inherit;
+  }
+
+  /* ── Main layout ── */
+  main {
+    max-width: 880px;
+    margin: 28px auto;
+    padding: 0 20px 48px;
+  }
+
+  .part {
+    background: #fff;
+    border: 1px solid #dde3ef;
+    border-radius: 12px;
+    padding: 22px 24px 24px;
+    margin-bottom: 22px;
+  }
+
+  .part-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .part-tag {
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    background: #1a2744;
+    padding: 3px 10px;
+    border-radius: 99px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+  .part-tag.practice { background: #D85A30; }
+  .part-tag.explore  { background: #3b7dd8; }
+  .part-tag.solve    { background: #7a5cb6; }
+  .part-tag.build    { background: #5a9e3a; }
+  .part-header h2 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -.01em;
+  }
+  .part-header .subtitle {
+    font-size: 13px;
+    color: #64748b;
+  }
+
+  .setup-box {
+    background: #f8f6f0;
+    border: 1px solid #e6dfd0;
+    border-radius: 9px;
+    padding: 14px 16px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: #334155;
+    margin-bottom: 16px;
+  }
+  .setup-box strong { color: #1a2744; }
+  .setup-box p + p { margin-top: 6px; }
+  .setup-box .meta-line {
+    margin-top: 10px;
+    font-size: 13px;
+    color: #475569;
+  }
+  .setup-box .meta-line strong { color: #1a2744; }
+
+  /* ── Read-only product table ── */
+  .prompt {
+    font-size: 14px;
+    color: #1a2744;
+    margin-bottom: 12px;
+    line-height: 1.55;
+  }
+  .prompt strong { font-weight: 700; }
+
+  .prod-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-bottom: 6px;
+    font-variant-numeric: tabular-nums;
+  }
+  .prod-table thead th {
+    background: #fde9c8;
+    color: #1a2744;
+    font-size: 12.5px;
+    font-weight: 700;
+    text-align: center;
+    padding: 10px 8px;
+    border-bottom: 2px solid #f0c674;
+  }
+  .prod-table thead th:first-child {
+    border-top-left-radius: 8px;
+    text-align: left;
+    padding-left: 14px;
+  }
+  .prod-table thead th:last-child  { border-top-right-radius: 8px; }
+  .prod-table tbody td {
+    background: #f0f5fa;
+    padding: 9px 8px;
+    text-align: center;
+    border-bottom: 1px solid #e1eaf3;
+  }
+  .prod-table tbody td.row-label {
+    text-align: left;
+    padding-left: 14px;
+    font-weight: 600;
+    color: #1a2744;
+  }
+  .prod-table tbody tr:last-child td:first-child { border-bottom-left-radius: 8px; }
+  .prod-table tbody tr:last-child td:last-child  { border-bottom-right-radius: 8px; }
+
+  /* ── Per-question stacked layout ── */
+  .qa-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 4px; }
+  .qa-row {
+    display: grid;
+    grid-template-columns: 1fr 200px;
+    gap: 14px;
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #e1eaf3;
+    border-radius: 9px;
+    padding: 13px 16px;
+  }
+  .qa-row .qa-prompt {
+    font-size: 13.5px;
+    color: #1a2744;
+    line-height: 1.5;
+  }
+  .qa-row .qa-prompt strong { font-weight: 700; }
+  .qa-row .qa-prompt small {
+    display: block;
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 3px;
+  }
+  .qa-row .answer { display: flex; flex-direction: column; }
+  .qa-row .answer label {
+    font-size: 10.5px;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 4px;
+  }
+  .qa-row .answer input {
+    padding: 8px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .qa-row .answer input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .qa-row .answer input.correct {
+    border-color: #5a9e3a;
+    background: #f0f9e8;
+    color: #2d6a1f;
+  }
+  .qa-row .answer input.wrong {
+    border-color: #c94040;
+    background: #fff1f1;
+    color: #9b2020;
+  }
+  .corr-hint {
+    display: block;
+    font-size: 11px;
+    color: #5a9e3a;
+    font-weight: 600;
+    margin-top: 3px;
+    min-height: 14px;
+  }
+
+  /* Reveal animation */
+  .reveal {
+    display: none;
+    animation: slideIn 0.4s ease-out;
+  }
+  .reveal.show { display: block; }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Intuition buttons ── */
+  .intuition-card {
+    background: #f8fafc;
+    border: 1px solid #e1eaf3;
+    border-radius: 9px;
+    padding: 16px 18px;
+    margin-bottom: 14px;
+  }
+  .intuition-card .intuition-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #7a5cb6;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 6px;
+  }
+  .intuition-card .intuition-text {
+    font-size: 13.5px;
+    color: #334155;
+    line-height: 1.6;
+    margin-bottom: 12px;
+  }
+  .intuition-btns {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .intuition-btns button {
+    flex: 1;
+    min-width: 140px;
+    background: #fff;
+    border: 1.5px solid #cbd5e1;
+    color: #1a2744;
+    padding: 11px 14px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    font-family: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .intuition-btns button:hover {
+    border-color: #7a5cb6;
+    background: #f5f3fa;
+  }
+  .intuition-btns button.selected {
+    background: #1a2744;
+    color: #fff;
+    border-color: #1a2744;
+    cursor: default;
+  }
+  .intuition-btns button.locked {
+    cursor: default;
+    opacity: 0.6;
+  }
+  .intuition-btns button.locked:hover {
+    border-color: #cbd5e1;
+    background: #fff;
+  }
+  .intuition-btns button.selected.locked:hover {
+    background: #1a2744;
+    border-color: #1a2744;
+  }
+  .intuition-feedback {
+    margin-top: 10px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.55;
+  }
+  .intuition-feedback.correct-fb {
+    background: #f0f9e8;
+    border: 1px solid #c4e0a3;
+    color: #2d6a1f;
+  }
+  .intuition-feedback.wrong-fb {
+    background: #fff1f1;
+    border: 1px solid #f0b0b0;
+    color: #9b2020;
+  }
+
+  .insight {
+    margin-top: 8px;
+    background: #eff6ff;
+    border: 1px solid #c7dcf5;
+    border-left: 4px solid #3b7dd8;
+    border-radius: 0 8px 8px 0;
+    padding: 11px 14px;
+    font-size: 13px;
+    line-height: 1.55;
+    color: #1a2744;
+  }
+  .insight strong { color: #1e40af; }
+  .insight.success {
+    background: #f0f9e8;
+    border-color: #c4e0a3;
+    border-left-color: #5a9e3a;
+  }
+  .insight.success strong { color: #2d6a1f; }
+
+  .footer {
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .check-btn {
+    background: #1a2744; color: #fff;
+    border: none; border-radius: 9px;
+    padding: 10px 24px; font-size: 14px;
+    cursor: pointer; font-family: inherit;
+    font-weight: 500;
+    transition: background .15s;
+  }
+  .check-btn:hover { background: #243660; }
+  .reset-btn {
+    font-size: 13px; color: #64748b;
+    background: none; border: none;
+    cursor: pointer; text-decoration: underline;
+    font-family: inherit;
+  }
+  .reveal-link {
+    margin-left: auto;
+    font-size: 12.5px;
+    color: #64748b;
+    background: none; border: none;
+    cursor: pointer; text-decoration: underline;
+    font-family: inherit;
+  }
+  .reveal-link:hover { color: #1a2744; }
+  .score-out {
+    font-size: 14px; font-weight: 600;
+    color: #1a2744;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 6px 14px;
+  }
+  .score-out:empty { display: none; }
+
+  /* Responsive */
+  @media (max-width: 700px) {
+    header { padding: 14px 16px; }
+    main { padding: 0 12px 40px; }
+    .part { padding: 18px 14px 18px; }
+    .prod-table thead th, .prod-table tbody td { font-size: 11.5px; padding: 7px 4px; }
+    .qa-row { grid-template-columns: 1fr; gap: 8px; }
+    .intuition-btns button { min-width: 100px; font-size: 12.5px; padding: 9px 10px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="header-left">
+    <h1>Traditional vs. Departmental Costing</h1>
+  </div>
+  <button class="qr-btn" onclick="showQR()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="2" height="2"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="19" width="3" height="2"/><rect x="19" y="19" width="2" height="2"/></svg>
+    Share with students
+  </button>
+</header>
+
+<!-- QR Modal -->
+<div class="qr-overlay" id="qr-overlay" onclick="hideQR(event)">
+  <div class="qr-modal">
+    <h2>Scan to open on your device</h2>
+    <p>Students can scan this QR code or type the URL to open the activity on their phone or laptop.</p>
+    <div id="qr-code"></div>
+    <div id="qr-url"></div>
+    <button class="qr-close" onclick="hideQR()">Close</button>
+  </div>
+</div>
+
+<!-- Main -->
+<main>
+
+  <!-- ───────── STEP 1 — Plantwide rate ───────── -->
+  <section class="part">
+    <div class="part-header">
+      <span class="part-tag practice">Step 1</span>
+      <h2>Plantwide rate</h2>
+      <span class="subtitle">one rate for the whole shop</span>
+    </div>
+
+    <div class="setup-box">
+      <p><strong>Peach Lab Coffee</strong> is a small Atlanta roaster. The plant runs two products through two departments:</p>
+      <p><strong>Roasting</strong> &mdash; the machine-heavy department where green beans are roasted and (for cold brew) cold-extracted.<br>
+      <strong>Packaging</strong> &mdash; the labor-heavy department where coffee is portioned, bagged or kegged, and labeled.</p>
+      <p>Annual production plan: <strong>1,000 batches</strong> of Cold Brew Concentrate (sold in growlers to local cafes) and <strong>1,000 batches</strong> of Whole Bean (sold in 5&ndash;lb bags to grocery stores).</p>
+      <p>Total budgeted manufacturing overhead is <strong>$120,000</strong> for the year. Roasting consumes <strong>4,000 machine hours</strong>. The cost team's first pass uses a single plantwide rate, applied based on machine hours.</p>
+
+      <table class="prod-table" style="margin-top:10px; margin-bottom:4px;">
+        <thead>
+          <tr>
+            <th>Per batch</th>
+            <th>Cold Brew Concentrate</th>
+            <th>Whole Bean</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="row-label">Roasting machine hours</td><td>3</td><td>1</td></tr>
+          <tr><td class="row-label">Packaging labor hours</td><td>1</td><td>3</td></tr>
+          <tr><td class="row-label">Direct materials</td><td>$40</td><td>$35</td></tr>
+          <tr><td class="row-label">Direct labor</td><td>$25</td><td>$30</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="prompt">Compute the plantwide overhead rate and apply it to each product.</p>
+
+    <div class="qa-list">
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Plantwide overhead rate</strong><small>$120,000 total OH &divide; total machine hours</small></div>
+        <div class="answer">
+          <label>$ per MH</label>
+          <input type="text" id="s1-rate" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s1-rate"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt">Overhead applied per batch of <strong>Cold Brew Concentrate</strong></div>
+        <div class="answer">
+          <label>$ / batch</label>
+          <input type="text" id="s1-cbc" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s1-cbc"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt">Overhead applied per batch of <strong>Whole Bean</strong></div>
+        <div class="answer">
+          <label>$ / batch</label>
+          <input type="text" id="s1-wb" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s1-wb"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep1()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep1()">Reset</button>
+      <span id="score1-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep2(true)" id="reveal-step2-btn">Skip ahead &rarr;</button>
+    </div>
+
+    <div id="step1-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 2 — Departmental rates ───────── -->
+  <section class="part reveal" id="step2">
+    <div class="part-header">
+      <span class="part-tag explore">Step 2</span>
+      <h2>Departmental rates</h2>
+      <span class="subtitle">one rate per department</span>
+    </div>
+
+    <div class="setup-box">
+      <p>Peach Lab's controller wants more precision. Splitting the $120,000 by department shows what each department actually costs to run:</p>
+      <table class="prod-table" style="margin-top:10px; margin-bottom:4px;">
+        <thead>
+          <tr>
+            <th>Department</th>
+            <th>Overhead</th>
+            <th>Cost driver</th>
+            <th>Total driver hours</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="row-label">Roasting</td><td>$100,000</td><td>Machine hours</td><td>4,000</td></tr>
+          <tr><td class="row-label">Packaging</td><td>$20,000</td><td>Direct labor hours</td><td>4,000</td></tr>
+        </tbody>
+      </table>
+      <p class="meta-line">Roasting machine hours: 1,000 batches &times; 3 hrs (CBC) + 1,000 batches &times; 1 hr (WB) = 4,000.<br>
+      Packaging labor hours: 1,000 &times; 1 (CBC) + 1,000 &times; 3 (WB) = 4,000.</p>
+    </div>
+
+    <p class="prompt">Compute the overhead rate for each department.</p>
+
+    <div class="qa-list">
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Roasting</strong> rate</div>
+        <div class="answer">
+          <label>$ per MH</label>
+          <input type="text" id="s2-roast" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s2-roast"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Packaging</strong> rate</div>
+        <div class="answer">
+          <label>$ per LH</label>
+          <input type="text" id="s2-pkg" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s2-pkg"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep2()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep2()">Reset</button>
+      <span id="score2-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep3(true)" id="reveal-step3-btn">Skip ahead &rarr;</button>
+    </div>
+
+    <div id="step2-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 3 — Apply departmental rates ───────── -->
+  <section class="part reveal" id="step3">
+    <div class="part-header">
+      <span class="part-tag solve">Step 3</span>
+      <h2>Apply the departmental rates</h2>
+      <span class="subtitle">each product picks up the cost of the departments it actually used</span>
+    </div>
+
+    <div class="setup-box">
+      <p>Each batch passes through both departments, but in very different proportions. Apply each department's rate to the hours each product actually consumes per batch.</p>
+    </div>
+
+    <p class="prompt">Total overhead applied per batch, under departmental costing:</p>
+
+    <div class="qa-list">
+      <div class="qa-row">
+        <div class="qa-prompt">Total OH per batch &mdash; <strong>Cold Brew Concentrate</strong><small>3 roasting MH + 1 packaging LH</small></div>
+        <div class="answer">
+          <label>$ / batch</label>
+          <input type="text" id="s3-cbc" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s3-cbc"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt">Total OH per batch &mdash; <strong>Whole Bean</strong><small>1 roasting MH + 3 packaging LH</small></div>
+        <div class="answer">
+          <label>$ / batch</label>
+          <input type="text" id="s3-wb" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s3-wb"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep3()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep3()">Reset</button>
+      <span id="score3-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep4(true)" id="reveal-step4-btn">Skip ahead &rarr;</button>
+    </div>
+
+    <div id="step3-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 4 — Compare ───────── -->
+  <section class="part reveal" id="step4">
+    <div class="part-header">
+      <span class="part-tag solve">Step 4</span>
+      <h2>Which method tells the truth?</h2>
+      <span class="subtitle">intuition first, then the dollars</span>
+    </div>
+
+    <div class="setup-box">
+      <p>The plantwide rate spreads <em>all</em> $120,000 of overhead based on machine hours alone &mdash; even though $20,000 of that is packaging cost driven by labor hours, not machines. Departmental rates fix this.</p>
+    </div>
+
+    <div class="intuition-card">
+      <div class="intuition-label">Intuition check</div>
+      <div class="intuition-text">Under the <strong>plantwide</strong> rate, which product was <strong>overcharged</strong> &mdash; carrying more overhead than it actually consumed?</div>
+      <div class="intuition-btns">
+        <button onclick="pickIntuition('CBC')">Cold Brew Concentrate</button>
+        <button onclick="pickIntuition('WB')">Whole Bean</button>
+        <button onclick="pickIntuition('Same')">Both about the same</button>
+      </div>
+      <div class="intuition-feedback" id="int-fb" style="display:none;"></div>
+    </div>
+
+    <div id="step4-math" class="reveal">
+      <p class="prompt">Compare the two methods side by side:</p>
+      <table class="prod-table" style="margin-bottom:14px;">
+        <thead>
+          <tr>
+            <th>OH per batch</th>
+            <th>Cold Brew Concentrate</th>
+            <th>Whole Bean</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="row-label">Plantwide</td><td>$90</td><td>$30</td></tr>
+          <tr><td class="row-label">Departmental</td><td>$80</td><td>$40</td></tr>
+          <tr><td class="row-label">Difference (Plantwide &minus; Departmental)</td><td>+$10</td><td>&minus;$10</td></tr>
+        </tbody>
+      </table>
+
+      <div class="qa-list">
+        <div class="qa-row">
+          <div class="qa-prompt">Across the year &mdash; 1,000 batches of Cold Brew Concentrate &mdash; how much extra overhead did plantwide costing assign to CBC vs. departmental?</div>
+          <div class="answer">
+            <label>$ / year</label>
+            <input type="text" id="s4-annual" inputmode="decimal" placeholder="$">
+            <span class="corr-hint" id="hint-s4-annual"></span>
+          </div>
+        </div>
+        <div class="qa-row">
+          <div class="qa-prompt">Total cost per batch of <strong>Cold Brew Concentrate</strong>, under departmental costing<small>DM + DL + departmental OH</small></div>
+          <div class="answer">
+            <label>$ / batch</label>
+            <input type="text" id="s4-cbc-total" inputmode="decimal" placeholder="$">
+            <span class="corr-hint" id="hint-s4-cbc-total"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <button class="check-btn" onclick="checkStep4()">Check answers</button>
+        <button class="reset-btn" onclick="resetStep4()">Reset</button>
+        <span id="score4-out" class="score-out"></span>
+      </div>
+
+      <div id="step4-insight"></div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════════════════ */
+function parseNum(s) {
+  if (typeof s !== 'string') return NaN;
+  return parseFloat(s.replace(/[\$,\s%]/g, ''));
+}
+function fmtMoney(v, decimals) {
+  var d = (decimals === undefined) ? 0 : decimals;
+  var rounded = Math.round(v * 100) / 100;
+  var sign = rounded < 0 ? '-$' : '$';
+  return sign + Math.abs(rounded).toLocaleString('en-US', {
+    minimumFractionDigits: d,
+    maximumFractionDigits: d
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   AUDIO
+═══════════════════════════════════════════════════════════════ */
+var audioCtx = null;
+function getAudio() {
+  if (!audioCtx) {
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (AC) audioCtx = new AC();
+  }
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+function playBell() {
+  var ctx = getAudio(); if (!ctx) return;
+  var now = ctx.currentTime;
+  [523.25, 659.25, 783.99].forEach(function(f) {
+    var osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = 'sine'; osc.frequency.value = f;
+    osc.connect(g).connect(ctx.destination);
+    g.gain.setValueAtTime(0, now);
+    g.gain.linearRampToValueAtTime(0.15, now + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 1.6);
+    osc.start(now); osc.stop(now + 1.7);
+  });
+}
+function playHorn() {
+  var ctx = getAudio(); if (!ctx) return;
+  var now = ctx.currentTime;
+  var notes = [
+    { f: 466.16, t: 0.00, d: 0.18 },
+    { f: 440.00, t: 0.20, d: 0.18 },
+    { f: 415.30, t: 0.40, d: 0.55 }
+  ];
+  notes.forEach(function(n) {
+    var osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(n.f, now + n.t);
+    if (n.d > 0.3) osc.frequency.exponentialRampToValueAtTime(n.f * 0.88, now + n.t + n.d);
+    osc.connect(g).connect(ctx.destination);
+    g.gain.setValueAtTime(0, now + n.t);
+    g.gain.linearRampToValueAtTime(0.12, now + n.t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, now + n.t + n.d);
+    osc.start(now + n.t); osc.stop(now + n.t + n.d + 0.05);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   EXPECTED ANSWERS
+═══════════════════════════════════════════════════════════════ */
+// Plantwide
+var PLANTWIDE_RATE = 120000 / 4000;     // $30 per MH
+var CBC_OH_PLANTWIDE = 3 * PLANTWIDE_RATE;  // $90
+var WB_OH_PLANTWIDE  = 1 * PLANTWIDE_RATE;  // $30
+
+// Departmental
+var ROAST_RATE = 100000 / 4000;          // $25 per MH
+var PKG_RATE   = 20000 / 4000;           // $5 per LH
+var CBC_OH_DEPT = 3 * ROAST_RATE + 1 * PKG_RATE;  // $80
+var WB_OH_DEPT  = 1 * ROAST_RATE + 3 * PKG_RATE;  // $40
+
+// Step 4
+var CBC_DIFF_PER_BATCH = CBC_OH_PLANTWIDE - CBC_OH_DEPT;  // $10
+var CBC_ANNUAL_DIFF = CBC_DIFF_PER_BATCH * 1000;          // $10,000
+var CBC_DM = 40, CBC_DL = 25;
+var CBC_TOTAL_DEPT = CBC_DM + CBC_DL + CBC_OH_DEPT;       // $145
+
+/* ═══════════════════════════════════════════════════════════════
+   GENERIC CHECKER
+═══════════════════════════════════════════════════════════════ */
+function checkGroup(spec, scoreId, allCorrectFn) {
+  var correct = 0, total = 0, blanks = 0;
+  spec.forEach(function(f) {
+    var inp  = document.getElementById(f.inputId);
+    var hint = document.getElementById(f.hintId);
+    inp.classList.remove('correct', 'wrong');
+    hint.textContent = '';
+    total++;
+    if (inp.value.trim() === '') { blanks++; return; }
+    var val = parseNum(inp.value);
+    var exp = f.expected;
+    var tol = f.tol;
+    if (!isNaN(val) && Math.abs(val - exp) <= tol) {
+      inp.classList.add('correct');
+      correct++;
+    } else {
+      inp.classList.add('wrong');
+      hint.textContent = '→ ' + f.fmt(exp);
+    }
+  });
+  var out = document.getElementById(scoreId);
+  if (blanks === total) {
+    out.textContent = 'Fill in some answers first.';
+    return false;
+  }
+  out.textContent = correct + ' / ' + total + ' correct' + (blanks ? ' (' + blanks + ' blank)' : '');
+  if (correct === total) {
+    playBell();
+    if (allCorrectFn) allCorrectFn();
+    return true;
+  } else {
+    playHorn();
+    return false;
+  }
+}
+
+function resetGroup(spec, scoreId, extraResetFn) {
+  spec.forEach(function(f) {
+    var inp = document.getElementById(f.inputId);
+    var hint = document.getElementById(f.hintId);
+    inp.value = '';
+    inp.classList.remove('correct', 'wrong');
+    hint.textContent = '';
+  });
+  document.getElementById(scoreId).textContent = '';
+  if (extraResetFn) extraResetFn();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 1 — Plantwide
+═══════════════════════════════════════════════════════════════ */
+var STEP1_SPEC = [
+  { inputId: 's1-rate', hintId: 'hint-s1-rate', expected: PLANTWIDE_RATE, tol: 0.05, fmt: function(v){ return fmtMoney(v,2); } },
+  { inputId: 's1-cbc',  hintId: 'hint-s1-cbc',  expected: CBC_OH_PLANTWIDE, tol: 0.5,  fmt: function(v){ return fmtMoney(v,0); } },
+  { inputId: 's1-wb',   hintId: 'hint-s1-wb',   expected: WB_OH_PLANTWIDE,  tol: 0.5,  fmt: function(v){ return fmtMoney(v,0); } }
+];
+function checkStep1() {
+  var fb = document.getElementById('step1-insight'); fb.innerHTML = '';
+  checkGroup(STEP1_SPEC, 'score1-out', function() {
+    revealStep2(false);
+    fb.innerHTML = '<div class="insight success"><strong>One rate, applied by machine hours.</strong> CBC uses 3 machine hours per batch, WB uses 1 — so CBC carries 3&times; the overhead under plantwide. But that lumps the labor-driven packaging cost into a rate that only tracks machines. Step 2 splits it apart.</div>';
+  });
+}
+function resetStep1() { resetGroup(STEP1_SPEC, 'score1-out', function(){ document.getElementById('step1-insight').innerHTML=''; }); }
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 2 — Departmental rates
+═══════════════════════════════════════════════════════════════ */
+var STEP2_SPEC = [
+  { inputId: 's2-roast', hintId: 'hint-s2-roast', expected: ROAST_RATE, tol: 0.05, fmt: function(v){ return fmtMoney(v,2); } },
+  { inputId: 's2-pkg',   hintId: 'hint-s2-pkg',   expected: PKG_RATE,   tol: 0.05, fmt: function(v){ return fmtMoney(v,2); } }
+];
+function checkStep2() {
+  var fb = document.getElementById('step2-insight'); fb.innerHTML = '';
+  checkGroup(STEP2_SPEC, 'score2-out', function() {
+    revealStep3(false);
+    fb.innerHTML = '<div class="insight success"><strong>$25 per machine hour in roasting, $5 per labor hour in packaging.</strong> Each rate now reflects what that specific department costs to run. The next step applies them to actual production.</div>';
+  });
+}
+function resetStep2() { resetGroup(STEP2_SPEC, 'score2-out', function(){ document.getElementById('step2-insight').innerHTML=''; }); }
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 3 — Apply departmental rates
+═══════════════════════════════════════════════════════════════ */
+var STEP3_SPEC = [
+  { inputId: 's3-cbc', hintId: 'hint-s3-cbc', expected: CBC_OH_DEPT, tol: 0.5, fmt: function(v){ return fmtMoney(v,0); } },
+  { inputId: 's3-wb',  hintId: 'hint-s3-wb',  expected: WB_OH_DEPT,  tol: 0.5, fmt: function(v){ return fmtMoney(v,0); } }
+];
+function checkStep3() {
+  var fb = document.getElementById('step3-insight'); fb.innerHTML = '';
+  checkGroup(STEP3_SPEC, 'score3-out', function() {
+    revealStep4(false);
+    fb.innerHTML = '<div class="insight success"><strong>Same $120,000 of total overhead, allocated differently.</strong> Across 1,000 batches each, CBC absorbs $80,000 and WB absorbs $40,000 — the split shifts because departmental rates respect which department each product actually leans on.</div>';
+  });
+}
+function resetStep3() { resetGroup(STEP3_SPEC, 'score3-out', function(){ document.getElementById('step3-insight').innerHTML=''; }); }
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 4 — Intuition + math
+═══════════════════════════════════════════════════════════════ */
+var intuitionAnswered = false;
+function pickIntuition(choice) {
+  if (intuitionAnswered) return;
+  intuitionAnswered = true;
+
+  var fbEl = document.getElementById('int-fb');
+  var btns = document.querySelectorAll('.intuition-btns button');
+  btns.forEach(function(btn) {
+    var label = btn.textContent.trim();
+    var thisChoice = label === 'Cold Brew Concentrate' ? 'CBC'
+                   : label === 'Whole Bean' ? 'WB'
+                   : 'Same';
+    if (thisChoice === choice) btn.classList.add('selected');
+    btn.classList.add('locked');
+  });
+
+  fbEl.style.display = 'block';
+  if (choice === 'CBC') {
+    fbEl.className = 'intuition-feedback correct-fb';
+    fbEl.textContent = 'Cold Brew Concentrate — yes. CBC is roasting-heavy and barely touches packaging, but plantwide costing forces every packaging dollar to ride along with machine hours. CBC ended up subsidizing WB.';
+    playBell();
+  } else if (choice === 'WB') {
+    fbEl.className = 'intuition-feedback wrong-fb';
+    fbEl.textContent = 'WB was actually undercharged under plantwide. WB does most of the packaging work — 1,000 batches × 3 LH = 3,000 labor hours — but plantwide ignores labor hours entirely. So WB got a free ride on packaging cost, and CBC paid for it.';
+    playHorn();
+  } else {
+    fbEl.className = 'intuition-feedback wrong-fb';
+    fbEl.textContent = 'Not quite — there is a meaningful gap. Plantwide treats packaging cost as if it scaled with machine hours, so the product with more machine hours (CBC, 3 MH/batch) picks up too much of the packaging burden. CBC was overcharged; WB was undercharged.';
+    playHorn();
+  }
+
+  // Reveal the math block
+  document.getElementById('step4-math').classList.add('show');
+}
+
+var STEP4_SPEC = [
+  { inputId: 's4-annual',    hintId: 'hint-s4-annual',    expected: CBC_ANNUAL_DIFF, tol: 50,  fmt: function(v){ return fmtMoney(v,0); } },
+  { inputId: 's4-cbc-total', hintId: 'hint-s4-cbc-total', expected: CBC_TOTAL_DEPT,  tol: 0.5, fmt: function(v){ return fmtMoney(v,0); } }
+];
+function checkStep4() {
+  var fb = document.getElementById('step4-insight'); fb.innerHTML = '';
+  checkGroup(STEP4_SPEC, 'score4-out', function() {
+    fb.innerHTML = '<div class="insight success"><strong>$10,000 of overhead the plantwide method misroutes every year.</strong> If Peach Lab prices CBC off plantwide costs, it looks $10/batch more expensive than it really is — enough to lose a wholesale account on the margin. Departmental rates aren\'t perfect, but they keep the labor-driven and machine-driven costs from contaminating each other.</div>';
+  });
+}
+function resetStep4() { resetGroup(STEP4_SPEC, 'score4-out', function(){ document.getElementById('step4-insight').innerHTML=''; }); }
+
+/* ═══════════════════════════════════════════════════════════════
+   REVEAL STEPS
+═══════════════════════════════════════════════════════════════ */
+var revealedSteps = new Set();
+function revealStep(stepNum, scroll) {
+  var el = document.getElementById('step' + stepNum);
+  if (!revealedSteps.has(stepNum)) {
+    el.classList.add('show');
+    revealedSteps.add(stepNum);
+    var btn = document.getElementById('reveal-step' + stepNum + '-btn');
+    if (btn) btn.style.display = 'none';
+  }
+  if (scroll) setTimeout(function() { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 60);
+}
+function revealStep2(scroll) { revealStep(2, scroll); }
+function revealStep3(scroll) { revealStep(3, scroll); }
+function revealStep4(scroll) { revealStep(4, scroll); }
+
+/* ═══════════════════════════════════════════════════════════════
+   QR / SHARE
+═══════════════════════════════════════════════════════════════ */
+function showQR() {
+  var url = location.href;
+  document.getElementById('qr-url').textContent = url;
+  var qrEl = document.getElementById('qr-code');
+  qrEl.innerHTML = '';
+  if (window.QRCode) {
+    new QRCode(qrEl, { text: url, width: 180, height: 180, colorDark: '#1a2744', colorLight: '#ffffff' });
+  }
+  document.getElementById('qr-overlay').classList.add('show');
+}
+function hideQR(ev) {
+  if (ev && ev.target.id !== 'qr-overlay' && ev.target.className !== 'qr-close') return;
+  document.getElementById('qr-overlay').classList.remove('show');
+}
+</script>
+
+</body>
+</html>
