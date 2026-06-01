@@ -1,0 +1,1287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Service Department Cost Allocation</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    background: #f4f0e8;
+    color: #1a2744;
+    min-height: 100vh;
+  }
+
+  header {
+    background: #1a2744;
+    color: #fff;
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .header-left h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+  .header-left p  { font-size: 13px; color: #a0aec0; margin-top: 2px; }
+
+  .qr-btn {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    transition: background .15s;
+  }
+  .qr-btn:hover { background: rgba(255,255,255,0.18); }
+
+  .qr-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .qr-overlay.show { display: flex; }
+  .qr-modal {
+    background: #fff;
+    border-radius: 14px;
+    padding: 32px;
+    text-align: center;
+    max-width: 300px;
+    width: 90%;
+  }
+  .qr-modal h2 { font-size: 16px; font-weight: 600; color: #1a2744; margin-bottom: 6px; }
+  .qr-modal p  { font-size: 12px; color: #64748b; margin-bottom: 18px; line-height: 1.5; }
+  #qr-code { display: flex; justify-content: center; margin-bottom: 16px; }
+  #qr-url  { font-size: 11px; color: #94a3b8; word-break: break-all; margin-bottom: 18px; }
+  .qr-close {
+    background: #1a2744; color: #fff;
+    border: none; border-radius: 8px;
+    padding: 8px 24px; font-size: 13px;
+    cursor: pointer; font-family: inherit;
+  }
+
+  main {
+    max-width: 920px;
+    margin: 28px auto;
+    padding: 0 20px 48px;
+  }
+
+  .part {
+    background: #fff;
+    border: 1px solid #dde3ef;
+    border-radius: 12px;
+    padding: 22px 24px 24px;
+    margin-bottom: 22px;
+  }
+
+  .part-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .part-tag {
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    background: #1a2744;
+    padding: 3px 10px;
+    border-radius: 99px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+  .part-tag.practice { background: #D85A30; }
+  .part-tag.explore  { background: #3b7dd8; }
+  .part-tag.solve    { background: #7a5cb6; }
+  .part-tag.build    { background: #5a9e3a; }
+  .part-header h2 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -.01em;
+  }
+  .part-header .subtitle {
+    font-size: 13px;
+    color: #64748b;
+  }
+
+  .setup-box {
+    background: #f8f6f0;
+    border: 1px solid #e6dfd0;
+    border-radius: 9px;
+    padding: 14px 16px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: #334155;
+    margin-bottom: 16px;
+  }
+  .setup-box strong { color: #1a2744; }
+  .setup-box p + p { margin-top: 6px; }
+
+  .prompt {
+    font-size: 14px;
+    color: #1a2744;
+    margin-bottom: 12px;
+    line-height: 1.55;
+  }
+  .prompt strong { font-weight: 700; }
+
+  .prod-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-bottom: 6px;
+    font-variant-numeric: tabular-nums;
+  }
+  .prod-table thead th {
+    background: #fde9c8;
+    color: #1a2744;
+    font-size: 12.5px;
+    font-weight: 700;
+    text-align: center;
+    padding: 10px 8px;
+    border-bottom: 2px solid #f0c674;
+  }
+  .prod-table thead th:first-child {
+    border-top-left-radius: 8px;
+    text-align: left;
+    padding-left: 14px;
+  }
+  .prod-table thead th:last-child  { border-top-right-radius: 8px; }
+  .prod-table tbody td {
+    background: #f0f5fa;
+    padding: 9px 8px;
+    text-align: center;
+    border-bottom: 1px solid #e1eaf3;
+  }
+  .prod-table tbody td.row-label {
+    text-align: left;
+    padding-left: 14px;
+    font-weight: 600;
+    color: #1a2744;
+  }
+  .prod-table tbody td.given {
+    color: #64748b;
+    font-style: italic;
+  }
+  .prod-table tbody td.dim {
+    color: #94a3b8;
+  }
+  .prod-table tbody tr:last-child td:first-child { border-bottom-left-radius: 8px; }
+  .prod-table tbody tr:last-child td:last-child  { border-bottom-right-radius: 8px; }
+  .prod-table tbody tr.totals-row td {
+    background: #e9eef7;
+    font-weight: 700;
+    border-top: 2px solid #cbd5e1;
+  }
+
+  /* Inline input table — used for the allocation grids */
+  .alloc-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-bottom: 6px;
+    font-variant-numeric: tabular-nums;
+  }
+  .alloc-table thead th {
+    background: #fde9c8;
+    color: #1a2744;
+    font-size: 12.5px;
+    font-weight: 700;
+    text-align: center;
+    padding: 9px 8px;
+    border-bottom: 2px solid #f0c674;
+  }
+  .alloc-table thead th:first-child {
+    border-top-left-radius: 8px;
+    text-align: left;
+    padding-left: 14px;
+  }
+  .alloc-table thead th:last-child { border-top-right-radius: 8px; }
+  .alloc-table tbody td {
+    background: #f0f5fa;
+    padding: 7px 6px;
+    text-align: center;
+    border-bottom: 1px solid #e1eaf3;
+    vertical-align: middle;
+  }
+  .alloc-table tbody td.row-label {
+    text-align: left;
+    padding-left: 14px;
+    font-weight: 600;
+    color: #1a2744;
+    font-size: 13px;
+  }
+  .alloc-table tbody td.row-label small {
+    display: block;
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 500;
+  }
+  .alloc-table tbody td.dim { color: #94a3b8; }
+  .alloc-table tbody tr:last-child td:first-child { border-bottom-left-radius: 8px; }
+  .alloc-table tbody tr:last-child td:last-child  { border-bottom-right-radius: 8px; }
+  .alloc-table tbody tr.totals-row td {
+    background: #e9eef7;
+    font-weight: 700;
+    border-top: 2px solid #cbd5e1;
+  }
+  .alloc-table input {
+    width: 100%;
+    padding: 6px 6px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 5px;
+    font-size: 13.5px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    max-width: 130px;
+  }
+  .alloc-table input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .alloc-table input.correct {
+    border-color: #5a9e3a;
+    background: #f0f9e8;
+    color: #2d6a1f;
+  }
+  .alloc-table input.wrong {
+    border-color: #c94040;
+    background: #fff1f1;
+    color: #9b2020;
+  }
+  .alloc-table .corr-hint {
+    display: block;
+    font-size: 10.5px;
+    color: #5a9e3a;
+    font-weight: 600;
+    margin-top: 2px;
+    min-height: 12px;
+  }
+
+  /* Dropdown row for ordering */
+  .order-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 4px;
+  }
+  .order-cell {
+    background: #f8fafc;
+    border: 1px solid #e1eaf3;
+    border-radius: 9px;
+    padding: 14px 14px 12px;
+    text-align: center;
+  }
+  .order-cell label {
+    display: block;
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 8px;
+  }
+  .order-cell select {
+    width: 100%;
+    padding: 9px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .order-cell select:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .order-cell select.correct {
+    border-color: #5a9e3a;
+    background: #f0f9e8;
+    color: #2d6a1f;
+  }
+  .order-cell select.wrong {
+    border-color: #c94040;
+    background: #fff1f1;
+    color: #9b2020;
+  }
+
+  .pool-readout {
+    background: #eff6ff;
+    border: 1px solid #c7dcf5;
+    border-left: 4px solid #3b7dd8;
+    border-radius: 0 8px 8px 0;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: #1a2744;
+    margin: 12px 0;
+    display: none;
+  }
+  .pool-readout.show { display: block; }
+  .pool-readout strong { color: #1e40af; }
+
+  .reveal { display: none; animation: slideIn 0.4s ease-out; }
+  .reveal.show { display: block; }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .insight {
+    margin-top: 8px;
+    background: #eff6ff;
+    border: 1px solid #c7dcf5;
+    border-left: 4px solid #3b7dd8;
+    border-radius: 0 8px 8px 0;
+    padding: 11px 14px;
+    font-size: 13px;
+    line-height: 1.55;
+    color: #1a2744;
+  }
+  .insight strong { color: #1e40af; }
+  .insight.success {
+    background: #f0f9e8;
+    border-color: #c4e0a3;
+    border-left-color: #5a9e3a;
+  }
+  .insight.success strong { color: #2d6a1f; }
+  .insight.warn {
+    background: #fff7e6;
+    border-color: #f5d491;
+    border-left-color: #d97706;
+  }
+  .insight.warn strong { color: #9a3412; }
+
+  .footer {
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .check-btn {
+    background: #1a2744; color: #fff;
+    border: none; border-radius: 9px;
+    padding: 10px 24px; font-size: 14px;
+    cursor: pointer; font-family: inherit;
+    font-weight: 500;
+    transition: background .15s;
+  }
+  .check-btn:hover { background: #243660; }
+  .reset-btn {
+    font-size: 13px; color: #64748b;
+    background: none; border: none;
+    cursor: pointer; text-decoration: underline;
+    font-family: inherit;
+  }
+  .reveal-link {
+    margin-left: auto;
+    font-size: 12.5px;
+    color: #64748b;
+    background: none; border: none;
+    cursor: pointer; text-decoration: underline;
+    font-family: inherit;
+  }
+  .reveal-link:hover { color: #1a2744; }
+  .score-out {
+    font-size: 14px; font-weight: 600;
+    color: #1a2744;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 6px 14px;
+  }
+  .score-out:empty { display: none; }
+
+  /* Intuition card (used in Step 5 reflection) */
+  .intuition-card {
+    background: #f8fafc;
+    border: 1px solid #e1eaf3;
+    border-radius: 9px;
+    padding: 16px 18px;
+    margin-bottom: 14px;
+  }
+  .intuition-card .intuition-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #5a9e3a;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 6px;
+  }
+  .intuition-card .intuition-text {
+    font-size: 13.5px;
+    color: #334155;
+    line-height: 1.6;
+    margin-bottom: 12px;
+  }
+  .intuition-btns {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .intuition-btns button {
+    background: #fff;
+    border: 1.5px solid #cbd5e1;
+    color: #1a2744;
+    padding: 11px 14px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    font-family: inherit;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all .15s;
+    line-height: 1.4;
+    text-align: left;
+  }
+  .intuition-btns button:hover {
+    border-color: #5a9e3a;
+    background: #f3faf0;
+  }
+  .intuition-btns button.selected {
+    background: #1a2744;
+    color: #fff;
+    border-color: #1a2744;
+    cursor: default;
+  }
+  .intuition-btns button.locked {
+    cursor: default;
+    opacity: 0.6;
+  }
+  .intuition-btns button.locked:hover {
+    border-color: #cbd5e1;
+    background: #fff;
+  }
+  .intuition-btns button.selected.locked:hover {
+    background: #1a2744;
+    border-color: #1a2744;
+  }
+  .intuition-feedback {
+    margin-top: 10px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.55;
+    background: #eff6ff;
+    border: 1px solid #c7dcf5;
+    color: #1a2744;
+  }
+
+  /* Compare table — Step 5 */
+  .compare-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-bottom: 14px;
+    font-variant-numeric: tabular-nums;
+  }
+  .compare-table thead th {
+    background: #1a2744;
+    color: #fff;
+    font-size: 12.5px;
+    font-weight: 700;
+    text-align: center;
+    padding: 10px 8px;
+  }
+  .compare-table thead th:first-child {
+    border-top-left-radius: 8px;
+    text-align: left;
+    padding-left: 14px;
+  }
+  .compare-table thead th:last-child { border-top-right-radius: 8px; }
+  .compare-table tbody td {
+    background: #f8fafc;
+    padding: 9px 8px;
+    text-align: center;
+    border-bottom: 1px solid #e1eaf3;
+    font-size: 13.5px;
+  }
+  .compare-table tbody td.row-label {
+    text-align: left;
+    padding-left: 14px;
+    font-weight: 600;
+  }
+  .compare-table tbody tr:last-child td:first-child { border-bottom-left-radius: 8px; }
+  .compare-table tbody tr:last-child td:last-child  { border-bottom-right-radius: 8px; }
+  .compare-table .diff-pos { color: #2d6a1f; font-weight: 700; }
+  .compare-table .diff-neg { color: #9b2020; font-weight: 700; }
+
+  @media (max-width: 700px) {
+    header { padding: 14px 16px; }
+    main { padding: 0 12px 40px; }
+    .part { padding: 18px 14px 18px; }
+    .prod-table thead th, .prod-table tbody td,
+    .alloc-table thead th, .alloc-table tbody td,
+    .compare-table thead th, .compare-table tbody td {
+      font-size: 11px; padding: 6px 4px;
+    }
+    .alloc-table input { font-size: 12px; padding: 5px 4px; }
+    .order-grid { grid-template-columns: 1fr; gap: 8px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>Service Department Cost Allocation</h1>
+  </div>
+  <button class="qr-btn" onclick="showQR()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="2" height="2"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="19" width="3" height="2"/><rect x="19" y="19" width="2" height="2"/></svg>
+    Share with students
+  </button>
+</header>
+
+<div class="qr-overlay" id="qr-overlay" onclick="hideQR(event)">
+  <div class="qr-modal">
+    <h2>Scan to open on your device</h2>
+    <p>Students can scan this QR code or type the URL to open the activity on their phone or laptop.</p>
+    <div id="qr-code"></div>
+    <div id="qr-url"></div>
+    <button class="qr-close" onclick="hideQR()">Close</button>
+  </div>
+</div>
+
+<main>
+
+  <!-- ───────── STEP 1 — Direct method ───────── -->
+  <section class="part">
+    <div class="part-header">
+      <span class="part-tag practice">Step 1</span>
+      <h2>Brewster's Bakery &mdash; Direct Method</h2>
+      <span class="subtitle">allocate service depts straight to the producing depts</span>
+    </div>
+
+    <div class="setup-box">
+      <p><strong>Brewster's Bakery</strong> is an Atlanta-based commercial bakery with two production departments &mdash; <strong>Mixing</strong> and <strong>Baking</strong> &mdash; and three service departments. Service department costs for the month, with each one's allocation base:</p>
+      <table class="prod-table" style="margin-top:10px; margin-bottom:10px;">
+        <thead>
+          <tr>
+            <th>Service dept</th>
+            <th>Costs to allocate</th>
+            <th>Allocation base</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="row-label">Maintenance</td><td>$24,000</td><td>Machine hours</td></tr>
+          <tr><td class="row-label">HR</td><td>$18,000</td><td>Number of employees</td></tr>
+          <tr><td class="row-label">Cafeteria</td><td>$20,000</td><td>Square feet</td></tr>
+        </tbody>
+      </table>
+      <p>Operating data for all five departments:</p>
+      <table class="prod-table" style="margin-top:10px;">
+        <thead>
+          <tr>
+            <th>Department</th>
+            <th>Square feet</th>
+            <th>Employees</th>
+            <th>Machine hours</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="row-label">Maintenance</td><td>1,000</td><td>5</td><td class="dim">&mdash;</td></tr>
+          <tr><td class="row-label">HR</td><td>1,000</td><td class="dim">&mdash;</td><td>200</td></tr>
+          <tr><td class="row-label">Cafeteria</td><td class="dim">&mdash;</td><td>5</td><td class="dim">&mdash;</td></tr>
+          <tr><td class="row-label">Mixing</td><td>3,000</td><td>40</td><td>300</td></tr>
+          <tr><td class="row-label">Baking</td><td>5,000</td><td>60</td><td>500</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="prompt">Allocate the three service departments to Mixing and Baking using the <strong>direct method</strong>.</p>
+
+    <table class="alloc-table">
+      <thead>
+        <tr>
+          <th>Service dept</th>
+          <th>To Mixing</th>
+          <th>To Baking</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="row-label">Maintenance</td>
+          <td><input type="text" id="d-m-mix" inputmode="decimal" placeholder="$"><span class="corr-hint" id="hd-m-mix"></span></td>
+          <td><input type="text" id="d-m-bak" inputmode="decimal" placeholder="$"><span class="corr-hint" id="hd-m-bak"></span></td>
+        </tr>
+        <tr>
+          <td class="row-label">HR</td>
+          <td><input type="text" id="d-h-mix" inputmode="decimal" placeholder="$"><span class="corr-hint" id="hd-h-mix"></span></td>
+          <td><input type="text" id="d-h-bak" inputmode="decimal" placeholder="$"><span class="corr-hint" id="hd-h-bak"></span></td>
+        </tr>
+        <tr>
+          <td class="row-label">Cafeteria</td>
+          <td><input type="text" id="d-c-mix" inputmode="decimal" placeholder="$"><span class="corr-hint" id="hd-c-mix"></span></td>
+          <td><input type="text" id="d-c-bak" inputmode="decimal" placeholder="$"><span class="corr-hint" id="hd-c-bak"></span></td>
+        </tr>
+        <tr class="totals-row">
+          <td class="row-label">Total allocated</td>
+          <td><input type="text" id="d-tot-mix" inputmode="decimal" placeholder="$"><span class="corr-hint" id="hd-tot-mix"></span></td>
+          <td><input type="text" id="d-tot-bak" inputmode="decimal" placeholder="$"><span class="corr-hint" id="hd-tot-bak"></span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep1()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep1()">Reset</button>
+      <span id="score1-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep2(true)" id="reveal-step2-btn">Skip ahead &rarr;</button>
+    </div>
+
+    <div id="step1-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 2 — Step method ordering ───────── -->
+  <section class="part reveal" id="step2">
+    <div class="part-header">
+      <span class="part-tag explore">Step 2</span>
+      <h2>Step Method &mdash; pick the order</h2>
+      <span class="subtitle">close the service dept that sends the most to other services first</span>
+    </div>
+
+    <div class="setup-box">
+      <p>Step method recognizes that service departments use each other's services. You allocate one service dept at a time, starting with the one whose services flow most heavily into <em>other service departments</em>. Once a dept is allocated, it's closed and receives no further allocations.</p>
+      <p>Use the operating data in Step 1 to figure out which service dept routes the most of its base into the other two service depts &mdash; that one goes first.</p>
+    </div>
+
+    <p class="prompt">Set the allocation order. Each service department appears exactly once.</p>
+
+    <div class="order-grid">
+      <div class="order-cell">
+        <label>1st (allocated first)</label>
+        <select id="ord-1">
+          <option value="">— pick —</option>
+          <option value="cafeteria">Cafeteria</option>
+          <option value="maintenance">Maintenance</option>
+          <option value="hr">HR</option>
+        </select>
+      </div>
+      <div class="order-cell">
+        <label>2nd</label>
+        <select id="ord-2">
+          <option value="">— pick —</option>
+          <option value="cafeteria">Cafeteria</option>
+          <option value="maintenance">Maintenance</option>
+          <option value="hr">HR</option>
+        </select>
+      </div>
+      <div class="order-cell">
+        <label>3rd (allocated last)</label>
+        <select id="ord-3">
+          <option value="">— pick —</option>
+          <option value="cafeteria">Cafeteria</option>
+          <option value="maintenance">Maintenance</option>
+          <option value="hr">HR</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep2()">Check answer</button>
+      <button class="reset-btn" onclick="resetStep2()">Reset</button>
+      <span id="score2-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep3(true)" id="reveal-step3-btn">Skip ahead &rarr;</button>
+    </div>
+
+    <div id="step2-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 3 — Step method Phase 1: Cafeteria ───────── -->
+  <section class="part reveal" id="step3">
+    <div class="part-header">
+      <span class="part-tag solve">Step 3</span>
+      <h2>Step Method &mdash; Phase 1: allocate Cafeteria</h2>
+      <span class="subtitle">$20,000 across all four other depts on sq ft</span>
+    </div>
+
+    <div class="setup-box">
+      <p>Allocate Cafeteria's $20,000 first. Under step method, it spreads across <strong>every other department</strong> &mdash; Maintenance, HR, Mixing, and Baking &mdash; using its allocation base. Use the operating data from Step 1.</p>
+    </div>
+
+    <p class="prompt">Allocate Cafeteria's $20,000 to each destination department.</p>
+
+    <table class="alloc-table">
+      <thead>
+        <tr>
+          <th>From Cafeteria to&hellip;</th>
+          <th>Allocation</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="row-label">Maintenance</td>
+          <td><input type="text" id="s-c-maint" inputmode="decimal" placeholder="$"><span class="corr-hint" id="hs-c-maint"></span></td>
+        </tr>
+        <tr>
+          <td class="row-label">HR</td>
+          <td><input type="text" id="s-c-hr" inputmode="decimal" placeholder="$"><span class="corr-hint" id="hs-c-hr"></span></td>
+        </tr>
+        <tr>
+          <td class="row-label">Mixing</td>
+          <td><input type="text" id="s-c-mix" inputmode="decimal" placeholder="$"><span class="corr-hint" id="hs-c-mix"></span></td>
+        </tr>
+        <tr>
+          <td class="row-label">Baking</td>
+          <td><input type="text" id="s-c-bak" inputmode="decimal" placeholder="$"><span class="corr-hint" id="hs-c-bak"></span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep3()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep3()">Reset</button>
+      <span id="score3-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep4(true)" id="reveal-step4-btn">Skip ahead &rarr;</button>
+    </div>
+
+    <div id="step3-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 4 — Step method Phases 2 & 3 + Totals ───────── -->
+  <section class="part reveal" id="step4">
+    <div class="part-header">
+      <span class="part-tag solve">Step 4</span>
+      <h2>Step Method &mdash; Phases 2 &amp; 3: Maintenance, then HR</h2>
+      <span class="subtitle">close each remaining pool sequentially, then total to producing depts</span>
+    </div>
+
+    <div class="setup-box">
+      <p>Maintenance is allocated next, on machine hours &mdash; but only to departments still open. Cafeteria is closed (already allocated); Maintenance can't allocate to itself. First figure out Maintenance's <em>new</em> pool: its original $24,000 plus what came in from Cafeteria.</p>
+    </div>
+
+    <p class="prompt">Maintenance's new pool to allocate:</p>
+
+    <table class="alloc-table">
+      <thead>
+        <tr>
+          <th>Pool</th>
+          <th>Total $</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="row-label">Maintenance (original + Cafeteria)</td>
+          <td><input type="text" id="s-m-pool" inputmode="decimal" placeholder="$"><span class="corr-hint" id="hs-m-pool"></span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p class="prompt" style="margin-top:14px;">Now allocate the Maintenance pool to the three still-open departments.</p>
+
+    <table class="alloc-table">
+      <thead>
+        <tr>
+          <th>From Maintenance to&hellip;</th>
+          <th>Allocation</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="row-label">HR</td>
+          <td><input type="text" id="s-m-hr" inputmode="decimal" placeholder="$"><span class="corr-hint" id="hs-m-hr"></span></td>
+        </tr>
+        <tr>
+          <td class="row-label">Mixing</td>
+          <td><input type="text" id="s-m-mix" inputmode="decimal" placeholder="$"><span class="corr-hint" id="hs-m-mix"></span></td>
+        </tr>
+        <tr>
+          <td class="row-label">Baking</td>
+          <td><input type="text" id="s-m-bak" inputmode="decimal" placeholder="$"><span class="corr-hint" id="hs-m-bak"></span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p class="prompt" style="margin-top:14px;">Last service dept &mdash; HR. Compute HR's new pool (original + Cafeteria + Maintenance), then allocate to the two remaining producing departments.</p>
+
+    <table class="alloc-table">
+      <thead>
+        <tr>
+          <th>Pool</th>
+          <th>Total $</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="row-label">HR (original + Cafeteria + Maintenance)</td>
+          <td><input type="text" id="s-h-pool" inputmode="decimal" placeholder="$"><span class="corr-hint" id="hs-h-pool"></span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <table class="alloc-table" style="margin-top:10px;">
+      <thead>
+        <tr>
+          <th>From HR to&hellip;</th>
+          <th>Allocation</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="row-label">Mixing</td>
+          <td><input type="text" id="s-h-mix" inputmode="decimal" placeholder="$"><span class="corr-hint" id="hs-h-mix"></span></td>
+        </tr>
+        <tr>
+          <td class="row-label">Baking</td>
+          <td><input type="text" id="s-h-bak" inputmode="decimal" placeholder="$"><span class="corr-hint" id="hs-h-bak"></span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p class="prompt" style="margin-top:14px;">Finally, sum each producing department's three step-method allocations.</p>
+
+    <table class="alloc-table">
+      <thead>
+        <tr>
+          <th>Step-method totals</th>
+          <th>To Mixing</th>
+          <th>To Baking</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="totals-row">
+          <td class="row-label">Total allocated</td>
+          <td><input type="text" id="s-tot-mix" inputmode="decimal" placeholder="$"><span class="corr-hint" id="hs-tot-mix"></span></td>
+          <td><input type="text" id="s-tot-bak" inputmode="decimal" placeholder="$"><span class="corr-hint" id="hs-tot-bak"></span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep4()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep4()">Reset</button>
+      <span id="score4-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep5(true)" id="reveal-step5-btn">Skip ahead &rarr;</button>
+    </div>
+
+    <div id="step4-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 5 — Compare ───────── -->
+  <section class="part reveal" id="step5">
+    <div class="part-header">
+      <span class="part-tag build">Step 5</span>
+      <h2>Direct vs. Step &mdash; does the method matter?</h2>
+      <span class="subtitle">compare totals and decide when the extra work is worth it</span>
+    </div>
+
+    <div class="setup-box">
+      <p>Two methods, two sets of totals for Brewster's producing departments:</p>
+      <table class="compare-table" style="margin-top:10px;">
+        <thead>
+          <tr>
+            <th>Producing dept</th>
+            <th>Direct method</th>
+            <th>Step method</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="row-label">Mixing</td><td>$23,700</td><td>$23,880</td></tr>
+          <tr><td class="row-label">Baking</td><td>$38,300</td><td>$38,120</td></tr>
+          <tr><td class="row-label" style="font-weight:700;">Total allocated</td><td>$62,000</td><td>$62,000</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="intuition-card">
+      <div class="intuition-label">When does step method actually matter?</div>
+      <div class="intuition-text">Step method takes more effort than direct. In what kind of business should management bother with it?</div>
+      <div class="intuition-btns">
+        <button onclick="pickReflect('few')">When service departments barely use each other's services.</button>
+        <button onclick="pickReflect('heavy')">When service departments heavily use each other's services.</button>
+        <button onclick="pickReflect('size')">When the two producing departments are very similar in size.</button>
+        <button onclick="pickReflect('always')">Always &mdash; step is strictly more accurate, so always use it.</button>
+      </div>
+      <div class="intuition-feedback" id="reflect-fb" style="display:none;"></div>
+    </div>
+
+    <p class="prompt">One final question. If Cafeteria's services flowed <strong>much more heavily</strong> into Maintenance and HR (say, Cafeteria sq ft to Maintenance + HR were 5,000 + 4,000 instead of 1,000 + 1,000), the step method's allocation to Mixing and Baking would&hellip;</p>
+
+    <div class="intuition-btns" style="display:flex; flex-direction:column; gap:8px; margin-bottom:14px;">
+      <button onclick="pickShift('converge')" class="shift-btn">Converge with direct &mdash; almost identical answer.</button>
+      <button onclick="pickShift('diverge')" class="shift-btn">Diverge from direct &mdash; the $180 gap would widen.</button>
+      <button onclick="pickShift('same')" class="shift-btn">Stay about the same &mdash; the gap doesn't depend on interdept flow.</button>
+    </div>
+    <div id="shift-fb" class="intuition-feedback" style="display:none;"></div>
+
+    <div id="step5-insight"></div>
+  </section>
+
+</main>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════════════════ */
+function parseNum(s) {
+  if (typeof s !== 'string') return NaN;
+  return parseFloat(s.replace(/[\$,\s]/g, ''));
+}
+function fmtMoney(v, decimals) {
+  var d = (decimals === undefined) ? 0 : decimals;
+  var rounded = Math.round(v * 100) / 100;
+  var sign = rounded < 0 ? '-$' : '$';
+  return sign + Math.abs(rounded).toLocaleString('en-US', {
+    minimumFractionDigits: d,
+    maximumFractionDigits: d
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   AUDIO
+═══════════════════════════════════════════════════════════════ */
+var audioCtx = null;
+function getAudio() {
+  if (!audioCtx) {
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (AC) audioCtx = new AC();
+  }
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+function playBell() {
+  var ctx = getAudio(); if (!ctx) return;
+  var now = ctx.currentTime;
+  [523.25, 659.25, 783.99].forEach(function(f) {
+    var osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = 'sine'; osc.frequency.value = f;
+    osc.connect(g).connect(ctx.destination);
+    g.gain.setValueAtTime(0, now);
+    g.gain.linearRampToValueAtTime(0.15, now + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 1.6);
+    osc.start(now); osc.stop(now + 1.7);
+  });
+}
+function playHorn() {
+  var ctx = getAudio(); if (!ctx) return;
+  var now = ctx.currentTime;
+  var notes = [
+    { f: 466.16, t: 0.00, d: 0.18 },
+    { f: 440.00, t: 0.20, d: 0.18 },
+    { f: 415.30, t: 0.40, d: 0.55 }
+  ];
+  notes.forEach(function(n) {
+    var osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(n.f, now + n.t);
+    if (n.d > 0.3) osc.frequency.exponentialRampToValueAtTime(n.f * 0.88, now + n.t + n.d);
+    osc.connect(g).connect(ctx.destination);
+    g.gain.setValueAtTime(0, now + n.t);
+    g.gain.linearRampToValueAtTime(0.12, now + n.t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, now + n.t + n.d);
+    osc.start(now + n.t); osc.stop(now + n.t + n.d + 0.05);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   EXPECTED ANSWERS
+═══════════════════════════════════════════════════════════════ */
+// Direct method — base totals exclude all service depts
+// Maintenance $24,000 / 800 mach hrs = $30/hr → Mixing 300×30=9000, Baking 500×30=15000
+// HR         $18,000 / 100 emp        = $180/emp → Mixing 40×180=7200, Baking 60×180=10800
+// Cafeteria  $20,000 / 8,000 sq ft    = $2.50/sf → Mixing 3000×2.50=7500, Baking 5000×2.50=12500
+var D_M_MIX = 9000,  D_M_BAK = 15000;
+var D_H_MIX = 7200,  D_H_BAK = 10800;
+var D_C_MIX = 7500,  D_C_BAK = 12500;
+var D_TOT_MIX = D_M_MIX + D_H_MIX + D_C_MIX;   // 23,700
+var D_TOT_BAK = D_M_BAK + D_H_BAK + D_C_BAK;   // 38,300
+
+// Step method — Cafeteria → Maintenance → HR
+// Phase 1: Cafeteria $20,000 / 10,000 sq ft = $2/sf
+var S_C_MAINT = 2000, S_C_HR = 2000, S_C_MIX = 6000, S_C_BAK = 10000;
+// Phase 2: Maintenance ($24,000 + $2,000) = $26,000 / 1,000 mach hrs = $26/hr
+var S_M_HR = 5200, S_M_MIX = 7800, S_M_BAK = 13000;
+// Phase 3: HR ($18,000 + $2,000 + $5,200) = $25,200 / 100 emp = $252/emp
+var S_H_MIX = 10080, S_H_BAK = 15120;
+// Totals to producing
+var S_TOT_MIX = S_C_MIX + S_M_MIX + S_H_MIX;   // 23,880
+var S_TOT_BAK = S_C_BAK + S_M_BAK + S_H_BAK;   // 38,120
+
+/* ═══════════════════════════════════════════════════════════════
+   GENERIC CHECKER
+═══════════════════════════════════════════════════════════════ */
+function checkGroup(spec, scoreId, allCorrectFn) {
+  var correct = 0, total = 0, blanks = 0;
+  spec.forEach(function(f) {
+    var inp  = document.getElementById(f.inputId);
+    var hint = document.getElementById(f.hintId);
+    inp.classList.remove('correct', 'wrong');
+    if (hint) hint.textContent = '';
+    total++;
+    if (inp.value.trim() === '') { blanks++; return; }
+    var val = parseNum(inp.value);
+    var exp = f.expected;
+    var tol = f.tol;
+    if (!isNaN(val) && Math.abs(val - exp) <= tol) {
+      inp.classList.add('correct');
+      correct++;
+    } else {
+      inp.classList.add('wrong');
+      if (hint) hint.textContent = '→ ' + fmtMoney(exp, 0);
+    }
+  });
+  var out = document.getElementById(scoreId);
+  if (blanks === total) {
+    out.textContent = 'Fill in some answers first.';
+    return false;
+  }
+  out.textContent = correct + ' / ' + total + ' correct' + (blanks ? ' (' + blanks + ' blank)' : '');
+  if (correct === total) { playBell(); if (allCorrectFn) allCorrectFn(); return true; }
+  playHorn();
+  return false;
+}
+function resetGroup(spec, scoreId, extraResetFn) {
+  spec.forEach(function(f) {
+    var inp = document.getElementById(f.inputId);
+    var hint = document.getElementById(f.hintId);
+    inp.value = '';
+    inp.classList.remove('correct', 'wrong');
+    if (hint) hint.textContent = '';
+  });
+  document.getElementById(scoreId).textContent = '';
+  if (extraResetFn) extraResetFn();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 1 — Direct method
+═══════════════════════════════════════════════════════════════ */
+var STEP1_SPEC = [
+  { inputId:'d-m-mix',  hintId:'hd-m-mix',  expected:D_M_MIX,  tol:1 },
+  { inputId:'d-m-bak',  hintId:'hd-m-bak',  expected:D_M_BAK,  tol:1 },
+  { inputId:'d-h-mix',  hintId:'hd-h-mix',  expected:D_H_MIX,  tol:1 },
+  { inputId:'d-h-bak',  hintId:'hd-h-bak',  expected:D_H_BAK,  tol:1 },
+  { inputId:'d-c-mix',  hintId:'hd-c-mix',  expected:D_C_MIX,  tol:1 },
+  { inputId:'d-c-bak',  hintId:'hd-c-bak',  expected:D_C_BAK,  tol:1 },
+  { inputId:'d-tot-mix',hintId:'hd-tot-mix',expected:D_TOT_MIX,tol:2 },
+  { inputId:'d-tot-bak',hintId:'hd-tot-bak',expected:D_TOT_BAK,tol:2 }
+];
+function checkStep1() {
+  var fb = document.getElementById('step1-insight'); fb.innerHTML = '';
+  checkGroup(STEP1_SPEC, 'score1-out', function() {
+    revealStep2(false);
+    fb.innerHTML = '<div class="insight success"><strong>$23,700 to Mixing, $38,300 to Baking.</strong> Direct method spreads each service pool only across Mixing and Baking &mdash; Cafeteria\'s sq ft in Maintenance and HR is ignored, even though Cafeteria really does feed those service depts.</div>';
+  });
+}
+function resetStep1() { resetGroup(STEP1_SPEC, 'score1-out', function(){ document.getElementById('step1-insight').innerHTML=''; }); }
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 2 — Step method ordering
+═══════════════════════════════════════════════════════════════ */
+function checkStep2() {
+  var ord1 = document.getElementById('ord-1');
+  var ord2 = document.getElementById('ord-2');
+  var ord3 = document.getElementById('ord-3');
+  var sels = [ord1, ord2, ord3];
+  sels.forEach(function(s){ s.classList.remove('correct','wrong'); });
+  var fb = document.getElementById('step2-insight'); fb.innerHTML = '';
+  var out = document.getElementById('score2-out');
+
+  var v1 = ord1.value, v2 = ord2.value, v3 = ord3.value;
+  if (!v1 || !v2 || !v3) {
+    out.textContent = 'Pick all three slots first.';
+    return;
+  }
+  var picks = [v1, v2, v3];
+  var unique = new Set(picks);
+  if (unique.size !== 3) {
+    out.textContent = 'Each department appears exactly once.';
+    sels.forEach(function(s){ s.classList.add('wrong'); });
+    playHorn();
+    return;
+  }
+  var correctOrder = ['cafeteria','maintenance','hr'];
+  var allRight = true;
+  for (var i = 0; i < 3; i++) {
+    if (picks[i] === correctOrder[i]) {
+      sels[i].classList.add('correct');
+    } else {
+      sels[i].classList.add('wrong');
+      allRight = false;
+    }
+  }
+  if (allRight) {
+    out.textContent = '3 / 3 correct';
+    playBell();
+    revealStep3(false);
+    fb.innerHTML = '<div class="insight success"><strong>Cafeteria → Maintenance → HR.</strong> Cafeteria sends real dollars to both other service depts, so closing it first means those flows aren\'t lost. Once Cafeteria is allocated, Maintenance picks up $2,000 from it. HR closes last because it only sends 9% of its base back into the service-dept chain.</div>';
+  } else {
+    out.textContent = 'Not quite. Cafeteria first (largest interdept dollar flow); HR last (smallest).';
+    playHorn();
+  }
+}
+function resetStep2() {
+  ['ord-1','ord-2','ord-3'].forEach(function(id){
+    var s = document.getElementById(id);
+    s.value = '';
+    s.classList.remove('correct','wrong');
+  });
+  document.getElementById('score2-out').textContent = '';
+  document.getElementById('step2-insight').innerHTML = '';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 3 — Step method Phase 1 (Cafeteria)
+═══════════════════════════════════════════════════════════════ */
+var STEP3_SPEC = [
+  { inputId:'s-c-maint', hintId:'hs-c-maint', expected:S_C_MAINT, tol:1 },
+  { inputId:'s-c-hr',    hintId:'hs-c-hr',    expected:S_C_HR,    tol:1 },
+  { inputId:'s-c-mix',   hintId:'hs-c-mix',   expected:S_C_MIX,   tol:1 },
+  { inputId:'s-c-bak',   hintId:'hs-c-bak',   expected:S_C_BAK,   tol:1 }
+];
+function checkStep3() {
+  var fb = document.getElementById('step3-insight'); fb.innerHTML = '';
+  checkGroup(STEP3_SPEC, 'score3-out', function() {
+    revealStep4(false);
+    fb.innerHTML = '<div class="insight success"><strong>Cafeteria closed at $2/sq ft.</strong> $2,000 each into Maintenance and HR — those service depts get bigger before we allocate them. $6,000 to Mixing and $10,000 to Baking go straight through.</div>';
+  });
+}
+function resetStep3() { resetGroup(STEP3_SPEC, 'score3-out', function(){ document.getElementById('step3-insight').innerHTML=''; }); }
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 4 — Step method Phases 2 & 3 + totals
+═══════════════════════════════════════════════════════════════ */
+var S_M_POOL = 24000 + S_C_MAINT;   // 26,000
+var S_H_POOL = 18000 + S_C_HR + S_M_HR;  // 25,200
+var STEP4_SPEC = [
+  { inputId:'s-m-pool', hintId:'hs-m-pool', expected:S_M_POOL, tol:1 },
+  { inputId:'s-m-hr',   hintId:'hs-m-hr',   expected:S_M_HR,   tol:1 },
+  { inputId:'s-m-mix',  hintId:'hs-m-mix',  expected:S_M_MIX,  tol:1 },
+  { inputId:'s-m-bak',  hintId:'hs-m-bak',  expected:S_M_BAK,  tol:1 },
+  { inputId:'s-h-pool', hintId:'hs-h-pool', expected:S_H_POOL, tol:1 },
+  { inputId:'s-h-mix',  hintId:'hs-h-mix',  expected:S_H_MIX,  tol:1 },
+  { inputId:'s-h-bak',  hintId:'hs-h-bak',  expected:S_H_BAK,  tol:1 },
+  { inputId:'s-tot-mix', hintId:'hs-tot-mix', expected:S_TOT_MIX, tol:2 },
+  { inputId:'s-tot-bak', hintId:'hs-tot-bak', expected:S_TOT_BAK, tol:2 }
+];
+function checkStep4() {
+  var fb = document.getElementById('step4-insight'); fb.innerHTML = '';
+  checkGroup(STEP4_SPEC, 'score4-out', function() {
+    revealStep5(false);
+    fb.innerHTML = '<div class="insight success"><strong>Step totals: $23,880 to Mixing, $38,120 to Baking.</strong> Compare to direct ($23,700 / $38,300) &mdash; step shifted about $180 from Baking to Mixing. The cost of recognizing Cafeteria\'s flows into Maintenance and HR, then Maintenance\'s flow into HR.</div>';
+  });
+}
+function resetStep4() {
+  resetGroup(STEP4_SPEC, 'score4-out', function(){
+    document.getElementById('step4-insight').innerHTML='';
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 5 — Reflection
+═══════════════════════════════════════════════════════════════ */
+var reflectAnswered = false;
+var REFLECT_MSGS = {
+  few:    'Yes — but the inverse of what you said. When service departments barely use each other, the two methods give nearly identical answers, so the extra effort of step is wasted. You only do step method when there\'s real interdepartmental service flow to capture.',
+  heavy:  'Right. The whole point of step is to recognize service-to-service flow. When that flow is small (as in this scenario — just $4,000 of Cafeteria into other services on a $62k total), direct and step agree within rounding. When it\'s large, the methods diverge meaningfully, and step\'s extra work pays off.',
+  size:   'Not really — size of producing depts doesn\'t determine whether step matters. What matters is how much service-to-service flow exists. If services rarely use each other, the methods converge regardless of producing-dept size.',
+  always: 'Practically, no. Step is more accurate, but the gain is often negligible (here, $180 on a $62,000 allocation). The reciprocal method is even more accurate than step, and almost no one uses it. The question is always cost vs. benefit — most firms pick the simplest method that gives a defensible answer.'
+};
+function pickReflect(choice) {
+  if (reflectAnswered) return;
+  reflectAnswered = true;
+  var fbEl = document.getElementById('reflect-fb');
+  var btns = document.querySelectorAll('.intuition-btns button');
+  // Lock the FIRST set of buttons (the reflection set above the shift-btn set)
+  document.querySelectorAll('.intuition-card .intuition-btns button').forEach(function(btn){
+    var text = btn.textContent.trim().toLowerCase();
+    var thisChoice = text.indexOf('barely use') >= 0 ? 'few'
+                   : text.indexOf('heavily use') >= 0 ? 'heavy'
+                   : text.indexOf('similar in size') >= 0 ? 'size'
+                   : 'always';
+    if (thisChoice === choice) btn.classList.add('selected');
+    btn.classList.add('locked');
+  });
+  fbEl.style.display = 'block';
+  fbEl.textContent = REFLECT_MSGS[choice];
+}
+
+var shiftAnswered = false;
+var SHIFT_MSGS = {
+  converge: 'Opposite. Heavier interdept flow magnifies what step picks up that direct misses. The two methods diverge more, not less, as service-to-service flow grows.',
+  diverge:  'Yes. The reason direct and step agreed within $180 here is that interdept flow was small (only $4,000 of Cafeteria into Maint+HR). Crank that interdept flow up and you reroute much more money through the service-dept chain — direct still ignores it entirely, step captures it. The gap widens.',
+  same:     'No — the gap is exactly a function of interdept flow. With zero interdept flow, the methods are identical. The more service-to-service flow there is, the bigger the divergence.'
+};
+function pickShift(choice) {
+  if (shiftAnswered) return;
+  shiftAnswered = true;
+  var fbEl = document.getElementById('shift-fb');
+  document.querySelectorAll('.shift-btn').forEach(function(btn){
+    var text = btn.textContent.trim().toLowerCase();
+    var thisChoice = text.indexOf('converge') >= 0 ? 'converge'
+                   : text.indexOf('diverge') >= 0 ? 'diverge'
+                   : 'same';
+    if (thisChoice === choice) btn.classList.add('selected');
+    btn.classList.add('locked');
+  });
+  fbEl.style.display = 'block';
+  fbEl.textContent = SHIFT_MSGS[choice];
+
+  // Final insight after both reflections
+  if (reflectAnswered) {
+    document.getElementById('step5-insight').innerHTML =
+      '<div class="insight success"><strong>Direct vs. Step is a cost-vs-benefit call.</strong> Step is more accurate, but the extra accuracy is only meaningful when service-to-service flow is large. For Brewster\'s — small flows, small gap — most controllers would defend direct method on materiality grounds. For a hospital with heavy service-dept interdependence (admin → IT → admin → housekeeping → everyone), step earns its keep.</div>';
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   REVEAL STEPS
+═══════════════════════════════════════════════════════════════ */
+var revealedSteps = new Set();
+function revealStep(stepNum, scroll) {
+  var el = document.getElementById('step' + stepNum);
+  if (!revealedSteps.has(stepNum)) {
+    el.classList.add('show');
+    revealedSteps.add(stepNum);
+    var btn = document.getElementById('reveal-step' + stepNum + '-btn');
+    if (btn) btn.style.display = 'none';
+  }
+  if (scroll) setTimeout(function() { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 60);
+}
+function revealStep2(scroll) { revealStep(2, scroll); }
+function revealStep3(scroll) { revealStep(3, scroll); }
+function revealStep4(scroll) { revealStep(4, scroll); }
+function revealStep5(scroll) { revealStep(5, scroll); }
+
+/* ═══════════════════════════════════════════════════════════════
+   QR / SHARE
+═══════════════════════════════════════════════════════════════ */
+function showQR() {
+  var url = location.href;
+  document.getElementById('qr-url').textContent = url;
+  var qrEl = document.getElementById('qr-code');
+  qrEl.innerHTML = '';
+  if (window.QRCode) {
+    new QRCode(qrEl, { text: url, width: 180, height: 180, colorDark: '#1a2744', colorLight: '#ffffff' });
+  }
+  document.getElementById('qr-overlay').classList.add('show');
+}
+function hideQR(ev) {
+  if (ev && ev.target.id !== 'qr-overlay' && ev.target.className !== 'qr-close') return;
+  document.getElementById('qr-overlay').classList.remove('show');
+}
+</script>
+
+</body>
+</html>

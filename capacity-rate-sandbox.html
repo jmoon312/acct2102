@@ -1,0 +1,1222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Capacity Rates &amp; Excess Capacity</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    background: #f4f0e8;
+    color: #1a2744;
+    min-height: 100vh;
+  }
+
+  header {
+    background: #1a2744;
+    color: #fff;
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .header-left h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+  .header-left p  { font-size: 13px; color: #a0aec0; margin-top: 2px; }
+
+  .qr-btn {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    transition: background .15s;
+  }
+  .qr-btn:hover { background: rgba(255,255,255,0.18); }
+
+  .qr-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .qr-overlay.show { display: flex; }
+  .qr-modal {
+    background: #fff;
+    border-radius: 14px;
+    padding: 32px;
+    text-align: center;
+    max-width: 300px;
+    width: 90%;
+  }
+  .qr-modal h2 { font-size: 16px; font-weight: 600; color: #1a2744; margin-bottom: 6px; }
+  .qr-modal p  { font-size: 12px; color: #64748b; margin-bottom: 18px; line-height: 1.5; }
+  #qr-code { display: flex; justify-content: center; margin-bottom: 16px; }
+  #qr-url  { font-size: 11px; color: #94a3b8; word-break: break-all; margin-bottom: 18px; }
+  .qr-close {
+    background: #1a2744; color: #fff;
+    border: none; border-radius: 8px;
+    padding: 8px 24px; font-size: 13px;
+    cursor: pointer; font-family: inherit;
+  }
+
+  main {
+    max-width: 920px;
+    margin: 28px auto;
+    padding: 0 20px 48px;
+  }
+
+  .part {
+    background: #fff;
+    border: 1px solid #dde3ef;
+    border-radius: 12px;
+    padding: 22px 24px 24px;
+    margin-bottom: 22px;
+  }
+
+  .part-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .part-tag {
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    background: #1a2744;
+    padding: 3px 10px;
+    border-radius: 99px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+  .part-tag.practice { background: #D85A30; }
+  .part-tag.explore  { background: #3b7dd8; }
+  .part-tag.solve    { background: #7a5cb6; }
+  .part-tag.build    { background: #5a9e3a; }
+  .part-header h2 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -.01em;
+  }
+  .part-header .subtitle {
+    font-size: 13px;
+    color: #64748b;
+  }
+
+  .setup-box {
+    background: #f8f6f0;
+    border: 1px solid #e6dfd0;
+    border-radius: 9px;
+    padding: 14px 16px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: #334155;
+    margin-bottom: 16px;
+  }
+  .setup-box strong { color: #1a2744; }
+  .setup-box p + p { margin-top: 6px; }
+
+  .prompt {
+    font-size: 14px;
+    color: #1a2744;
+    margin-bottom: 12px;
+    line-height: 1.55;
+  }
+  .prompt strong { font-weight: 700; }
+
+  .prod-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-bottom: 6px;
+    font-variant-numeric: tabular-nums;
+  }
+  .prod-table thead th {
+    background: #fde9c8;
+    color: #1a2744;
+    font-size: 12.5px;
+    font-weight: 700;
+    text-align: center;
+    padding: 10px 8px;
+    border-bottom: 2px solid #f0c674;
+  }
+  .prod-table thead th:first-child {
+    border-top-left-radius: 8px;
+    text-align: left;
+    padding-left: 14px;
+  }
+  .prod-table thead th:last-child { border-top-right-radius: 8px; }
+  .prod-table tbody td {
+    background: #f0f5fa;
+    padding: 9px 8px;
+    text-align: center;
+    border-bottom: 1px solid #e1eaf3;
+  }
+  .prod-table tbody td.row-label {
+    text-align: left;
+    padding-left: 14px;
+    font-weight: 600;
+    color: #1a2744;
+  }
+  .prod-table tbody tr:last-child td:first-child { border-bottom-left-radius: 8px; }
+  .prod-table tbody tr:last-child td:last-child  { border-bottom-right-radius: 8px; }
+
+  .qa-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 4px; }
+  .qa-row {
+    display: grid;
+    grid-template-columns: 1fr 200px;
+    gap: 14px;
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #e1eaf3;
+    border-radius: 9px;
+    padding: 13px 16px;
+  }
+  .qa-row .qa-prompt {
+    font-size: 13.5px;
+    color: #1a2744;
+    line-height: 1.5;
+  }
+  .qa-row .qa-prompt strong { font-weight: 700; }
+  .qa-row .qa-prompt small {
+    display: block;
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 3px;
+  }
+  .qa-row .answer { display: flex; flex-direction: column; }
+  .qa-row .answer label {
+    font-size: 10.5px;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 4px;
+  }
+  .qa-row .answer input {
+    padding: 8px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .qa-row .answer input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .qa-row .answer input.correct {
+    border-color: #5a9e3a;
+    background: #f0f9e8;
+    color: #2d6a1f;
+  }
+  .qa-row .answer input.wrong {
+    border-color: #c94040;
+    background: #fff1f1;
+    color: #9b2020;
+  }
+  .corr-hint {
+    display: block;
+    font-size: 11px;
+    color: #5a9e3a;
+    font-weight: 600;
+    margin-top: 3px;
+    min-height: 14px;
+  }
+
+  /* Three-rate sandbox cards (Step 2) */
+  .rate-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .rate-card {
+    background: #f8fafc;
+    border: 2px solid #e1eaf3;
+    border-radius: 10px;
+    padding: 14px 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .rate-card:hover {
+    border-color: #3b7dd8;
+    background: #f0f5fa;
+  }
+  .rate-card.active {
+    border-color: #1a2744;
+    background: #fff;
+    box-shadow: 0 2px 12px rgba(26,39,68,0.12);
+  }
+  .rate-card .rate-name {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 4px;
+  }
+  .rate-card.active .rate-name { color: #1a2744; }
+  .rate-card .rate-capacity {
+    font-size: 11.5px;
+    color: #94a3b8;
+    margin-bottom: 8px;
+    font-variant-numeric: tabular-nums;
+  }
+  .rate-card .rate-value {
+    font-size: 22px;
+    font-weight: 800;
+    color: #1a2744;
+    margin-bottom: 4px;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -.01em;
+  }
+  .rate-card .rate-unit {
+    font-size: 11px;
+    color: #64748b;
+  }
+
+  .sandbox-readout {
+    background: #eff6ff;
+    border: 1px solid #c7dcf5;
+    border-radius: 9px;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: #1a2744;
+    margin-bottom: 14px;
+    line-height: 1.55;
+  }
+  .sandbox-readout strong { color: #1e40af; font-weight: 700; }
+  .sandbox-readout .readout-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 2px 0;
+  }
+  .sandbox-readout .readout-row .lbl { color: #475569; font-size: 12.5px; }
+  .sandbox-readout .readout-row .val {
+    font-weight: 700;
+    color: #1a2744;
+    font-variant-numeric: tabular-nums;
+    font-size: 14px;
+  }
+
+  /* Intuition card */
+  .intuition-card {
+    background: #f8fafc;
+    border: 1px solid #e1eaf3;
+    border-radius: 9px;
+    padding: 16px 18px;
+    margin-bottom: 14px;
+  }
+  .intuition-card .intuition-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #3b7dd8;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 6px;
+  }
+  .intuition-card .intuition-text {
+    font-size: 13.5px;
+    color: #334155;
+    line-height: 1.6;
+    margin-bottom: 12px;
+  }
+  .intuition-btns {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .intuition-btns button {
+    flex: 1;
+    min-width: 150px;
+    background: #fff;
+    border: 1.5px solid #cbd5e1;
+    color: #1a2744;
+    padding: 11px 14px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    font-family: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .15s;
+    line-height: 1.4;
+  }
+  .intuition-btns button:hover {
+    border-color: #3b7dd8;
+    background: #f0f5fa;
+  }
+  .intuition-btns button.selected {
+    background: #1a2744;
+    color: #fff;
+    border-color: #1a2744;
+    cursor: default;
+  }
+  .intuition-btns button.locked {
+    cursor: default;
+    opacity: 0.6;
+  }
+  .intuition-btns button.locked:hover {
+    border-color: #cbd5e1;
+    background: #fff;
+  }
+  .intuition-btns button.selected.locked:hover {
+    background: #1a2744;
+    border-color: #1a2744;
+  }
+  .intuition-feedback {
+    margin-top: 10px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.55;
+    background: #eff6ff;
+    border: 1px solid #c7dcf5;
+    color: #1a2744;
+  }
+
+  /* Build sandbox (Step 5) */
+  .build-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+  .build-input {
+    background: #fff7f0;
+    border: 1.5px solid #D85A30;
+    border-radius: 9px;
+    padding: 12px 14px;
+  }
+  .build-input label {
+    display: block;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #D85A30;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 6px;
+  }
+  .build-input input {
+    width: 100%;
+    padding: 9px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 15px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .build-input input:focus {
+    outline: none;
+    border-color: #D85A30;
+    background: #fff;
+  }
+  .build-readout {
+    background: #f8fafc;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 9px;
+    padding: 12px 14px;
+  }
+  .build-readout label {
+    display: block;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 6px;
+  }
+  .build-readout .live-val {
+    font-size: 22px;
+    font-weight: 800;
+    color: #1a2744;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -.01em;
+  }
+  .build-readout .live-sub {
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 2px;
+  }
+
+  .reset-build-btn {
+    background: #fff;
+    border: 1px solid #cbd5e1;
+    color: #475569;
+    padding: 6px 14px;
+    border-radius: 7px;
+    font-size: 12.5px;
+    font-family: inherit;
+    cursor: pointer;
+    margin-bottom: 14px;
+  }
+  .reset-build-btn:hover {
+    background: #f1f5f9;
+    color: #1a2744;
+  }
+
+  .reveal { display: none; animation: slideIn 0.4s ease-out; }
+  .reveal.show { display: block; }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .insight {
+    margin-top: 8px;
+    background: #eff6ff;
+    border: 1px solid #c7dcf5;
+    border-left: 4px solid #3b7dd8;
+    border-radius: 0 8px 8px 0;
+    padding: 11px 14px;
+    font-size: 13px;
+    line-height: 1.55;
+    color: #1a2744;
+  }
+  .insight strong { color: #1e40af; }
+  .insight.success {
+    background: #f0f9e8;
+    border-color: #c4e0a3;
+    border-left-color: #5a9e3a;
+  }
+  .insight.success strong { color: #2d6a1f; }
+  .insight.warn {
+    background: #fff7e6;
+    border-color: #f5d491;
+    border-left-color: #d97706;
+  }
+  .insight.warn strong { color: #9a3412; }
+
+  .footer {
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .check-btn {
+    background: #1a2744; color: #fff;
+    border: none; border-radius: 9px;
+    padding: 10px 24px; font-size: 14px;
+    cursor: pointer; font-family: inherit;
+    font-weight: 500;
+    transition: background .15s;
+  }
+  .check-btn:hover { background: #243660; }
+  .reset-btn {
+    font-size: 13px; color: #64748b;
+    background: none; border: none;
+    cursor: pointer; text-decoration: underline;
+    font-family: inherit;
+  }
+  .reveal-link {
+    margin-left: auto;
+    font-size: 12.5px;
+    color: #64748b;
+    background: none; border: none;
+    cursor: pointer; text-decoration: underline;
+    font-family: inherit;
+  }
+  .reveal-link:hover { color: #1a2744; }
+  .score-out {
+    font-size: 14px; font-weight: 600;
+    color: #1a2744;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 6px 14px;
+  }
+  .score-out:empty { display: none; }
+
+  @media (max-width: 700px) {
+    header { padding: 14px 16px; }
+    main { padding: 0 12px 40px; }
+    .part { padding: 18px 14px 18px; }
+    .prod-table thead th, .prod-table tbody td { font-size: 11px; padding: 6px 4px; }
+    .qa-row { grid-template-columns: 1fr; gap: 8px; }
+    .rate-grid { grid-template-columns: 1fr; }
+    .build-grid { grid-template-columns: 1fr; }
+    .intuition-btns button { min-width: 110px; font-size: 12.5px; padding: 9px 10px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>Capacity Rates &amp; Excess Capacity</h1>
+  </div>
+  <button class="qr-btn" onclick="showQR()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="2" height="2"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="19" width="3" height="2"/><rect x="19" y="19" width="2" height="2"/></svg>
+    Share with students
+  </button>
+</header>
+
+<div class="qr-overlay" id="qr-overlay" onclick="hideQR(event)">
+  <div class="qr-modal">
+    <h2>Scan to open on your device</h2>
+    <p>Students can scan this QR code or type the URL to open the activity on their phone or laptop.</p>
+    <div id="qr-code"></div>
+    <div id="qr-url"></div>
+    <button class="qr-close" onclick="hideQR()">Close</button>
+  </div>
+</div>
+
+<main>
+
+  <!-- ───────── STEP 1 — Three rates ───────── -->
+  <section class="part">
+    <div class="part-header">
+      <span class="part-tag practice">Step 1</span>
+      <h2>Peachtree Print Co. &mdash; three rates, one cost</h2>
+      <span class="subtitle">same press, same dollars, three different denominators</span>
+    </div>
+
+    <div class="setup-box">
+      <p><strong>Peachtree Print Co.</strong> runs a single high-speed digital press out of an Atlanta warehouse. The press &mdash; lease, maintenance, supplies, depreciation &mdash; costs <strong>$120,000 per year</strong>. Three different measures of "capacity" are floating around the office:</p>
+      <table class="prod-table" style="margin-top:10px;">
+        <thead>
+          <tr>
+            <th>Capacity type</th>
+            <th>What it means</th>
+            <th>Sheets / year</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="row-label">Theoretical</td><td>The press's spec-sheet maximum &mdash; 24/7, no breaks, no jams.</td><td>1,500,000</td></tr>
+          <tr><td class="row-label">Practical</td><td>What the team realistically expects in normal operations.</td><td>1,000,000</td></tr>
+          <tr><td class="row-label">Actual</td><td>What actually ran this period.</td><td>800,000</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="prompt">Compute the <strong>predetermined rate per sheet</strong> under each capacity choice.</p>
+
+    <div class="qa-list">
+      <div class="qa-row">
+        <div class="qa-prompt">Rate at <strong>theoretical</strong> capacity</div>
+        <div class="answer">
+          <label>$ / sheet</label>
+          <input type="text" id="r-theo" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-r-theo"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt">Rate at <strong>practical</strong> capacity</div>
+        <div class="answer">
+          <label>$ / sheet</label>
+          <input type="text" id="r-prac" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-r-prac"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt">Rate at <strong>actual</strong> output</div>
+        <div class="answer">
+          <label>$ / sheet</label>
+          <input type="text" id="r-act" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-r-act"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep1()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep1()">Reset</button>
+      <span id="score1-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep2(true)" id="reveal-step2-btn">Skip ahead &rarr;</button>
+    </div>
+
+    <div id="step1-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 2 — Which to defend? ───────── -->
+  <section class="part reveal" id="step2">
+    <div class="part-header">
+      <span class="part-tag explore">Step 2</span>
+      <h2>Which rate would you defend?</h2>
+      <span class="subtitle">tap each option to see what it implies for a 10,000-sheet job</span>
+    </div>
+
+    <div class="setup-box">
+      <p>Same press. Same $120,000. But the rate management quotes &mdash; and the rate the costing system applies to jobs &mdash; depends entirely on which capacity number sits in the denominator. Tap each option below to see the consequences for a typical 10,000-sheet customer job.</p>
+    </div>
+
+    <div class="rate-grid">
+      <div class="rate-card" id="card-theo" onclick="selectRate('theo')">
+        <div class="rate-name">Theoretical</div>
+        <div class="rate-capacity">1,500,000 sheets</div>
+        <div class="rate-value">$0.08</div>
+        <div class="rate-unit">per sheet</div>
+      </div>
+      <div class="rate-card" id="card-prac" onclick="selectRate('prac')">
+        <div class="rate-name">Practical</div>
+        <div class="rate-capacity">1,000,000 sheets</div>
+        <div class="rate-value">$0.12</div>
+        <div class="rate-unit">per sheet</div>
+      </div>
+      <div class="rate-card" id="card-act" onclick="selectRate('act')">
+        <div class="rate-name">Actual</div>
+        <div class="rate-capacity">800,000 sheets</div>
+        <div class="rate-value">$0.15</div>
+        <div class="rate-unit">per sheet</div>
+      </div>
+    </div>
+
+    <div class="sandbox-readout" id="sandbox-readout">
+      <p style="margin-bottom:8px;">Tap any rate above to see what it implies.</p>
+    </div>
+
+    <div class="intuition-card">
+      <div class="intuition-label">Which rate should the controller defend for product costing?</div>
+      <div class="intuition-text">The controller has to pick one rate to apply to every job that runs through the press this year. Which one?</div>
+      <div class="intuition-btns">
+        <button onclick="pickDefend('theo')">Theoretical &mdash; the truest ceiling</button>
+        <button onclick="pickDefend('prac')">Practical &mdash; realistic operations</button>
+        <button onclick="pickDefend('act')">Actual &mdash; matches what really happened</button>
+      </div>
+      <div class="intuition-feedback" id="defend-fb" style="display:none;"></div>
+    </div>
+
+    <div class="footer">
+      <span id="score2-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep3(true)" id="reveal-step3-btn">Skip ahead &rarr;</button>
+    </div>
+
+    <div id="step2-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 3 — Cost of excess capacity ───────── -->
+  <section class="part reveal" id="step3">
+    <div class="part-header">
+      <span class="part-tag solve">Step 3</span>
+      <h2>Cost of excess (idle) capacity</h2>
+      <span class="subtitle">capacity that was paid for but never used</span>
+    </div>
+
+    <div class="setup-box">
+      <p>Peachtree's controller is using <strong>practical capacity</strong> as the costing denominator. This period, actual output came in below practical &mdash; the press sat idle for some portion of its planned capacity. That idle capacity still cost money to keep available; it just didn't get absorbed into any job.</p>
+    </div>
+
+    <p class="prompt">Compute the idle capacity and what it cost the company.</p>
+
+    <div class="qa-list">
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Idle (excess) capacity</strong></div>
+        <div class="answer">
+          <label>sheets</label>
+          <input type="text" id="idle-sheets" inputmode="decimal" placeholder="sheets">
+          <span class="corr-hint" id="h-idle-sheets"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Cost of excess capacity</strong></div>
+        <div class="answer">
+          <label>$</label>
+          <input type="text" id="idle-cost" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-idle-cost"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Cost actually absorbed into jobs</strong></div>
+        <div class="answer">
+          <label>$</label>
+          <input type="text" id="absorbed-cost" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-absorbed-cost"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep3()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep3()">Reset</button>
+      <span id="score3-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep4(true)" id="reveal-step4-btn">Skip ahead &rarr;</button>
+    </div>
+
+    <div id="step3-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 4 — Customer-quote trap ───────── -->
+  <section class="part reveal" id="step4">
+    <div class="part-header">
+      <span class="part-tag solve">Step 4</span>
+      <h2>The customer-quote trap</h2>
+      <span class="subtitle">build a quote on the wrong rate and someone eats the difference</span>
+    </div>
+
+    <div class="setup-box">
+      <p>A new customer is asking Peachtree for a quote on a <strong>100,000-sheet</strong> job. The sales rep wants to use the lowest defensible rate so the quote is competitive. The controller pushes back &mdash; the rate should reflect the long-run cost of capacity, not the spec-sheet ceiling.</p>
+    </div>
+
+    <p class="prompt">Compute the price quote for the 100,000-sheet job at each rate.</p>
+
+    <div class="qa-list">
+      <div class="qa-row">
+        <div class="qa-prompt">Quote at the <strong>theoretical</strong> rate</div>
+        <div class="answer">
+          <label>$</label>
+          <input type="text" id="q-theo" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-q-theo"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt">Quote at the <strong>practical</strong> rate</div>
+        <div class="answer">
+          <label>$</label>
+          <input type="text" id="q-prac" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-q-prac"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt">Quote at the <strong>actual</strong> rate</div>
+        <div class="answer">
+          <label>$</label>
+          <input type="text" id="q-act" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-q-act"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Under-recovery</strong> if Peachtree quotes the theoretical rate but the press runs at practical volume</div>
+        <div class="answer">
+          <label>$</label>
+          <input type="text" id="q-under" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-q-under"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="intuition-card" style="margin-top:14px;">
+      <div class="intuition-label">Who eats the under-recovery?</div>
+      <div class="intuition-text">If the sales rep quotes on the theoretical rate and Peachtree runs at practical volume all year, where does the $4,000 gap show up?</div>
+      <div class="intuition-btns">
+        <button onclick="pickWho('customer')">The customer &mdash; they get re-billed.</button>
+        <button onclick="pickWho('press')">The press &mdash; it absorbs the difference somehow.</button>
+        <button onclick="pickWho('peachtree')">Peachtree &mdash; under-recovered overhead lands in COGS.</button>
+        <button onclick="pickWho('vendor')">The lease vendor &mdash; they take the loss.</button>
+      </div>
+      <div class="intuition-feedback" id="who-fb" style="display:none;"></div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep4()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep4()">Reset</button>
+      <span id="score4-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep5(true)" id="reveal-step5-btn">Skip ahead &rarr;</button>
+    </div>
+
+    <div id="step4-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 5 — Build your own ───────── -->
+  <section class="part reveal" id="step5">
+    <div class="part-header">
+      <span class="part-tag build">Step 5</span>
+      <h2>Build your own &mdash; sandbox</h2>
+      <span class="subtitle">change the inputs, watch the rate and excess cost move</span>
+    </div>
+
+    <div class="setup-box">
+      <p>Peachtree's board is doing strategic planning. They want to see how the practical rate and the cost of excess capacity would change under different assumptions about capacity and demand. Press cost remains <strong>$120,000</strong>.</p>
+    </div>
+
+    <p class="prompt">Three planning scenarios. Work each one out.</p>
+
+    <div class="qa-list">
+      <div class="qa-row">
+        <div class="qa-prompt">If practical capacity rises to <strong>1,200,000 sheets</strong> (actual output unchanged), what is the new practical rate per sheet?</div>
+        <div class="answer">
+          <label>$ / sheet</label>
+          <input type="text" id="b-q1" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-b-q1"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt">Back to baseline (practical 1,000,000, actual 800,000). If <strong>actual output drops to 600,000 sheets</strong>, what is the new cost of excess capacity?</div>
+        <div class="answer">
+          <label>$</label>
+          <input type="text" id="b-q2" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-b-q2"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt">Back to baseline. If the press cost rises to <strong>$150,000</strong> (capacities unchanged), what is the new cost of excess capacity?</div>
+        <div class="answer">
+          <label>$</label>
+          <input type="text" id="b-q3" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-b-q3"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep5()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep5()">Reset answers</button>
+      <span id="score5-out" class="score-out"></span>
+    </div>
+
+    <div id="step5-insight"></div>
+  </section>
+
+</main>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════════════════ */
+function parseNum(s) {
+  if (typeof s !== 'string') return NaN;
+  return parseFloat(s.replace(/[\$,\s]/g, ''));
+}
+function fmtMoney(v, decimals) {
+  var d = (decimals === undefined) ? 0 : decimals;
+  var rounded = Math.round(v * 100) / 100;
+  var sign = rounded < 0 ? '-$' : '$';
+  return sign + Math.abs(rounded).toLocaleString('en-US', {
+    minimumFractionDigits: d,
+    maximumFractionDigits: d
+  });
+}
+function fmtRate(v) {
+  // $0.xxx format for per-sheet rates
+  return '$' + v.toFixed(3);
+}
+function fmtInt(v) {
+  return Math.round(v).toLocaleString('en-US');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   AUDIO
+═══════════════════════════════════════════════════════════════ */
+var audioCtx = null;
+function getAudio() {
+  if (!audioCtx) {
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (AC) audioCtx = new AC();
+  }
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+function playBell() {
+  var ctx = getAudio(); if (!ctx) return;
+  var now = ctx.currentTime;
+  [523.25, 659.25, 783.99].forEach(function(f) {
+    var osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = 'sine'; osc.frequency.value = f;
+    osc.connect(g).connect(ctx.destination);
+    g.gain.setValueAtTime(0, now);
+    g.gain.linearRampToValueAtTime(0.15, now + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 1.6);
+    osc.start(now); osc.stop(now + 1.7);
+  });
+}
+function playHorn() {
+  var ctx = getAudio(); if (!ctx) return;
+  var now = ctx.currentTime;
+  var notes = [
+    { f: 466.16, t: 0.00, d: 0.18 },
+    { f: 440.00, t: 0.20, d: 0.18 },
+    { f: 415.30, t: 0.40, d: 0.55 }
+  ];
+  notes.forEach(function(n) {
+    var osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(n.f, now + n.t);
+    if (n.d > 0.3) osc.frequency.exponentialRampToValueAtTime(n.f * 0.88, now + n.t + n.d);
+    osc.connect(g).connect(ctx.destination);
+    g.gain.setValueAtTime(0, now + n.t);
+    g.gain.linearRampToValueAtTime(0.12, now + n.t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, now + n.t + n.d);
+    osc.start(now + n.t); osc.stop(now + n.t + n.d + 0.05);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   EXPECTED ANSWERS
+═══════════════════════════════════════════════════════════════ */
+var PRESS_COST = 120000;
+var CAP_THEO = 1500000, CAP_PRAC = 1000000, CAP_ACT = 800000;
+var R_THEO = PRESS_COST / CAP_THEO;   // 0.08
+var R_PRAC = PRESS_COST / CAP_PRAC;   // 0.12
+var R_ACT  = PRESS_COST / CAP_ACT;    // 0.15
+
+var IDLE_SHEETS = CAP_PRAC - CAP_ACT;          // 200,000
+var IDLE_COST   = IDLE_SHEETS * R_PRAC;        // 24,000
+var ABSORBED    = CAP_ACT * R_PRAC;            // 96,000
+
+var JOB_SIZE = 100000;
+var Q_THEO = JOB_SIZE * R_THEO;                // 8,000
+var Q_PRAC = JOB_SIZE * R_PRAC;                // 12,000
+var Q_ACT  = JOB_SIZE * R_ACT;                 // 15,000
+var Q_UNDER = Q_PRAC - Q_THEO;                 // 4,000
+
+// Build-step expected answers
+var B_Q1 = PRESS_COST / 1200000;          // $0.10/sheet (rate at 1.2M practical)
+var B_Q2 = (CAP_PRAC - 600000) * R_PRAC;  // 400,000 × $0.12 = $48,000
+var B_Q3 = (CAP_PRAC - CAP_ACT) * (150000 / CAP_PRAC);  // 200,000 × $0.15 = $30,000
+
+/* ═══════════════════════════════════════════════════════════════
+   GENERIC CHECKER
+═══════════════════════════════════════════════════════════════ */
+function checkGroup(spec, scoreId, allCorrectFn) {
+  var correct = 0, total = 0, blanks = 0;
+  spec.forEach(function(f) {
+    var inp  = document.getElementById(f.inputId);
+    var hint = document.getElementById(f.hintId);
+    inp.classList.remove('correct', 'wrong');
+    hint.textContent = '';
+    total++;
+    if (inp.value.trim() === '') { blanks++; return; }
+    var val = parseNum(inp.value);
+    var exp = f.expected;
+    var tol = f.tol;
+    if (!isNaN(val) && Math.abs(val - exp) <= tol) {
+      inp.classList.add('correct');
+      correct++;
+    } else {
+      inp.classList.add('wrong');
+      hint.textContent = '→ ' + f.fmt(exp);
+    }
+  });
+  var out = document.getElementById(scoreId);
+  if (blanks === total) {
+    out.textContent = 'Fill in some answers first.';
+    return false;
+  }
+  out.textContent = correct + ' / ' + total + ' correct' + (blanks ? ' (' + blanks + ' blank)' : '');
+  if (correct === total) { playBell(); if (allCorrectFn) allCorrectFn(); return true; }
+  playHorn();
+  return false;
+}
+function resetGroup(spec, scoreId, extraResetFn) {
+  spec.forEach(function(f) {
+    var inp = document.getElementById(f.inputId);
+    var hint = document.getElementById(f.hintId);
+    inp.value = '';
+    inp.classList.remove('correct', 'wrong');
+    hint.textContent = '';
+  });
+  document.getElementById(scoreId).textContent = '';
+  if (extraResetFn) extraResetFn();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 1
+═══════════════════════════════════════════════════════════════ */
+var STEP1_SPEC = [
+  { inputId:'r-theo', hintId:'h-r-theo', expected:R_THEO, tol:0.003, fmt:fmtRate },
+  { inputId:'r-prac', hintId:'h-r-prac', expected:R_PRAC, tol:0.003, fmt:fmtRate },
+  { inputId:'r-act',  hintId:'h-r-act',  expected:R_ACT,  tol:0.003, fmt:fmtRate }
+];
+function checkStep1() {
+  var fb = document.getElementById('step1-insight'); fb.innerHTML = '';
+  checkGroup(STEP1_SPEC, 'score1-out', function() {
+    revealStep2(false);
+    fb.innerHTML = '<div class="insight success"><strong>$0.08, $0.12, $0.15.</strong> The press is the same, the cost is the same — only the denominator moved. Theoretical undersells the cost; actual overshoots and swings every period. Step 2 unpacks which one a controller should defend.</div>';
+  });
+}
+function resetStep1() { resetGroup(STEP1_SPEC, 'score1-out', function(){ document.getElementById('step1-insight').innerHTML=''; }); }
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 2 — Rate sandbox + which to defend
+═══════════════════════════════════════════════════════════════ */
+var SANDBOX_MSGS = {
+  theo: {
+    rate: 0.08,
+    title: 'Theoretical &mdash; $0.08/sheet',
+    body: 'A 10,000-sheet job would be costed at <strong>$800</strong>. Theoretical capacity assumes the press runs 24/7 with no jams, breaks, or downtime. The denominator is the highest of the three, so the rate per sheet is the lowest.'
+  },
+  prac: {
+    rate: 0.12,
+    title: 'Practical &mdash; $0.12/sheet',
+    body: 'A 10,000-sheet job would be costed at <strong>$1,200</strong>. Practical capacity reflects normal operations &mdash; what management plans to deliver in a typical year, allowing for realistic downtime and demand patterns.'
+  },
+  act: {
+    rate: 0.15,
+    title: 'Actual &mdash; $0.15/sheet',
+    body: 'A 10,000-sheet job would be costed at <strong>$1,500</strong>. Actual capacity is whatever volume actually ran this period &mdash; in this case, a relatively slow stretch. The denominator changes every period, so the rate changes every period.'
+  }
+};
+function selectRate(key) {
+  ['theo','prac','act'].forEach(function(k){
+    document.getElementById('card-' + k).classList.remove('active');
+  });
+  document.getElementById('card-' + key).classList.add('active');
+  var m = SANDBOX_MSGS[key];
+  document.getElementById('sandbox-readout').innerHTML =
+    '<p style="margin-bottom:6px;"><strong>' + m.title + '</strong></p><p>' + m.body + '</p>';
+}
+
+var defendAnswered = false;
+var DEFEND_MSGS = {
+  theo: 'Tempting because it produces the lowest rate &mdash; but theoretical is an unreachable ceiling. Build product costs on it and you systematically under-cost everything; budget variances pile up. Most controllers won\'t defend it.',
+  prac: 'Right. Practical reflects normal operations &mdash; the rate stays stable period-to-period, products absorb a realistic share of capacity cost, and idle capacity is named explicitly rather than buried inside the rate. It\'s the textbook answer and the operational answer.',
+  act:  'Avoid this for product costing. The rate swings every period: in a slow quarter the rate spikes, making products look more expensive, which can drive further volume loss. Practical breaks that feedback loop by holding the denominator constant.'
+};
+function pickDefend(choice) {
+  if (defendAnswered) return;
+  defendAnswered = true;
+  var fbEl = document.getElementById('defend-fb');
+  document.querySelectorAll('#step2 .intuition-btns button').forEach(function(btn){
+    var text = btn.textContent.trim().toLowerCase();
+    var thisChoice = text.indexOf('theoretical') >= 0 ? 'theo'
+                   : text.indexOf('practical') >= 0 ? 'prac'
+                   : 'act';
+    if (thisChoice === choice) btn.classList.add('selected');
+    btn.classList.add('locked');
+  });
+  fbEl.style.display = 'block';
+  fbEl.innerHTML = DEFEND_MSGS[choice];
+
+  if (choice === 'prac') {
+    document.getElementById('score2-out').textContent = '✓ correct';
+    playBell();
+  } else {
+    document.getElementById('score2-out').textContent = 'see explanation';
+    playHorn();
+  }
+  revealStep3(false);
+  document.getElementById('step2-insight').innerHTML =
+    '<div class="insight"><strong>The rate-choice decision lives or dies on stability.</strong> Practical capacity gives a rate that holds steady across periods, doesn\'t spike when demand dips, and forces management to put a dollar value on idle capacity (Step 3) rather than hide it inside an inflated rate.</div>';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 3
+═══════════════════════════════════════════════════════════════ */
+var STEP3_SPEC = [
+  { inputId:'idle-sheets',   hintId:'h-idle-sheets',   expected:IDLE_SHEETS, tol:50,   fmt:function(v){return fmtInt(v)+' sheets';} },
+  { inputId:'idle-cost',     hintId:'h-idle-cost',     expected:IDLE_COST,   tol:5,    fmt:function(v){return fmtMoney(v,0);} },
+  { inputId:'absorbed-cost', hintId:'h-absorbed-cost', expected:ABSORBED,    tol:5,    fmt:function(v){return fmtMoney(v,0);} }
+];
+function checkStep3() {
+  var fb = document.getElementById('step3-insight'); fb.innerHTML = '';
+  checkGroup(STEP3_SPEC, 'score3-out', function() {
+    revealStep4(false);
+    fb.innerHTML = '<div class="insight success"><strong>$24,000 of idle capacity, $96,000 absorbed.</strong> The two add to $120,000 — Peachtree\'s full press cost. Practical-capacity rates do this on purpose: they keep absorbed cost reflective of normal operations, and they put a dollar value on what management <em>didn\'t</em> use. That number forces a question: can capacity be shrunk, or do we need more volume?</div>';
+  });
+}
+function resetStep3() { resetGroup(STEP3_SPEC, 'score3-out', function(){ document.getElementById('step3-insight').innerHTML=''; }); }
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 4 — Customer quote trap
+═══════════════════════════════════════════════════════════════ */
+var STEP4_SPEC = [
+  { inputId:'q-theo',  hintId:'h-q-theo',  expected:Q_THEO,  tol:5, fmt:function(v){return fmtMoney(v,0);} },
+  { inputId:'q-prac',  hintId:'h-q-prac',  expected:Q_PRAC,  tol:5, fmt:function(v){return fmtMoney(v,0);} },
+  { inputId:'q-act',   hintId:'h-q-act',   expected:Q_ACT,   tol:5, fmt:function(v){return fmtMoney(v,0);} },
+  { inputId:'q-under', hintId:'h-q-under', expected:Q_UNDER, tol:5, fmt:function(v){return fmtMoney(v,0);} }
+];
+
+var whoAnswered = false;
+var WHO_MSGS = {
+  customer:  'No — the quote\'s already signed. Peachtree can\'t go back and re-bill on a different rate. Under-recovery falls inside Peachtree.',
+  press:     'A bit too literal. The press is an asset — it doesn\'t absorb anything. The $4,000 is unrecovered overhead that lands in Peachtree\'s income statement.',
+  peachtree: 'Right. The quote\'s based on $0.08/sheet, but Peachtree\'s actual overhead cost per sheet at practical volume is $0.12. The gap — $4,000 on this job — is under-applied overhead. At year-end, that under-applied amount typically flows to COGS, eroding gross margin.',
+  vendor:    'No — the lease vendor was paid regardless of how Peachtree priced its quotes. The mismatch sits inside Peachtree.'
+};
+function pickWho(choice) {
+  if (whoAnswered) return;
+  whoAnswered = true;
+  var fbEl = document.getElementById('who-fb');
+  document.querySelectorAll('#step4 .intuition-btns button').forEach(function(btn){
+    var text = btn.textContent.trim().toLowerCase();
+    var thisChoice = text.indexOf('customer') >= 0 ? 'customer'
+                   : text.indexOf('press ') >= 0 || text.indexOf('press —') >= 0 ? 'press'
+                   : text.indexOf('peachtree') >= 0 ? 'peachtree'
+                   : 'vendor';
+    if (thisChoice === choice) btn.classList.add('selected');
+    btn.classList.add('locked');
+  });
+  fbEl.style.display = 'block';
+  fbEl.textContent = WHO_MSGS[choice];
+}
+
+function checkStep4() {
+  var fb = document.getElementById('step4-insight'); fb.innerHTML = '';
+  checkGroup(STEP4_SPEC, 'score4-out', function() {
+    revealStep5(false);
+    fb.innerHTML = '<div class="insight success"><strong>$8,000 / $12,000 / $15,000 — and a $4,000 under-recovery if Peachtree quotes theoretical.</strong> One cost, three rates, three different prices to the customer. The under-recovery isn\'t a customer problem — it\'s Peachtree\'s. Step 5 lets you push the inputs around and see how the picture changes.</div>';
+  });
+}
+function resetStep4() { resetGroup(STEP4_SPEC, 'score4-out', function(){ document.getElementById('step4-insight').innerHTML=''; }); }
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 5 — Build sandbox
+═══════════════════════════════════════════════════════════════ */
+var STEP5_SPEC = [
+  { inputId:'b-q1', hintId:'h-b-q1', expected:B_Q1, tol:0.005, fmt:fmtRate },
+  { inputId:'b-q2', hintId:'h-b-q2', expected:B_Q2, tol:50,    fmt:function(v){return fmtMoney(v,0);} },
+  { inputId:'b-q3', hintId:'h-b-q3', expected:B_Q3, tol:50,    fmt:function(v){return fmtMoney(v,0);} }
+];
+function checkStep5() {
+  var fb = document.getElementById('step5-insight'); fb.innerHTML = '';
+  checkGroup(STEP5_SPEC, 'score5-out', function() {
+    fb.innerHTML = '<div class="insight success"><strong>The denominator drives everything.</strong> Bigger practical capacity → lower rate, more idle. Lower actual output (with practical fixed) → bigger cost of excess. Shrink practical to match actual and idle cost goes to zero — but the press now has no slack for any growth in demand. The choice of capacity number is a real strategic decision, not just a costing convention.</div>';
+  });
+}
+function resetStep5() { resetGroup(STEP5_SPEC, 'score5-out', function(){ document.getElementById('step5-insight').innerHTML=''; }); }
+
+/* ═══════════════════════════════════════════════════════════════
+   REVEAL STEPS
+═══════════════════════════════════════════════════════════════ */
+var revealedSteps = new Set();
+function revealStep(stepNum, scroll) {
+  var el = document.getElementById('step' + stepNum);
+  if (!revealedSteps.has(stepNum)) {
+    el.classList.add('show');
+    revealedSteps.add(stepNum);
+    var btn = document.getElementById('reveal-step' + stepNum + '-btn');
+    if (btn) btn.style.display = 'none';
+  }
+  if (scroll) setTimeout(function() { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 60);
+}
+function revealStep2(scroll) { revealStep(2, scroll); }
+function revealStep3(scroll) { revealStep(3, scroll); }
+function revealStep4(scroll) { revealStep(4, scroll); }
+function revealStep5(scroll) { revealStep(5, scroll); }
+
+/* ═══════════════════════════════════════════════════════════════
+   QR / SHARE
+═══════════════════════════════════════════════════════════════ */
+function showQR() {
+  var url = location.href;
+  document.getElementById('qr-url').textContent = url;
+  var qrEl = document.getElementById('qr-code');
+  qrEl.innerHTML = '';
+  if (window.QRCode) {
+    new QRCode(qrEl, { text: url, width: 180, height: 180, colorDark: '#1a2744', colorLight: '#ffffff' });
+  }
+  document.getElementById('qr-overlay').classList.add('show');
+}
+function hideQR(ev) {
+  if (ev && ev.target.id !== 'qr-overlay' && ev.target.className !== 'qr-close') return;
+  document.getElementById('qr-overlay').classList.remove('show');
+}
+</script>
+
+</body>
+</html>
