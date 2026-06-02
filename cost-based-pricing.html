@@ -594,19 +594,19 @@
 
     <div class="qa-list">
       <div class="qa-row">
-        <div class="qa-prompt"><strong>Maximum total cost</strong> per bag the firm can absorb and still earn the $60,000 profit</div>
+        <div class="qa-prompt"><strong>Maximum total operating costs</strong> the firm can absorb (across the entire business) and still earn the $60,000 profit</div>
         <div class="answer">
-          <label>$ / bag</label>
-          <input type="text" id="s5-target" inputmode="decimal" placeholder="$">
-          <span class="corr-hint" id="h-s5-target"></span>
+          <label>$ (total)</label>
+          <input type="text" id="s5-total" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-s5-total"></span>
         </div>
       </div>
       <div class="qa-row">
-        <div class="qa-prompt"><strong>Cost reduction</strong> needed per bag<small>vs. Piedmont's current total cost of $7.60/bag</small></div>
+        <div class="qa-prompt">Management says any cost cuts have to come out of <strong>production</strong> &mdash; selling &amp; admin stays at current levels. What is the <strong>maximum product cost per bag</strong> (full mfg) the firm can incur?<small>current full mfg cost is $6.60/bag; total S&amp;A is $50,000</small></div>
         <div class="answer">
           <label>$ / bag</label>
-          <input type="text" id="s5-cut" inputmode="decimal" placeholder="$">
-          <span class="corr-hint" id="h-s5-cut"></span>
+          <input type="text" id="s5-prodcost" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-s5-prodcost"></span>
         </div>
       </div>
     </div>
@@ -772,8 +772,11 @@ var MARKUP_DM_PCT   = ((TARG_PRICE - DM)            / DM)            * 100; // 1
 
 // Step 5 — target-cost flip
 var MARKET_PRICE   = 7.50;
-var MAX_COST_UNIT  = (MARKET_PRICE * V - PROFIT) / V;             // 6.30
-var CUT_PER_UNIT   = (TCOST_TOT / V) - MAX_COST_UNIT;             // 1.30
+var MAX_TOTAL_OPS  = MARKET_PRICE * V - PROFIT;                   // 315,000 total $
+var SGA_TOT        = (VSA * V) + FSA_TOT;                         // 50,000 total $
+var MAX_PROD_TOT   = MAX_TOTAL_OPS - SGA_TOT;                     // 265,000
+var MAX_PROD_UNIT  = MAX_PROD_TOT / V;                            // 5.30 per bag
+var CURR_FULLMFG_UNIT = FULL_MFG_UNIT;                            // 6.60 per bag
 
 // Step 6 — build scenarios
 var S6_A = (TCOST_TOT + 90000) / V;                                // 9.40
@@ -891,14 +894,14 @@ function resetStep4() { resetGroup(S4, 'score4-out', function(){ document.getEle
    STEP 5 — Target-cost flip
 ═══════════════════════════════════════════════════════════════ */
 var S5 = [
-  { inputId:'s5-target', hintId:'h-s5-target', expected:MAX_COST_UNIT, tol:0.05, fmt:function(v){return fmtMoney(v,2);} },
-  { inputId:'s5-cut',    hintId:'h-s5-cut',    expected:CUT_PER_UNIT,  tol:0.05, fmt:function(v){return fmtMoney(v,2);} }
+  { inputId:'s5-total',    hintId:'h-s5-total',    expected:MAX_TOTAL_OPS, tol:50,   fmt:function(v){return fmtMoney(v,0);} },
+  { inputId:'s5-prodcost', hintId:'h-s5-prodcost', expected:MAX_PROD_UNIT, tol:0.05, fmt:function(v){return fmtMoney(v,2);} }
 ];
 function checkStep5() {
   var fb = document.getElementById('step5-insight'); fb.innerHTML = '';
   checkGroup(S5, 'score5-out', function() {
     revealStep6(false);
-    fb.innerHTML = '<div class="insight success"><strong>Target cost = $6.30/bag, gap = $1.30/bag.</strong> You just inverted the problem. Cost-based pricing starts from cost and adds a markup to find price. The market just imposed the reverse: price is fixed at $7.50, profit target is fixed at $60,000, and Piedmont has to redesign its cost structure to fit. That &mdash; <em>price-led, customer-driven, cost as the unknown</em> &mdash; is the philosophy of target costing.</div>';
+    fb.innerHTML = '<div class="insight success"><strong>$315,000 total operating ceiling &rarr; strip out $50,000 of S&amp;A &rarr; $265,000 left for production &rarr; $5.30/bag, a $1.30 cut from the current $6.60.</strong> You just inverted the problem: price is fixed by the market, profit is fixed by the ROI target, and the cost structure has to redesign itself to fit. <em>Price-led, customer-driven, cost as the unknown</em> &mdash; that&rsquo;s target costing.</div>';
   });
 }
 function resetStep5() { resetGroup(S5, 'score5-out', function(){ document.getElementById('step5-insight').innerHTML=''; }); }
