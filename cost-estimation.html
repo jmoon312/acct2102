@@ -1244,14 +1244,14 @@ function checkStep1() {
     vcEl.classList.add('correct');
   } else {
     vcEl.classList.add('wrong');
-    vcHint.textContent = fmtMoney(HL_VC) + '/dozen';
+    vcHint.textContent = '';
     allOk = false;
   }
   if (Math.abs(fcGuess - HL_FC) <= 5) {
     fcEl.classList.add('correct');
   } else {
     fcEl.classList.add('wrong');
-    fcHint.textContent = fmtMoney(HL_FC);
+    fcHint.textContent = '';
     allOk = false;
   }
 

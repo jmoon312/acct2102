@@ -573,7 +573,7 @@ function render() {
     if (checked) {
       const ok = assignments[l] === correct[l];
       item.className = 'sc-item ' + (ok ? 'correct' : 'wrong');
-      res.textContent = ok ? '✓ Correct' : '✗  → Graph ' + correct[l];
+      res.textContent = ok ? '✓ Correct' : '';
       res.style.color = ok ? '#2d6a1f' : '#9b2020';
     } else {
       res.textContent = '';

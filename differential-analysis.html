@@ -756,7 +756,6 @@
       <button class="check-btn" onclick="checkStep1()">Check answers</button>
       <button class="reset-btn" onclick="resetStep1()">Reset</button>
       <span id="score1-out" class="score-out"></span>
-      <button class="reveal-link" onclick="revealStep2(true)" id="reveal-step2-btn">Skip ahead →</button>
     </div>
   </section>
 
@@ -778,7 +777,6 @@
       <button class="check-btn" onclick="checkStep2()">Check answers</button>
       <button class="reset-btn" onclick="resetStep2()">Reset</button>
       <span id="score2-out" class="score-out"></span>
-      <button class="reveal-link" onclick="revealStep3(true)" id="reveal-step3-btn">Skip ahead →</button>
     </div>
   </section>
 
@@ -793,7 +791,6 @@
     <div class="single-solve">
       <div class="solve-prompt">
         What is the <strong>net differential effect</strong> on HP's monthly profit from keeping the division and accepting the special order?
-        <small>Positive means keeping is better; negative means discontinuing is better.</small>
       </div>
       <div class="answer">
         <label>Net differential</label>
@@ -818,7 +815,6 @@
       <button class="check-btn" onclick="checkStep3()">Check answers</button>
       <button class="reset-btn" onclick="resetStep3()">Reset</button>
       <span id="score3-out" class="score-out"></span>
-      <button class="reveal-link" onclick="revealStep4(true)" id="reveal-step4-btn">Skip ahead →</button>
     </div>
 
     <div id="step3-insight"></div>
@@ -881,7 +877,7 @@
 
     <div class="build-solve">
       <div class="solve-card">
-        <label>Net differential <small>+ means keep is better</small></label>
+        <label>Net differential</label>
         <input type="text" id="bv-net" inputmode="decimal" placeholder="$">
       </div>
       <div class="solve-card">
@@ -909,16 +905,16 @@
    DATA
 ═══════════════════════════════════════════════════════════════ */
 const ITEMS = [
-  { id: 'reg-rev',   label: 'Sales revenue from regular customers',    detail: '4,000 units × $20 = $80,000/month',    relevant: true,  diff:  80000 },
-  { id: 'reg-vprod', label: 'Variable production costs (regular)',      detail: '4,000 × $9 (DM + DL + MOH)',           relevant: true,  diff: -36000 },
-  { id: 'reg-vsa',   label: 'Variable selling & admin costs (regular)', detail: '4,000 × $1',                           relevant: true,  diff:  -4000 },
-  { id: 'avoid-fc',  label: 'Avoidable fixed costs',                    detail: 'Supervisor, lease, software — $25,000', relevant: true,  diff: -25000 },
-  { id: 'alloc-oh',  label: 'Allocated corporate overhead',             detail: '$20,000/month',                         relevant: false, diff: 0 },
-  { id: 'equip',     label: 'Equipment purchased last year',            detail: 'Original cost: $100,000',               relevant: false, diff: 0 },
-  { id: 'so-rev',    label: 'Special order revenue',                    detail: '1,000 units × $15',                     relevant: true,  diff:  15000 },
-  { id: 'so-vprod',  label: 'Special order variable production costs',  detail: '1,000 × $9 (DM + DL + MOH)',            relevant: true,  diff:  -9000 },
-  { id: 'so-qc',     label: 'Temporary QC inspector',                   detail: '$500/month for special order',           relevant: true,  diff:   -500 },
-  { id: 'deprec',    label: 'Depreciation on division equipment',       detail: '$4,000/month',                          relevant: false, diff: 0 }
+  { id: 'reg-rev',   label: 'Sales revenue from regular customers',    detail: 'Monthly sales to existing customers',   relevant: true,  diff:  80000 },
+  { id: 'reg-vprod', label: 'Variable production costs (regular)',      detail: 'DM + DL + variable MOH on regular units', relevant: true,  diff: -36000 },
+  { id: 'reg-vsa',   label: 'Variable selling & admin costs (regular)', detail: 'Variable S&A on regular units',         relevant: true,  diff:  -4000 },
+  { id: 'avoid-fc',  label: 'Avoidable fixed costs',                    detail: 'Supervisor, equipment lease, software',  relevant: true,  diff: -25000 },
+  { id: 'alloc-oh',  label: 'Allocated corporate overhead',             detail: 'Share of HQ costs assigned to the division', relevant: false, diff: 0 },
+  { id: 'equip',     label: 'Equipment purchased last year',            detail: 'Bought last year for division use',     relevant: false, diff: 0 },
+  { id: 'so-rev',    label: 'Special order revenue',                    detail: 'Revenue from the TechRetailer order',   relevant: true,  diff:  15000 },
+  { id: 'so-vprod',  label: 'Special order variable production costs',  detail: 'DM + DL + variable MOH on the special order', relevant: true,  diff:  -9000 },
+  { id: 'so-qc',     label: 'Temporary QC inspector',                   detail: 'Needed only if the special order is accepted', relevant: true,  diff:   -500 },
+  { id: 'deprec',    label: 'Depreciation on division equipment',       detail: 'Monthly depreciation charge',           relevant: false, diff: 0 }
 ];
 const NET_DIFF = ITEMS.reduce((s, it) => s + (it.relevant ? it.diff : 0), 0); // 20,500
 const CORRECT_DECISION = 'keep';
@@ -1047,15 +1043,8 @@ function checkStep1() {
       correct++;
     } else {
       row.classList.add('row-wrong');
-      if (item.relevant) {
-        corr.textContent = 'This is relevant — it differs between the two alternatives.';
-        corr.classList.add('show-yes');
-      } else {
-        corr.textContent = item.id === 'equip' || item.id === 'deprec'
-          ? 'Sunk cost — this doesn\'t change regardless of the decision.'
-          : 'This cost is allocated and won\'t change if the division is discontinued.';
-        corr.classList.add('show-no');
-      }
+      corr.textContent = '';
+      corr.classList.add('show-no');
     }
   });
 
@@ -1141,7 +1130,7 @@ function checkStep2() {
       correct++;
     } else {
       inp.classList.add('wrong');
-      hint.textContent = '\u2192 ' + fmtMoneySigned(item.diff);
+      hint.textContent = '';
     }
   });
 
@@ -1153,10 +1142,11 @@ function checkStep2() {
   out.textContent = correct + ' / ' + total + ' correct' + (blanks ? ' (' + blanks + ' blank)' : '');
   if (correct === total) {
     playBell();
-    revealStep3(false);
   } else {
     playHorn();
   }
+  // Reveal Step 3 after first check attempt so students aren't stuck if they get one wrong
+  revealStep3(correct === total);
 }
 
 function resetStep2() {
@@ -1203,7 +1193,7 @@ function checkStep3() {
       correct++;
     } else {
       inp.classList.add('wrong');
-      hint.textContent = '\u2192 ' + fmtMoneySigned(NET_DIFF);
+      hint.textContent = '';
     }
   }
 
@@ -1228,14 +1218,12 @@ function checkStep3() {
         <strong>The $5,000 "loss" is misleading.</strong> $20,000 of allocated overhead stays whether ProConnect exists or not. The division actually contributes $15,000 toward covering that overhead — and the special order adds another $5,500. Shutting it down would make HP ${fmtMoney(Math.abs(NET_DIFF))} worse off each month.
       </div>
     `;
-    revealStep4(false);
   } else {
     out.textContent = correct + ' / ' + parts + ' correct';
     playHorn();
-    if (step3Decision !== null && step3Decision !== CORRECT_DECISION) {
-      fb.innerHTML = `<div class="insight">Think about which costs actually disappear if the division shuts down. Does the allocated overhead go away?</div>`;
-    }
   }
+  // Reveal Step 4 after first check attempt so students can move on
+  revealStep4(correct === parts && parts === 2);
 }
 
 function resetStep3() {
@@ -1337,7 +1325,7 @@ function checkStep4() {
       parts.push('\u2714 Net differential');
     } else {
       netEl.classList.add('wrong');
-      parts.push('\u2718 Net differential (actual: ' + fmtMoneySigned(actual) + ')');
+      parts.push('\u2718 Net differential');
       allCorrect = false;
     }
   }
@@ -1346,7 +1334,7 @@ function checkStep4() {
     if (bvDecision === correctDecision) {
       parts.push('\u2714 Decision');
     } else {
-      parts.push('\u2718 Decision (should ' + (correctDecision === 'keep' ? 'keep' : 'discontinue') + ')');
+      parts.push('\u2718 Decision');
       allCorrect = false;
     }
   }
@@ -1358,12 +1346,11 @@ function checkStep4() {
 
   out.textContent = parts.join('  \u00b7  ');
 
-  const summaryLine = `Net differential: <strong>${fmtMoneySigned(actual)}</strong> \u2014 HP should <strong>${correctDecision === 'keep' ? 'keep the division' : 'discontinue'}</strong>.`;
   if (allCorrect) {
+    const summaryLine = `Net differential: <strong>${fmtMoneySigned(actual)}</strong> \u2014 HP should <strong>${correctDecision === 'keep' ? 'keep the division' : 'discontinue'}</strong>.`;
     fb.innerHTML = `<div class="insight success">${summaryLine}</div>`;
     playBell();
   } else {
-    fb.innerHTML = `<div class="insight">${summaryLine}</div>`;
     playHorn();
   }
 }

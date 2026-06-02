@@ -3,10 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Activity-Based Costing — Full Process</title>
+<title>Cost-Based Pricing &mdash; Piedmont Roasting</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
-  /* ── Reset & base ── */
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -15,7 +14,6 @@
     min-height: 100vh;
   }
 
-  /* ── Header ── */
   header {
     background: #1a2744;
     color: #fff;
@@ -74,7 +72,6 @@
     cursor: pointer; font-family: inherit;
   }
 
-  /* ── Main layout ── */
   main {
     max-width: 920px;
     margin: 28px auto;
@@ -141,53 +138,56 @@
   }
   .prompt strong { font-weight: 700; }
 
-  .prod-table {
+  .cost-table {
     width: 100%;
     border-collapse: separate;
     border-spacing: 0;
-    margin-bottom: 6px;
+    margin-top: 10px;
     font-variant-numeric: tabular-nums;
   }
-  .prod-table thead th {
+  .cost-table thead th {
     background: #fde9c8;
     color: #1a2744;
     font-size: 12.5px;
     font-weight: 700;
     text-align: center;
-    padding: 10px 8px;
+    padding: 9px 8px;
     border-bottom: 2px solid #f0c674;
   }
-  .prod-table thead th:first-child {
+  .cost-table thead th:first-child {
     border-top-left-radius: 8px;
     text-align: left;
     padding-left: 14px;
   }
-  .prod-table thead th:last-child  { border-top-right-radius: 8px; }
-  .prod-table tbody td {
-    background: #f0f5fa;
-    padding: 9px 8px;
-    text-align: center;
-    border-bottom: 1px solid #e1eaf3;
+  .cost-table thead th:last-child { border-top-right-radius: 8px; }
+  .cost-table tbody td {
+    background: #fff;
+    padding: 8px 8px;
+    text-align: right;
+    border-bottom: 1px solid #f0e9d6;
+    font-size: 13px;
   }
-  .prod-table tbody td.row-label {
+  .cost-table tbody td.row-label {
     text-align: left;
     padding-left: 14px;
     font-weight: 600;
     color: #1a2744;
   }
-  .prod-table tbody td.given {
-    color: #64748b;
-    font-style: italic;
+  .cost-table tbody td.row-sub {
+    text-align: left;
+    padding-left: 28px;
+    color: #475569;
+    font-weight: 400;
   }
-  .prod-table tbody tr:last-child td:first-child { border-bottom-left-radius: 8px; }
-  .prod-table tbody tr:last-child td:last-child  { border-bottom-right-radius: 8px; }
-  .prod-table tbody tr.totals-row td {
-    background: #e9eef7;
+  .cost-table tbody tr.subtotal td {
+    background: #f8f6f0;
     font-weight: 700;
-    border-top: 2px solid #cbd5e1;
+    color: #1a2744;
+    border-top: 1px solid #e6dfd0;
   }
+  .cost-table tbody tr:last-child td:first-child { border-bottom-left-radius: 8px; }
+  .cost-table tbody tr:last-child td:last-child  { border-bottom-right-radius: 8px; }
 
-  /* ── QA layout ── */
   .qa-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 4px; }
   .qa-row {
     display: grid;
@@ -256,7 +256,6 @@
     min-height: 14px;
   }
 
-  /* Reveal */
   .reveal { display: none; animation: slideIn 0.4s ease-out; }
   .reveal.show { display: block; }
   @keyframes slideIn {
@@ -282,6 +281,12 @@
     border-left-color: #5a9e3a;
   }
   .insight.success strong { color: #2d6a1f; }
+  .insight.warn {
+    background: #fff7e6;
+    border-color: #f5d491;
+    border-left-color: #d97706;
+  }
+  .insight.warn strong { color: #9a3412; }
 
   .footer {
     margin-top: 16px;
@@ -324,16 +329,11 @@
   }
   .score-out:empty { display: none; }
 
-  /* Comparison highlight (Step 4) */
-  .compare-table tbody td.method-cell { font-weight: 600; color: #1a2744; }
-  .compare-table tbody tr.abc-row td { background: #f0f9e8; }
-  .compare-table tbody tr.abc-row td.row-label { color: #2d6a1f; }
-
   @media (max-width: 700px) {
     header { padding: 14px 16px; }
     main { padding: 0 12px 40px; }
     .part { padding: 18px 14px 18px; }
-    .prod-table thead th, .prod-table tbody td { font-size: 11px; padding: 6px 4px; }
+    .cost-table thead th, .cost-table tbody td { font-size: 11.5px; padding: 6px 6px; }
     .qa-row { grid-template-columns: 1fr; gap: 8px; }
   }
 </style>
@@ -342,7 +342,7 @@
 
 <header>
   <div class="header-left">
-    <h1>Activity-Based Costing &mdash; Full Process</h1>
+    <h1>Cost-Based Pricing &mdash; Piedmont Roasting</h1>
   </div>
   <button class="qr-btn" onclick="showQR()">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="2" height="2"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="19" width="3" height="2"/><rect x="19" y="19" width="2" height="2"/></svg>
@@ -362,63 +362,53 @@
 
 <main>
 
-  <!-- ───────── STEP 1 — Compute activity rates ───────── -->
+  <!-- ───────── STEP 1 — Target-profit price ───────── -->
   <section class="part">
     <div class="part-header">
       <span class="part-tag practice">Step 1</span>
-      <h2>Compute activity rates</h2>
-      <span class="subtitle">six activity pools, one rate each</span>
+      <h2>What price covers cost and earns the target profit?</h2>
+      <span class="subtitle">work the profit equation backward to a per-bag price</span>
     </div>
 
     <div class="setup-box">
-      <p>Peach Lab Coffee's controller is moving from the two-department system to <strong>activity-based costing</strong>. The same $120,000 of total overhead is now broken into six activity pools, each with its own cost driver:</p>
-
-      <table class="prod-table" style="margin-top:10px;">
+      <p><strong>Piedmont Roasting Co.</strong> roasts and packages 12-oz bags of specialty coffee for wholesale caf&eacute;s around the Southeast. Total invested assets sit at <strong>$400,000</strong>. Management wants an annual return of <strong>15%</strong> on those assets. Next year's planned volume is <strong>50,000 bags</strong>.</p>
+      <p>The cost structure is laid out below.</p>
+      <table class="cost-table">
         <thead>
           <tr>
-            <th>Activity pool</th>
-            <th>Annual cost</th>
-            <th>Cost driver</th>
-            <th>Total driver activity</th>
+            <th>Cost line</th>
+            <th>Per bag</th>
+            <th>Total at 50,000 bags</th>
           </tr>
         </thead>
         <tbody>
-          <tr><td class="row-label">Roasting machine time</td><td>$70,000</td><td>Machine hours</td><td>4,000</td></tr>
-          <tr><td class="row-label">Quality testing</td><td>$15,000</td><td>Number of tests</td><td>30</td></tr>
-          <tr><td class="row-label">Packaging labor</td><td>$12,000</td><td>Packaging labor hours</td><td>4,000</td></tr>
-          <tr><td class="row-label">Setup / changeover</td><td>$8,000</td><td>Number of setups</td><td>40</td></tr>
-          <tr><td class="row-label">Inventory storage</td><td>$10,000</td><td>Cubic feet stored</td><td>5,000</td></tr>
-          <tr><td class="row-label">Order processing</td><td>$5,000</td><td>Number of orders</td><td>250</td></tr>
-          <tr class="totals-row"><td class="row-label">Total</td><td>$120,000</td><td></td><td></td></tr>
+          <tr><td class="row-label">Direct materials (green beans)</td><td>$3.00</td><td>$150,000</td></tr>
+          <tr><td class="row-label">Direct labor (roasting, packaging)</td><td>$1.20</td><td>$60,000</td></tr>
+          <tr><td class="row-label">Variable manufacturing overhead</td><td>$0.80</td><td>$40,000</td></tr>
+          <tr><td class="row-label">Variable selling &amp; admin</td><td>$0.40</td><td>$20,000</td></tr>
+          <tr><td class="row-label">Fixed manufacturing overhead</td><td>&mdash;</td><td>$80,000</td></tr>
+          <tr><td class="row-label">Fixed selling &amp; admin</td><td>&mdash;</td><td>$30,000</td></tr>
         </tbody>
       </table>
     </div>
 
-    <p class="prompt">Compute the activity rate for each pool below. (Packaging $3/LH, storage $2/cu ft, and order processing $20/order are given for you and used later.)</p>
+    <p class="prompt">Use the basic profit equation to find the price per bag that hits Piedmont's targets.</p>
 
     <div class="qa-list">
       <div class="qa-row">
-        <div class="qa-prompt"><strong>Roasting</strong> activity rate</div>
+        <div class="qa-prompt"><strong>Desired annual profit</strong></div>
         <div class="answer">
-          <label>$ per MH</label>
-          <input type="text" id="s1-roast" inputmode="decimal" placeholder="$">
-          <span class="corr-hint" id="hint-s1-roast"></span>
+          <label>$</label>
+          <input type="text" id="s1-profit" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-s1-profit"></span>
         </div>
       </div>
       <div class="qa-row">
-        <div class="qa-prompt"><strong>Quality testing</strong> activity rate</div>
+        <div class="qa-prompt"><strong>Target-profit price</strong> per bag</div>
         <div class="answer">
-          <label>$ per test</label>
-          <input type="text" id="s1-test" inputmode="decimal" placeholder="$">
-          <span class="corr-hint" id="hint-s1-test"></span>
-        </div>
-      </div>
-      <div class="qa-row">
-        <div class="qa-prompt"><strong>Setup / changeover</strong> activity rate</div>
-        <div class="answer">
-          <label>$ per setup</label>
-          <input type="text" id="s1-setup" inputmode="decimal" placeholder="$">
-          <span class="corr-hint" id="hint-s1-setup"></span>
+          <label>$ / bag</label>
+          <input type="text" id="s1-price" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-s1-price"></span>
         </div>
       </div>
     </div>
@@ -433,53 +423,44 @@
     <div id="step1-insight"></div>
   </section>
 
-  <!-- ───────── STEP 2 — Apply ABC to CBC ───────── -->
+  <!-- ───────── STEP 2 — Markup on full mfg ───────── -->
   <section class="part reveal" id="step2">
     <div class="part-header">
       <span class="part-tag explore">Step 2</span>
-      <h2>Apply ABC to Cold Brew Concentrate</h2>
-      <span class="subtitle">trace each activity to the product</span>
+      <h2>Markup on full manufacturing cost</h2>
+      <span class="subtitle">a price built up from the manufactured-cost base</span>
     </div>
 
     <div class="setup-box">
-      <p>Cold Brew Concentrate is roasted in long runs (few changeovers) and sold to about 100 large wholesale orders to local cafes. It's kegged, so it takes more storage space. Here's how its 1,000 annual batches consume each activity:</p>
-      <table class="prod-table" style="margin-top:10px;">
-        <thead>
-          <tr>
-            <th>Activity</th>
-            <th>CBC driver usage</th>
-            <th>Rate</th>
-            <th>Cost</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr><td class="row-label">Roasting</td><td>3,000 MH</td><td>$17.50 / MH</td><td class="given">$52,500</td></tr>
-          <tr><td class="row-label">Quality testing</td><td>20 tests</td><td>$500 / test</td><td class="given">$10,000</td></tr>
-          <tr><td class="row-label">Packaging</td><td>1,000 LH</td><td>$3 / LH</td><td class="given">$3,000</td></tr>
-          <tr><td class="row-label">Setup / changeover</td><td>10 setups</td><td>$200 / setup</td><td class="given">$2,000</td></tr>
-          <tr><td class="row-label">Inventory storage</td><td>3,000 cu ft</td><td>$2 / cu ft</td><td class="given">$6,000</td></tr>
-          <tr><td class="row-label">Order processing</td><td>100 orders</td><td>$20 / order</td><td class="given">$2,000</td></tr>
-        </tbody>
-      </table>
+      <p>Most product-cost systems start with <strong>full manufacturing cost</strong> &mdash; direct materials, direct labor, variable mfg overhead, and an allocated share of fixed mfg overhead. Selling and admin costs (plus the profit target) get layered on through the markup.</p>
+      <p>Allocated fixed mfg overhead per bag at 50,000 bags = $80,000 &divide; 50,000 = <strong>$1.60</strong>.</p>
     </div>
 
-    <p class="prompt">Sum the activity costs above and compute per-batch overhead.</p>
+    <p class="prompt">Compute the full manufacturing cost per bag, then the markup % needed so the price recovers all unassigned costs and the target profit.</p>
 
     <div class="qa-list">
       <div class="qa-row">
-        <div class="qa-prompt"><strong>Total ABC overhead</strong> assigned to CBC, annually</div>
+        <div class="qa-prompt"><strong>Full manufacturing cost</strong> per bag</div>
         <div class="answer">
-          <label>$ / year</label>
-          <input type="text" id="s2-cbc-annual" inputmode="decimal" placeholder="$">
-          <span class="corr-hint" id="hint-s2-cbc-annual"></span>
+          <label>$ / bag</label>
+          <input type="text" id="s2-base" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-s2-base"></span>
         </div>
       </div>
       <div class="qa-row">
-        <div class="qa-prompt"><strong>ABC overhead per batch</strong> of CBC<small>annual OH &divide; 1,000 batches</small></div>
+        <div class="qa-prompt"><strong>Markup %</strong> on full mfg cost</div>
         <div class="answer">
-          <label>$ / batch</label>
-          <input type="text" id="s2-cbc-batch" inputmode="decimal" placeholder="$">
-          <span class="corr-hint" id="hint-s2-cbc-batch"></span>
+          <label>%</label>
+          <input type="text" id="s2-pct" inputmode="decimal" placeholder="%">
+          <span class="corr-hint" id="h-s2-pct"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Selling price</strong> per bag</div>
+        <div class="answer">
+          <label>$ / bag</label>
+          <input type="text" id="s2-price" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-s2-price"></span>
         </div>
       </div>
     </div>
@@ -494,53 +475,43 @@
     <div id="step2-insight"></div>
   </section>
 
-  <!-- ───────── STEP 3 — Apply ABC to WB ───────── -->
+  <!-- ───────── STEP 3 — Markup on variable mfg ───────── -->
   <section class="part reveal" id="step3">
     <div class="part-header">
       <span class="part-tag solve">Step 3</span>
-      <h2>Apply ABC to Whole Bean</h2>
-      <span class="subtitle">a different consumption profile</span>
+      <h2>Markup on variable manufacturing cost</h2>
+      <span class="subtitle">same price, narrower base, bigger markup</span>
     </div>
 
     <div class="setup-box">
-      <p>Whole Bean is the opposite story. It's bagged (compact storage), sold across ~150 small grocery-store orders, and each new SKU requires a clean changeover and a fresh QC test. Far more packaging labor, far more setups.</p>
-      <table class="prod-table" style="margin-top:10px;">
-        <thead>
-          <tr>
-            <th>Activity</th>
-            <th>WB driver usage</th>
-            <th>Rate</th>
-            <th>Cost</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr><td class="row-label">Roasting</td><td>1,000 MH</td><td>$17.50 / MH</td><td class="given">$17,500</td></tr>
-          <tr><td class="row-label">Quality testing</td><td>10 tests</td><td>$500 / test</td><td class="given">$5,000</td></tr>
-          <tr><td class="row-label">Packaging</td><td>3,000 LH</td><td>$3 / LH</td><td class="given">$9,000</td></tr>
-          <tr><td class="row-label">Setup / changeover</td><td>30 setups</td><td>$200 / setup</td><td class="given">$6,000</td></tr>
-          <tr><td class="row-label">Inventory storage</td><td>2,000 cu ft</td><td>$2 / cu ft</td><td class="given">$4,000</td></tr>
-          <tr><td class="row-label">Order processing</td><td>150 orders</td><td>$20 / order</td><td class="given">$3,000</td></tr>
-        </tbody>
-      </table>
+      <p>Some firms prefer to mark up only the <strong>variable manufacturing cost</strong> &mdash; DM + DL + variable MOH. Fixed mfg overhead now has to be recovered through the markup along with selling &amp; admin and profit.</p>
     </div>
 
-    <p class="prompt">Sum the activity costs and compute per-batch overhead.</p>
+    <p class="prompt">Recompute the markup % and price using variable manufacturing cost as the base.</p>
 
     <div class="qa-list">
       <div class="qa-row">
-        <div class="qa-prompt"><strong>Total ABC overhead</strong> assigned to Whole Bean, annually</div>
+        <div class="qa-prompt"><strong>Variable manufacturing cost</strong> per bag</div>
         <div class="answer">
-          <label>$ / year</label>
-          <input type="text" id="s3-wb-annual" inputmode="decimal" placeholder="$">
-          <span class="corr-hint" id="hint-s3-wb-annual"></span>
+          <label>$ / bag</label>
+          <input type="text" id="s3-base" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-s3-base"></span>
         </div>
       </div>
       <div class="qa-row">
-        <div class="qa-prompt"><strong>ABC overhead per batch</strong> of Whole Bean</div>
+        <div class="qa-prompt"><strong>Markup %</strong> on variable mfg cost</div>
         <div class="answer">
-          <label>$ / batch</label>
-          <input type="text" id="s3-wb-batch" inputmode="decimal" placeholder="$">
-          <span class="corr-hint" id="hint-s3-wb-batch"></span>
+          <label>%</label>
+          <input type="text" id="s3-pct" inputmode="decimal" placeholder="%">
+          <span class="corr-hint" id="h-s3-pct"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Selling price</strong> per bag</div>
+        <div class="answer">
+          <label>$ / bag</label>
+          <input type="text" id="s3-price" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-s3-price"></span>
         </div>
       </div>
     </div>
@@ -555,57 +526,43 @@
     <div id="step3-insight"></div>
   </section>
 
-  <!-- ───────── STEP 4 — Three methods compared ───────── -->
+  <!-- ───────── STEP 4 — Markup on direct materials ───────── -->
   <section class="part reveal" id="step4">
     <div class="part-header">
       <span class="part-tag solve">Step 4</span>
-      <h2>Three methods, one truth</h2>
-      <span class="subtitle">how plantwide, departmental, and ABC stack up</span>
+      <h2>Markup on direct materials only</h2>
+      <span class="subtitle">narrowest base &mdash; watch what happens to the markup</span>
     </div>
 
     <div class="setup-box">
-      <p>Same $120,000 of overhead, three different ways to spread it across products. Here's what each method says about the cost of one batch:</p>
-      <table class="prod-table compare-table" style="margin-top:10px;">
-        <thead>
-          <tr>
-            <th>Overhead per batch</th>
-            <th>Cold Brew Concentrate</th>
-            <th>Whole Bean</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr><td class="row-label">Plantwide rate</td><td class="method-cell">$90.00</td><td class="method-cell">$30.00</td></tr>
-          <tr><td class="row-label">Departmental rates</td><td class="method-cell">$80.00</td><td class="method-cell">$40.00</td></tr>
-          <tr class="abc-row"><td class="row-label">Activity-Based Costing</td><td class="method-cell">$75.50</td><td class="method-cell">$44.50</td></tr>
-        </tbody>
-      </table>
+      <p>Some industries (jewelry, custom furniture, printing) price strictly off the cost of the <strong>direct materials</strong>. Everything else &mdash; labor, all overhead, all S&amp;A, and the profit target &mdash; rides inside the markup.</p>
     </div>
 
-    <p class="prompt">Refining the cost system moves overhead from CBC to WB. Quantify the gap and compute total batch cost under ABC.</p>
+    <p class="prompt">Same target price as before. New base, new markup.</p>
 
     <div class="qa-list">
       <div class="qa-row">
-        <div class="qa-prompt">How much <strong>more</strong> overhead does Whole Bean carry annually under ABC than under plantwide?<small>($44.50 &minus; $30.00) &times; 1,000 batches</small></div>
+        <div class="qa-prompt"><strong>Direct materials cost</strong> per bag</div>
         <div class="answer">
-          <label>$ / year</label>
-          <input type="text" id="s4-wb-shift" inputmode="decimal" placeholder="$">
-          <span class="corr-hint" id="hint-s4-wb-shift"></span>
+          <label>$ / bag</label>
+          <input type="text" id="s4-base" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-s4-base"></span>
         </div>
       </div>
       <div class="qa-row">
-        <div class="qa-prompt"><strong>Total cost per batch of CBC</strong> under ABC<small>DM $40 + DL $25 + ABC OH</small></div>
+        <div class="qa-prompt"><strong>Markup %</strong> on direct materials</div>
         <div class="answer">
-          <label>$ / batch</label>
-          <input type="text" id="s4-cbc-total" inputmode="decimal" placeholder="$">
-          <span class="corr-hint" id="hint-s4-cbc-total"></span>
+          <label>%</label>
+          <input type="text" id="s4-pct" inputmode="decimal" placeholder="%">
+          <span class="corr-hint" id="h-s4-pct"></span>
         </div>
       </div>
       <div class="qa-row">
-        <div class="qa-prompt"><strong>Total cost per batch of Whole Bean</strong> under ABC<small>DM $35 + DL $30 + ABC OH</small></div>
+        <div class="qa-prompt"><strong>Selling price</strong> per bag</div>
         <div class="answer">
-          <label>$ / batch</label>
-          <input type="text" id="s4-wb-total" inputmode="decimal" placeholder="$">
-          <span class="corr-hint" id="hint-s4-wb-total"></span>
+          <label>$ / bag</label>
+          <input type="text" id="s4-price" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-s4-price"></span>
         </div>
       </div>
     </div>
@@ -620,47 +577,36 @@
     <div id="step4-insight"></div>
   </section>
 
-  <!-- ───────── STEP 5 — Scenario ───────── -->
+  <!-- ───────── STEP 5 — Target-cost flip ───────── -->
   <section class="part reveal" id="step5">
     <div class="part-header">
-      <span class="part-tag build">Step 5</span>
-      <h2>What if Peach Lab expands Whole Bean SKUs?</h2>
-      <span class="subtitle">activity volumes drive cost</span>
+      <span class="part-tag solve">Step 5</span>
+      <h2>The market pushes back &mdash; flip the problem</h2>
+      <span class="subtitle">when customers won't pay your cost-based price</span>
     </div>
 
     <div class="setup-box">
-      <p>Marketing wants to launch five new Whole Bean varieties (single-origin Ethiopian, Colombian decaf, holiday blend, etc.) without changing total batch volume. The new lineup means more changeovers and more QC work:</p>
-      <p>&bull; Whole Bean setups rise from <strong>30 to 60</strong> per year (each new SKU needs clean changeovers).<br>
-      &bull; Whole Bean quality tests rise from <strong>10 to 25</strong> per year (each SKU gets its own test panel).<br>
-      &bull; All activity rates and other driver quantities stay the same.</p>
-      <p>Cold Brew is untouched.</p>
+      <p>You bring the <strong>$8.80</strong> price to a roundtable of wholesale caf&eacute; buyers. They tell you the going rate for a comparable 12-oz private-label specialty bag tops out at <strong>$7.50</strong>. Cost-based pricing told you what to charge; the market is telling you what you can charge.</p>
+      <p>Management still expects the same <strong>$60,000</strong> profit at the same planned <strong>50,000-bag</strong> volume.</p>
     </div>
 
-    <p class="prompt">Re-run the ABC math for Whole Bean under the new scenario.</p>
+    <p class="prompt">Work the profit equation again &mdash; but this time, with price fixed by the market, solve for cost.</p>
 
     <div class="qa-list">
       <div class="qa-row">
-        <div class="qa-prompt">New <strong>annual ABC overhead</strong> for Whole Bean</div>
+        <div class="qa-prompt"><strong>Maximum total cost</strong> per bag the firm can absorb and still earn the $60,000 profit</div>
         <div class="answer">
-          <label>$ / year</label>
-          <input type="text" id="s5-wb-annual" inputmode="decimal" placeholder="$">
-          <span class="corr-hint" id="hint-s5-wb-annual"></span>
+          <label>$ / bag</label>
+          <input type="text" id="s5-target" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-s5-target"></span>
         </div>
       </div>
       <div class="qa-row">
-        <div class="qa-prompt">New <strong>ABC overhead per batch</strong> of Whole Bean</div>
+        <div class="qa-prompt"><strong>Cost reduction</strong> needed per bag<small>vs. Piedmont's current total cost of $7.60/bag</small></div>
         <div class="answer">
-          <label>$ / batch</label>
-          <input type="text" id="s5-wb-batch" inputmode="decimal" placeholder="$">
-          <span class="corr-hint" id="hint-s5-wb-batch"></span>
-        </div>
-      </div>
-      <div class="qa-row">
-        <div class="qa-prompt">New <strong>total cost per batch</strong> of Whole Bean (DM + DL + ABC OH)</div>
-        <div class="answer">
-          <label>$ / batch</label>
-          <input type="text" id="s5-wb-total" inputmode="decimal" placeholder="$">
-          <span class="corr-hint" id="hint-s5-wb-total"></span>
+          <label>$ / bag</label>
+          <input type="text" id="s5-cut" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-s5-cut"></span>
         </div>
       </div>
     </div>
@@ -669,9 +615,60 @@
       <button class="check-btn" onclick="checkStep5()">Check answers</button>
       <button class="reset-btn" onclick="resetStep5()">Reset</button>
       <span id="score5-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep6(true)" id="reveal-step6-btn">Skip ahead &rarr;</button>
     </div>
 
     <div id="step5-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 6 — Build your own ───────── -->
+  <section class="part reveal" id="step6">
+    <div class="part-header">
+      <span class="part-tag build">Step 6</span>
+      <h2>Build your own &mdash; change one driver, reprice</h2>
+      <span class="subtitle">three planning scenarios for Piedmont's board</span>
+    </div>
+
+    <div class="setup-box">
+      <p>Each scenario varies <em>one</em> input from Piedmont's baseline (DM $3.00, DL $1.20, Var MOH $0.80, Var S&amp;A $0.40, Fixed MOH $80,000, Fixed S&amp;A $30,000, volume 50,000 bags, desired profit $60,000). Use the target-profit (profit-equation) method.</p>
+    </div>
+
+    <p class="prompt">Solve each scenario for the new target-profit price per bag.</p>
+
+    <div class="qa-list">
+      <div class="qa-row">
+        <div class="qa-prompt">(a) Management raises the desired annual profit to <strong>$90,000</strong> (a 22.5% ROI). Everything else is unchanged.</div>
+        <div class="answer">
+          <label>$ / bag</label>
+          <input type="text" id="s6-a" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-s6-a"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt">(b) A larger competitor opens an Atlanta facility and Piedmont's planned volume drops to <strong>40,000 bags</strong>. Costs and profit target unchanged.</div>
+        <div class="answer">
+          <label>$ / bag</label>
+          <input type="text" id="s6-b" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-s6-b"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt">(c) A drought in Colombia pushes green-bean cost from $3.00 to <strong>$4.50</strong> per bag. Everything else baseline.</div>
+        <div class="answer">
+          <label>$ / bag</label>
+          <input type="text" id="s6-c" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-s6-c"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep6()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep6()">Reset</button>
+      <span id="score6-out" class="score-out"></span>
+    </div>
+
+    <div id="step6-insight"></div>
   </section>
 
 </main>
@@ -684,8 +681,15 @@ function parseNum(s) {
   if (typeof s !== 'string') return NaN;
   return parseFloat(s.replace(/[\$,\s%]/g, ''));
 }
+function parsePct(s) {
+  // Returns the percent value as a number (e.g., 50 for 50%, or convert 0.5 -> 50)
+  if (typeof s !== 'string') return NaN;
+  var v = parseFloat(s.replace(/[\$,\s%]/g, ''));
+  if (isNaN(v)) return NaN;
+  return v <= 1 ? v * 100 : v;
+}
 function fmtMoney(v, decimals) {
-  var d = (decimals === undefined) ? 0 : decimals;
+  var d = (decimals === undefined) ? 2 : decimals;
   var rounded = Math.round(v * 100) / 100;
   var sign = rounded < 0 ? '-$' : '$';
   return sign + Math.abs(rounded).toLocaleString('en-US', {
@@ -693,6 +697,7 @@ function fmtMoney(v, decimals) {
     maximumFractionDigits: d
   });
 }
+function fmtPct(v) { return v.toFixed(1) + '%'; }
 
 /* ═══════════════════════════════════════════════════════════════
    AUDIO
@@ -741,55 +746,39 @@ function playHorn() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   EXPECTED ANSWERS
+   EXPECTED ANSWERS — Piedmont Roasting baseline
 ═══════════════════════════════════════════════════════════════ */
-// Activity rates
-var ROAST_RATE   = 70000 / 4000;    // $17.50 / MH
-var TEST_RATE    = 15000 / 30;      // $500 / test
-var PKG_RATE     = 12000 / 4000;    // $3 / LH
-var SETUP_RATE   = 8000 / 40;       // $200 / setup
-var STORAGE_RATE = 10000 / 5000;    // $2 / cu ft
-var ORDER_RATE   = 5000 / 250;      // $20 / order
+var V         = 50000;        // planned volume (bags)
+var DM        = 3.00;         // direct materials per bag
+var DL        = 1.20;         // direct labor per bag
+var VMOH      = 0.80;         // variable mfg overhead per bag
+var VSA       = 0.40;         // variable S&A per bag
+var FMOH_TOT  = 80000;        // fixed mfg overhead annual
+var FSA_TOT   = 30000;        // fixed S&A annual
+var ASSETS    = 400000;
+var ROI       = 0.15;
+var PROFIT    = ASSETS * ROI; // 60,000
 
-// CBC consumption
-var CBC = { mh: 3000, tests: 20, lh: 1000, setups: 10, storage: 3000, orders: 100 };
-var CBC_OH_ANNUAL =
-    CBC.mh * ROAST_RATE
-  + CBC.tests * TEST_RATE
-  + CBC.lh * PKG_RATE
-  + CBC.setups * SETUP_RATE
-  + CBC.storage * STORAGE_RATE
-  + CBC.orders * ORDER_RATE;          // $75,500
-var CBC_OH_BATCH = CBC_OH_ANNUAL / 1000;  // $75.50
+var TVC_UNIT  = DM + DL + VMOH + VSA;             // 5.40
+var TFC_TOT   = FMOH_TOT + FSA_TOT;               // 110,000
+var TCOST_TOT = TVC_UNIT * V + TFC_TOT;           // 380,000
+var TARG_PRICE = (TCOST_TOT + PROFIT) / V;        // 8.80
 
-// WB consumption (baseline)
-var WB = { mh: 1000, tests: 10, lh: 3000, setups: 30, storage: 2000, orders: 150 };
-var WB_OH_ANNUAL =
-    WB.mh * ROAST_RATE
-  + WB.tests * TEST_RATE
-  + WB.lh * PKG_RATE
-  + WB.setups * SETUP_RATE
-  + WB.storage * STORAGE_RATE
-  + WB.orders * ORDER_RATE;            // $44,500
-var WB_OH_BATCH = WB_OH_ANNUAL / 1000; // $44.50
+var FULL_MFG_UNIT = DM + DL + VMOH + FMOH_TOT / V; // 6.60
+var VAR_MFG_UNIT  = DM + DL + VMOH;                // 5.00
+var MARKUP_FULL_PCT = ((TARG_PRICE - FULL_MFG_UNIT) / FULL_MFG_UNIT) * 100; // 33.33
+var MARKUP_VAR_PCT  = ((TARG_PRICE - VAR_MFG_UNIT)  / VAR_MFG_UNIT)  * 100; // 76.00
+var MARKUP_DM_PCT   = ((TARG_PRICE - DM)            / DM)            * 100; // 193.33
 
-// Step 4
-var WB_PLANTWIDE_BATCH = 30;
-var WB_ABC_SHIFT_ANNUAL = (WB_OH_BATCH - WB_PLANTWIDE_BATCH) * 1000;  // $14,500
-var CBC_TOTAL_ABC = 40 + 25 + CBC_OH_BATCH;   // $140.50
-var WB_TOTAL_ABC  = 35 + 30 + WB_OH_BATCH;    // $109.50
+// Step 5 — target-cost flip
+var MARKET_PRICE   = 7.50;
+var MAX_COST_UNIT  = (MARKET_PRICE * V - PROFIT) / V;             // 6.30
+var CUT_PER_UNIT   = (TCOST_TOT / V) - MAX_COST_UNIT;             // 1.30
 
-// Step 5 — WB expansion
-var WB_NEW = { mh: 1000, tests: 25, lh: 3000, setups: 60, storage: 2000, orders: 150 };
-var WB_OH_ANNUAL_NEW =
-    WB_NEW.mh * ROAST_RATE
-  + WB_NEW.tests * TEST_RATE
-  + WB_NEW.lh * PKG_RATE
-  + WB_NEW.setups * SETUP_RATE
-  + WB_NEW.storage * STORAGE_RATE
-  + WB_NEW.orders * ORDER_RATE;          // $58,000
-var WB_OH_BATCH_NEW = WB_OH_ANNUAL_NEW / 1000;  // $58.00
-var WB_TOTAL_NEW    = 35 + 30 + WB_OH_BATCH_NEW;  // $123.00
+// Step 6 — build scenarios
+var S6_A = (TCOST_TOT + 90000) / V;                                // 9.40
+var S6_B = (TVC_UNIT * 40000 + TFC_TOT + PROFIT) / 40000;          // 9.65
+var S6_C = ((4.50 + DL + VMOH + VSA) * V + TFC_TOT + PROFIT) / V;  // 10.30
 
 /* ═══════════════════════════════════════════════════════════════
    GENERIC CHECKER
@@ -803,10 +792,8 @@ function checkGroup(spec, scoreId, allCorrectFn) {
     hint.textContent = '';
     total++;
     if (inp.value.trim() === '') { blanks++; return; }
-    var val = parseNum(inp.value);
-    var exp = f.expected;
-    var tol = f.tol;
-    if (!isNaN(val) && Math.abs(val - exp) <= tol) {
+    var val = (f.kind === 'pct') ? parsePct(inp.value) : parseNum(inp.value);
+    if (!isNaN(val) && Math.abs(val - f.expected) <= f.tol) {
       inp.classList.add('correct');
       correct++;
     } else {
@@ -815,10 +802,7 @@ function checkGroup(spec, scoreId, allCorrectFn) {
     }
   });
   var out = document.getElementById(scoreId);
-  if (blanks === total) {
-    out.textContent = 'Fill in some answers first.';
-    return false;
-  }
+  if (blanks === total) { out.textContent = 'Fill in some answers first.'; return false; }
   out.textContent = correct + ' / ' + total + ' correct' + (blanks ? ' (' + blanks + ' blank)' : '');
   if (correct === total) { playBell(); if (allCorrectFn) allCorrectFn(); return true; }
   playHorn();
@@ -839,84 +823,101 @@ function resetGroup(spec, scoreId, extraResetFn) {
 /* ═══════════════════════════════════════════════════════════════
    STEP 1
 ═══════════════════════════════════════════════════════════════ */
-var STEP1_SPEC = [
-  { inputId: 's1-roast', hintId: 'hint-s1-roast', expected: ROAST_RATE, tol: 0.05, fmt: function(v){ return fmtMoney(v,2); } },
-  { inputId: 's1-test',  hintId: 'hint-s1-test',  expected: TEST_RATE,  tol: 0.5,  fmt: function(v){ return fmtMoney(v,0); } },
-  { inputId: 's1-setup', hintId: 'hint-s1-setup', expected: SETUP_RATE, tol: 0.5,  fmt: function(v){ return fmtMoney(v,0); } }
+var S1 = [
+  { inputId:'s1-profit', hintId:'h-s1-profit', expected:PROFIT,     tol:50,   fmt:function(v){return fmtMoney(v,0);} },
+  { inputId:'s1-price',  hintId:'h-s1-price',  expected:TARG_PRICE, tol:0.05, fmt:function(v){return fmtMoney(v,2);} }
 ];
 function checkStep1() {
   var fb = document.getElementById('step1-insight'); fb.innerHTML = '';
-  checkGroup(STEP1_SPEC, 'score1-out', function() {
+  checkGroup(S1, 'score1-out', function() {
     revealStep2(false);
-    fb.innerHTML = '<div class="insight success"><strong>Six rates, one per resource.</strong> Each rate now reflects the cost of one specific activity — not a blended plant average. Step 2 traces them to a product.</div>';
+    fb.innerHTML = '<div class="insight success"><strong>$60,000 profit and an $8.80 price.</strong> Profit equation says total revenue must cover all costs ($380,000) plus desired profit ($60,000) — $440,000 across 50,000 bags. The next three steps reach that same $8.80 by routing through different markup bases.</div>';
   });
 }
-function resetStep1() { resetGroup(STEP1_SPEC, 'score1-out', function(){ document.getElementById('step1-insight').innerHTML=''; }); }
+function resetStep1() { resetGroup(S1, 'score1-out', function(){ document.getElementById('step1-insight').innerHTML=''; }); }
 
 /* ═══════════════════════════════════════════════════════════════
-   STEP 2 — CBC
+   STEP 2 — Full mfg markup
 ═══════════════════════════════════════════════════════════════ */
-var STEP2_SPEC = [
-  { inputId: 's2-cbc-annual', hintId: 'hint-s2-cbc-annual', expected: CBC_OH_ANNUAL, tol: 5,    fmt: function(v){ return fmtMoney(v,0); } },
-  { inputId: 's2-cbc-batch',  hintId: 'hint-s2-cbc-batch',  expected: CBC_OH_BATCH,  tol: 0.10, fmt: function(v){ return fmtMoney(v,2); } }
+var S2 = [
+  { inputId:'s2-base',  hintId:'h-s2-base',  expected:FULL_MFG_UNIT,   tol:0.05, fmt:function(v){return fmtMoney(v,2);} },
+  { inputId:'s2-pct',   hintId:'h-s2-pct',   expected:MARKUP_FULL_PCT, tol:0.6,  kind:'pct', fmt:fmtPct },
+  { inputId:'s2-price', hintId:'h-s2-price', expected:TARG_PRICE,      tol:0.05, fmt:function(v){return fmtMoney(v,2);} }
 ];
 function checkStep2() {
   var fb = document.getElementById('step2-insight'); fb.innerHTML = '';
-  checkGroup(STEP2_SPEC, 'score2-out', function() {
+  checkGroup(S2, 'score2-out', function() {
     revealStep3(false);
-    fb.innerHTML = '<div class="insight success"><strong>$75,500 of overhead for CBC.</strong> Roasting dominates ($52,500) because CBC is machine-intensive, but every other activity contributes its own slice. Now do the same for Whole Bean.</div>';
+    fb.innerHTML = '<div class="insight success"><strong>$6.60 base, 33.3% markup, $8.80 price.</strong> The markup needs to cover $20,000 of variable S&amp;A, $30,000 of fixed S&amp;A, and $60,000 of profit — $110,000 across 50,000 bags = $2.20 per bag, which is 33.3% of the $6.60 base.</div>';
   });
 }
-function resetStep2() { resetGroup(STEP2_SPEC, 'score2-out', function(){ document.getElementById('step2-insight').innerHTML=''; }); }
+function resetStep2() { resetGroup(S2, 'score2-out', function(){ document.getElementById('step2-insight').innerHTML=''; }); }
 
 /* ═══════════════════════════════════════════════════════════════
-   STEP 3 — WB
+   STEP 3 — Variable mfg markup
 ═══════════════════════════════════════════════════════════════ */
-var STEP3_SPEC = [
-  { inputId: 's3-wb-annual', hintId: 'hint-s3-wb-annual', expected: WB_OH_ANNUAL, tol: 5,    fmt: function(v){ return fmtMoney(v,0); } },
-  { inputId: 's3-wb-batch',  hintId: 'hint-s3-wb-batch',  expected: WB_OH_BATCH,  tol: 0.10, fmt: function(v){ return fmtMoney(v,2); } }
+var S3 = [
+  { inputId:'s3-base',  hintId:'h-s3-base',  expected:VAR_MFG_UNIT,   tol:0.05, fmt:function(v){return fmtMoney(v,2);} },
+  { inputId:'s3-pct',   hintId:'h-s3-pct',   expected:MARKUP_VAR_PCT, tol:0.6,  kind:'pct', fmt:fmtPct },
+  { inputId:'s3-price', hintId:'h-s3-price', expected:TARG_PRICE,     tol:0.05, fmt:function(v){return fmtMoney(v,2);} }
 ];
 function checkStep3() {
   var fb = document.getElementById('step3-insight'); fb.innerHTML = '';
-  checkGroup(STEP3_SPEC, 'score3-out', function() {
+  checkGroup(S3, 'score3-out', function() {
     revealStep4(false);
-    fb.innerHTML = '<div class="insight success"><strong>$44,500 for Whole Bean.</strong> Less roasting, but packaging, setups, and order processing carry real cost. Together CBC and WB account for the full $120,000 — same total, different split.</div>';
+    fb.innerHTML = '<div class="insight success"><strong>$5.00 base, 76% markup, same $8.80 price.</strong> Narrower base, bigger markup — because now fixed mfg overhead ($80,000) joins S&amp;A and profit inside the markup. The base dropped $1.60; the markup % more than doubled.</div>';
   });
 }
-function resetStep3() { resetGroup(STEP3_SPEC, 'score3-out', function(){ document.getElementById('step3-insight').innerHTML=''; }); }
+function resetStep3() { resetGroup(S3, 'score3-out', function(){ document.getElementById('step3-insight').innerHTML=''; }); }
 
 /* ═══════════════════════════════════════════════════════════════
-   STEP 4 — three-method comparison
+   STEP 4 — Direct materials markup
 ═══════════════════════════════════════════════════════════════ */
-var STEP4_SPEC = [
-  { inputId: 's4-wb-shift',  hintId: 'hint-s4-wb-shift',  expected: WB_ABC_SHIFT_ANNUAL, tol: 50,   fmt: function(v){ return fmtMoney(v,0); } },
-  { inputId: 's4-cbc-total', hintId: 'hint-s4-cbc-total', expected: CBC_TOTAL_ABC,       tol: 0.10, fmt: function(v){ return fmtMoney(v,2); } },
-  { inputId: 's4-wb-total',  hintId: 'hint-s4-wb-total',  expected: WB_TOTAL_ABC,        tol: 0.10, fmt: function(v){ return fmtMoney(v,2); } }
+var S4 = [
+  { inputId:'s4-base',  hintId:'h-s4-base',  expected:DM,            tol:0.05, fmt:function(v){return fmtMoney(v,2);} },
+  { inputId:'s4-pct',   hintId:'h-s4-pct',   expected:MARKUP_DM_PCT, tol:1.0,  kind:'pct', fmt:fmtPct },
+  { inputId:'s4-price', hintId:'h-s4-price', expected:TARG_PRICE,    tol:0.05, fmt:function(v){return fmtMoney(v,2);} }
 ];
 function checkStep4() {
   var fb = document.getElementById('step4-insight'); fb.innerHTML = '';
-  checkGroup(STEP4_SPEC, 'score4-out', function() {
+  checkGroup(S4, 'score4-out', function() {
     revealStep5(false);
-    fb.innerHTML = '<div class="insight success"><strong>$14,500 of WB cost was hiding inside the CBC line under plantwide costing.</strong> Whole Bean is the high-touch, many-SKU, small-order product — it consumes service activities (setups, orders, packaging) that plantwide and departmental rates can\'t see. ABC drags those costs out of the shadows. Final step: what happens when WB demands even more of those activities?</div>';
+    fb.innerHTML = '<div class="insight success"><strong>$3.00 base, 193% markup, still $8.80.</strong> Same target price, same target profit — three wildly different markup percentages (33% &rarr; 76% &rarr; 193%) because the base keeps shrinking. The narrower the base, the more of the cost structure has to ride inside the markup. The number on the markup sticker has no meaning without knowing the base.</div>';
   });
 }
-function resetStep4() { resetGroup(STEP4_SPEC, 'score4-out', function(){ document.getElementById('step4-insight').innerHTML=''; }); }
+function resetStep4() { resetGroup(S4, 'score4-out', function(){ document.getElementById('step4-insight').innerHTML=''; }); }
 
 /* ═══════════════════════════════════════════════════════════════
-   STEP 5 — scenario
+   STEP 5 — Target-cost flip
 ═══════════════════════════════════════════════════════════════ */
-var STEP5_SPEC = [
-  { inputId: 's5-wb-annual', hintId: 'hint-s5-wb-annual', expected: WB_OH_ANNUAL_NEW, tol: 5,    fmt: function(v){ return fmtMoney(v,0); } },
-  { inputId: 's5-wb-batch',  hintId: 'hint-s5-wb-batch',  expected: WB_OH_BATCH_NEW,  tol: 0.10, fmt: function(v){ return fmtMoney(v,2); } },
-  { inputId: 's5-wb-total',  hintId: 'hint-s5-wb-total',  expected: WB_TOTAL_NEW,     tol: 0.10, fmt: function(v){ return fmtMoney(v,2); } }
+var S5 = [
+  { inputId:'s5-target', hintId:'h-s5-target', expected:MAX_COST_UNIT, tol:0.05, fmt:function(v){return fmtMoney(v,2);} },
+  { inputId:'s5-cut',    hintId:'h-s5-cut',    expected:CUT_PER_UNIT,  tol:0.05, fmt:function(v){return fmtMoney(v,2);} }
 ];
 function checkStep5() {
   var fb = document.getElementById('step5-insight'); fb.innerHTML = '';
-  checkGroup(STEP5_SPEC, 'score5-out', function() {
-    fb.innerHTML = '<div class="insight success"><strong>Five new SKUs cost Whole Bean $13.50 more per batch.</strong> No change in total volume — just more setups and more tests — and yet ABC shows WB\'s total cost rising from $109.50 to $123.00 per batch. Under plantwide costing this expansion would look free; ABC reveals that activity volume, not unit volume, drives a real chunk of overhead. That\'s the case for and against expanding the product line.</div>';
+  checkGroup(S5, 'score5-out', function() {
+    revealStep6(false);
+    fb.innerHTML = '<div class="insight success"><strong>Target cost = $6.30/bag, gap = $1.30/bag.</strong> You just inverted the problem. Cost-based pricing starts from cost and adds a markup to find price. The market just imposed the reverse: price is fixed at $7.50, profit target is fixed at $60,000, and Piedmont has to redesign its cost structure to fit. That &mdash; <em>price-led, customer-driven, cost as the unknown</em> &mdash; is the philosophy of target costing.</div>';
   });
 }
-function resetStep5() { resetGroup(STEP5_SPEC, 'score5-out', function(){ document.getElementById('step5-insight').innerHTML=''; }); }
+function resetStep5() { resetGroup(S5, 'score5-out', function(){ document.getElementById('step5-insight').innerHTML=''; }); }
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 6 — Build your own
+═══════════════════════════════════════════════════════════════ */
+var S6 = [
+  { inputId:'s6-a', hintId:'h-s6-a', expected:S6_A, tol:0.05, fmt:function(v){return fmtMoney(v,2);} },
+  { inputId:'s6-b', hintId:'h-s6-b', expected:S6_B, tol:0.05, fmt:function(v){return fmtMoney(v,2);} },
+  { inputId:'s6-c', hintId:'h-s6-c', expected:S6_C, tol:0.05, fmt:function(v){return fmtMoney(v,2);} }
+];
+function checkStep6() {
+  var fb = document.getElementById('step6-insight'); fb.innerHTML = '';
+  checkGroup(S6, 'score6-out', function() {
+    fb.innerHTML = '<div class="insight success"><strong>$9.40, $9.65, $10.30.</strong> A bigger profit ask, lower volume, and a costlier input all push the price up — but each through a different mechanism. (a) raises the numerator. (b) shrinks the denominator and forces fixed costs to ride on fewer bags. (c) raises the variable cost on every bag. Whether the market will actually pay these prices is a separate question — and one Piedmont increasingly can&rsquo;t answer with cost data alone.</div>';
+  });
+}
+function resetStep6() { resetGroup(S6, 'score6-out', function(){ document.getElementById('step6-insight').innerHTML=''; }); }
 
 /* ═══════════════════════════════════════════════════════════════
    REVEAL STEPS
@@ -936,6 +937,7 @@ function revealStep2(scroll) { revealStep(2, scroll); }
 function revealStep3(scroll) { revealStep(3, scroll); }
 function revealStep4(scroll) { revealStep(4, scroll); }
 function revealStep5(scroll) { revealStep(5, scroll); }
+function revealStep6(scroll) { revealStep(6, scroll); }
 
 /* ═══════════════════════════════════════════════════════════════
    QR / SHARE

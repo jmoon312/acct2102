@@ -728,7 +728,7 @@
         </div>
         <div class="answer">
           <label>Profit effect</label>
-          <input type="text" id="s2-net" inputmode="decimal" placeholder="$">
+          <input type="text" id="s2-net" placeholder="$">
           <span class="corr-hint" id="hint-s2-net"></span>
         </div>
       </div>
@@ -887,7 +887,7 @@
     <div class="build-solve">
       <div class="solve-card">
         <label>Combined net effect <small>+ = outsourcing is better</small></label>
-        <input type="text" id="bv-net" inputmode="decimal" placeholder="$">
+        <input type="text" id="bv-net" placeholder="$">
       </div>
       <div class="solve-card">
         <label>Decision</label>
@@ -1028,7 +1028,7 @@ function checkGroup(spec, scoreId, allCorrectFn) {
       correct++;
     } else {
       inp.classList.add('wrong');
-      hint.textContent = '\u2192 ' + f.fmt(exp);
+      hint.textContent = '';
     }
   });
   const out = document.getElementById(scoreId);
@@ -1117,7 +1117,7 @@ function checkStep2() {
       correct++;
     } else {
       inp.classList.add('wrong');
-      hint.textContent = '\u2192 ' + f.fmt(f.expected);
+      hint.textContent = '';
     }
   });
 
@@ -1141,9 +1141,6 @@ function checkStep2() {
     revealStep3(false);
   } else {
     playHorn();
-    if (s2Decision === 'out') {
-      fb.innerHTML = `<div class="insight">The relevant cost of making is only the variable production cost ($9) — S&amp;A doesn't change either way. Compare that to the $11 buy price and factor in the $3,000 fixed cost savings.</div>`;
-    }
   }
 }
 
@@ -1191,7 +1188,7 @@ function checkStep3() {
       correct++;
     } else {
       inp.classList.add('wrong');
-      hint.textContent = '\u2192 ' + f.fmt(f.expected);
+      hint.textContent = '';
     }
   });
 
@@ -1215,9 +1212,6 @@ function checkStep3() {
     revealStep4(false);
   } else {
     playHorn();
-    if (s3Decision === 'make') {
-      fb.innerHTML = `<div class="insight">Reconsider — the outsourcing cost from Step 2 is only part of the picture. What can HP do with the freed machine hours?</div>`;
-    }
   }
 }
 
@@ -1322,7 +1316,7 @@ function checkStep4() {
       parts.push('\u2714 Net effect');
     } else {
       netEl.classList.add('wrong');
-      parts.push('\u2718 Net effect (actual: ' + fmtMoneySigned(actual) + ')');
+      parts.push('\u2718 Net effect');
       allCorrect = false;
     }
   }
@@ -1331,7 +1325,7 @@ function checkStep4() {
     if (bvDecision === correctDec) {
       parts.push('\u2714 Decision');
     } else {
-      parts.push('\u2718 Decision (should ' + (correctDec === 'out' ? 'outsource' : 'make') + ')');
+      parts.push('\u2718 Decision');
       allCorrect = false;
     }
   }
@@ -1342,12 +1336,11 @@ function checkStep4() {
   }
 
   out.textContent = parts.join('  \u00b7  ');
-  const line = `Combined net effect: <strong>${fmtMoneySigned(actual)}</strong> \u2014 HP should <strong>${correctDec === 'out' ? 'outsource' : 'keep making in-house'}</strong>.`;
   if (allCorrect) {
+    const line = `Combined net effect: <strong>${fmtMoneySigned(actual)}</strong> \u2014 HP should <strong>${correctDec === 'out' ? 'outsource' : 'keep making in-house'}</strong>.`;
     fb.innerHTML = `<div class="insight success">${line}</div>`;
     playBell();
   } else {
-    fb.innerHTML = `<div class="insight">${line}</div>`;
     playHorn();
   }
 }

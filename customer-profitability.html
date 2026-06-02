@@ -637,7 +637,7 @@
         <div class="qa-prompt"><strong>Customer profitability</strong><small>can be negative &mdash; enter with a minus sign if so</small></div>
         <div class="answer">
           <label>$</label>
-          <input type="text" id="s3-profit" inputmode="decimal" placeholder="$">
+          <input type="text" id="s3-profit" placeholder="$">
           <span class="corr-hint" id="hint-s3-profit"></span>
         </div>
       </div>
@@ -645,7 +645,7 @@
         <div class="qa-prompt"><strong>Profitability ratio</strong></div>
         <div class="answer">
           <label>%</label>
-          <input type="text" id="s3-ratio" inputmode="decimal" placeholder="%">
+          <input type="text" id="s3-ratio" placeholder="%">
           <span class="corr-hint" id="hint-s3-ratio"></span>
         </div>
       </div>
@@ -938,7 +938,7 @@ function checkGroup(spec, scoreId, allCorrectFn) {
       correct++;
     } else {
       inp.classList.add('wrong');
-      hint.textContent = '→ ' + f.fmt(exp);
+      hint.textContent = '';
     }
   });
   var out = document.getElementById(scoreId);

@@ -660,7 +660,7 @@
       </div>
       <div class="answer">
         <label>Change in profit</label>
-        <input type="text" id="in-B" inputmode="decimal" placeholder="$">
+        <input type="text" id="in-B" placeholder="$">
         <span class="corr-hint" id="hint-B"></span>
       </div>
     </div>
@@ -752,7 +752,7 @@
         Your predicted profit
         <small>Profit = (Price − VC per bar) × Units − Fixed costs</small>
       </div>
-      <input type="text" id="bv-profit" inputmode="decimal" placeholder="$">
+      <input type="text" id="bv-profit" placeholder="$">
     </div>
 
     <div class="footer">
@@ -895,7 +895,7 @@ function checkStep1() {
       correct++;
     } else {
       inp.classList.add('wrong');
-      hint.textContent = '→ ' + (f.kind === 'percent' ? fmtPct(exp) : fmtMoney(exp, f.displayDecimals));
+      hint.textContent = '';
     }
   });
   const out = document.getElementById('score1-out');
@@ -966,10 +966,7 @@ function checkStep2() {
       correct++;
     } else {
       inp.classList.add('wrong');
-      const display = f.signed
-        ? fmtMoneySigned(exp)
-        : fmtMoney(exp, f.decimals);
-      hint.textContent = '→ ' + display;
+      hint.textContent = '';
     }
   });
   const out = document.getElementById('score2-out');
@@ -1087,12 +1084,6 @@ function checkStep3() {
   } else {
     profitEl.classList.add('wrong');
     out.textContent = 'Not quite.';
-    fb.innerHTML = `
-      <div class="insight">
-        Your answer: <strong>${fmtMoney(guess, Math.abs(guess) < 100 ? 2 : 0)}</strong>. Actual profit at these inputs: <strong>${fmtMoney(actual, Math.abs(actual) < 100 ? 2 : 0)}</strong>.<br>
-        Profit = (Price − VC per bar) × Units − Fixed costs = (${SP.toFixed(2)} − ${VC.toFixed(2)}) × ${Q.toLocaleString()} − ${FC.toLocaleString()}
-      </div>
-    `;
     playHorn();
   }
 }

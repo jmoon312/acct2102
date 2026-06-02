@@ -1039,7 +1039,7 @@ function checkGroup(spec, scoreId, allCorrectFn) {
       correct++;
     } else {
       inp.classList.add('wrong');
-      if (hint) hint.textContent = '→ ' + fmtMoney(exp, 0);
+      if (hint) hint.textContent = '';
     }
   });
   var out = document.getElementById(scoreId);

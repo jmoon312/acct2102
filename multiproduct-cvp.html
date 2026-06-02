@@ -723,7 +723,7 @@
       </div>
       <div class="answer">
         <label>Projected profit</label>
-        <input type="text" id="profit-input" inputmode="decimal" placeholder="$">
+        <input type="text" id="profit-input" placeholder="$">
         <span class="corr-hint" id="hint-profit"></span>
       </div>
     </div>
@@ -867,7 +867,7 @@
           Profit at expected sales
           <small>= (WACM × total units) − FC</small>
         </label>
-        <input type="text" id="bv-profit" inputmode="decimal" placeholder="$">
+        <input type="text" id="bv-profit" placeholder="$">
       </div>
       <div class="solve-card">
         <label>
@@ -1011,7 +1011,7 @@ function checkStep1() {
       correct++;
     } else {
       inp.classList.add('wrong');
-      hint.textContent = '→ ' + fmtMoney(exp, 2);
+      hint.textContent = '';
     }
   });
   const out = document.getElementById('score1-out');
@@ -1063,7 +1063,7 @@ function checkStep2() {
     revealStep3(false);
   } else {
     inp.classList.add('wrong');
-    hint.textContent = '→ ' + fmtMoney(exp, 2);
+    hint.textContent = '';
     out.textContent = 'Not quite.';
     playHorn();
   }
@@ -1108,7 +1108,7 @@ function checkStep3() {
     revealStep4(false);
   } else {
     inp.classList.add('wrong');
-    hint.textContent = '→ ' + fmtMoneySigned(exp);
+    hint.textContent = '';
     out.textContent = 'Not quite.';
     playHorn();
   }
@@ -1148,7 +1148,7 @@ function checkStep4() {
       correct++;
     } else {
       inp.classList.add('wrong');
-      hint.textContent = '→ ' + fmtUnits(item.expected);
+      hint.textContent = '';
     }
   });
   const out = document.getElementById('score4-out');
@@ -1286,7 +1286,7 @@ function checkStep5() {
       lines.push('✔ profit');
     } else {
       profitEl.classList.add('wrong');
-      lines.push('✘ profit (actual: ' + fmtMoneySigned(profit) + ')');
+      lines.push('✘ profit');
       allCorrect = false;
     }
   }
@@ -1304,7 +1304,7 @@ function checkStep5() {
         lines.push('✔ breakeven');
       } else {
         beEl.classList.add('wrong');
-        lines.push('✘ breakeven (actual: ' + fmtUnits(beUnits) + ' units)');
+        lines.push('✘ breakeven');
         allCorrect = false;
       }
     }
@@ -1318,7 +1318,7 @@ function checkStep5() {
     fb.innerHTML = `<div class="insight success">${totalsLine}<br>Profit = ${fmtMoney(tc, 0)} − ${fmtMoney(fc, 0)} = <strong>${fmtMoneySigned(profit)}</strong>${isFinite(beUnits) ? ` &nbsp;·&nbsp; Breakeven = ${fmtMoney(fc, 0)} ÷ ${fmtMoney(wacm, 2)} = <strong>${fmtUnits(beUnits)} units</strong>` : ''}</div>`;
     playBell();
   } else {
-    fb.innerHTML = `<div class="insight">${totalsLine}<br>Profit = (WACM × Total units) − FC = ${fmtMoney(wacm, 2)} × ${fmtUnits(tu)} − ${fmtMoney(fc, 0)} = <strong>${fmtMoneySigned(profit)}</strong>${isFinite(beUnits) ? ` &nbsp;·&nbsp; Breakeven units = ${fmtMoney(fc, 0)} ÷ ${fmtMoney(wacm, 2)} = <strong>${fmtUnits(beUnits)}</strong>` : ''}</div>`;
+    fb.innerHTML = '';
     playHorn();
   }
 }

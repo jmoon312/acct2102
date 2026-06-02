@@ -753,7 +753,7 @@
         </div>
         <div class="answer">
           <label>SO improvement</label>
-          <input type="text" id="s3-so-net" inputmode="decimal" placeholder="$">
+          <input type="text" id="s3-so-net" placeholder="$">
           <span class="corr-hint" id="hint-s3-so-net"></span>
         </div>
       </div>
@@ -763,7 +763,7 @@
         </div>
         <div class="answer">
           <label>Plus improvement</label>
-          <input type="text" id="s3-plus-net" inputmode="decimal" placeholder="$">
+          <input type="text" id="s3-plus-net" placeholder="$">
           <span class="corr-hint" id="hint-s3-plus-net"></span>
         </div>
       </div>
@@ -851,11 +851,11 @@
     <div class="build-solve">
       <div class="solve-card">
         <label>Plus improvement <small>max upgrades within spare capacity</small></label>
-        <input type="text" id="bv-plus-imp" inputmode="decimal" placeholder="$">
+        <input type="text" id="bv-plus-imp" placeholder="$">
       </div>
       <div class="solve-card">
         <label>SO improvement <small>include any displacement cost</small></label>
-        <input type="text" id="bv-so-imp" inputmode="decimal" placeholder="$">
+        <input type="text" id="bv-so-imp" placeholder="$">
       </div>
     </div>
 
@@ -989,7 +989,7 @@ function checkGroup(spec, scoreId, allCorrectFn) {
       correct++;
     } else {
       inp.classList.add('wrong');
-      hint.textContent = '\u2192 ' + f.fmt(f.expected);
+      hint.textContent = '';
     }
   });
   const out = document.getElementById(scoreId);
@@ -1053,7 +1053,7 @@ function checkStep2() {
     if (inp.value.trim() === '') { blanks++; return; }
     const val = parseNum(inp.value);
     if (!isNaN(val) && Math.abs(val - f.expected) <= f.tol) { inp.classList.add('correct'); correct++; }
-    else { inp.classList.add('wrong'); hint.textContent = '\u2192 ' + f.fmt(f.expected); }
+    else { inp.classList.add('wrong'); hint.textContent = ''; }
   });
 
   // Check sunk cost picks
@@ -1072,7 +1072,7 @@ function checkStep2() {
       correct++;
     } else {
       yesBtn.classList.remove('selected'); yesBtn.classList.add('yn-wrong');
-      hint.textContent = 'Sunk cost \u2014 already spent, can\u2019t be recovered.';
+      hint.textContent = '';
     }
   });
 
@@ -1136,7 +1136,7 @@ function checkStep3() {
     if (inp.value.trim() === '') { blanks++; return; }
     const val = parseNum(inp.value);
     if (!isNaN(val) && Math.abs(val - f.expected) <= f.tol) { inp.classList.add('correct'); correct++; }
-    else { inp.classList.add('wrong'); hint.textContent = '\u2192 ' + f.fmt(f.expected); }
+    else { inp.classList.add('wrong'); hint.textContent = ''; }
   });
 
   if (s3Decision !== null) { total++; if (s3Decision === 'plus') correct++; }
@@ -1265,17 +1265,17 @@ function checkStep4() {
     const v = parseNum(plusEl.value);
     const tol = Math.max(0.5, Math.abs(plusImp) * 0.001);
     if (!isNaN(v) && Math.abs(v - plusImp) <= tol) { plusEl.classList.add('correct'); parts.push('\u2714 Plus'); }
-    else { plusEl.classList.add('wrong'); parts.push('\u2718 Plus (' + fmtMoneySigned(plusImp) + ')'); allCorrect = false; }
+    else { plusEl.classList.add('wrong'); parts.push('\u2718 Plus'); allCorrect = false; }
   }
   if (soEl.value.trim()) {
     const v = parseNum(soEl.value);
     const tol = Math.max(0.5, Math.abs(soImp) * 0.001);
     if (!isNaN(v) && Math.abs(v - soImp) <= tol) { soEl.classList.add('correct'); parts.push('\u2714 SO'); }
-    else { soEl.classList.add('wrong'); parts.push('\u2718 SO (' + fmtMoneySigned(soImp) + ')'); allCorrect = false; }
+    else { soEl.classList.add('wrong'); parts.push('\u2718 SO'); allCorrect = false; }
   }
   if (bvDecision !== null) {
     if (bvDecision === best) parts.push('\u2714 Decision');
-    else { parts.push('\u2718 Decision (should ' + (best === 'plus' ? 'upgrade to Plus' : best === 'so' ? 'accept SO' : 'do nothing') + ')'); allCorrect = false; }
+    else { parts.push('\u2718 Decision'); allCorrect = false; }
   }
 
   if (parts.length === 0) {
@@ -1284,9 +1284,14 @@ function checkStep4() {
   }
 
   out.textContent = parts.join('  \u00b7  ');
-  const line = `Plus improvement: <strong>${fmtMoneySigned(plusImp)}</strong> &nbsp;\u00b7&nbsp; SO improvement: <strong>${fmtMoneySigned(soImp)}</strong> &nbsp;\u2014&nbsp; Best: <strong>${best === 'plus' ? 'Upgrade to Plus' : best === 'so' ? 'Accept university order' : 'Do nothing'}</strong>`;
-  if (allCorrect) { fb.innerHTML = `<div class="insight success">${line}</div>`; playBell(); }
-  else { fb.innerHTML = `<div class="insight">${line}</div>`; playHorn(); }
+  if (allCorrect) {
+    const line = `Plus improvement: <strong>${fmtMoneySigned(plusImp)}</strong> &nbsp;\u00b7&nbsp; SO improvement: <strong>${fmtMoneySigned(soImp)}</strong> &nbsp;\u2014&nbsp; Best: <strong>${best === 'plus' ? 'Upgrade to Plus' : best === 'so' ? 'Accept university order' : 'Do nothing'}</strong>`;
+    fb.innerHTML = `<div class="insight success">${line}</div>`;
+    playBell();
+  } else {
+    fb.innerHTML = '';
+    playHorn();
+  }
 }
 
 function resetStep4() {

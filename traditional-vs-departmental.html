@@ -793,7 +793,7 @@ function checkGroup(spec, scoreId, allCorrectFn) {
       correct++;
     } else {
       inp.classList.add('wrong');
-      hint.textContent = '→ ' + f.fmt(exp);
+      hint.textContent = '';
     }
   });
   var out = document.getElementById(scoreId);

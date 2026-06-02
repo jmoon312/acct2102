@@ -1,9 +1,20 @@
 .github-pat
 .github-pat.*
+.canvas-pat
+.canvas-pat.*
 .DS_Store
 pptx/
 CLAUDE.md
+activities-build-guide.md
 
 # Analytics exercises distributed via Canvas, not GitHub
 analytics-exercises/
 canvas-uploads/
+
+# Class-prep briefs — local only
+class-prep/
+
+# Canvas API local state — never commit
+.canvas/
+canvas_token*
+canvas-cache/

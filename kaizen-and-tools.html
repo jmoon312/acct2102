@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kaizen Costing &amp; the Pricing Toolkit &mdash; Crescent Fulfillment</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    background: #f4f0e8;
+    color: #1a2744;
+    min-height: 100vh;
+  }
+
+  header {
+    background: #1a2744;
+    color: #fff;
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .header-left h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+  .header-left p  { font-size: 13px; color: #a0aec0; margin-top: 2px; }
+
+  .qr-btn {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    transition: background .15s;
+  }
+  .qr-btn:hover { background: rgba(255,255,255,0.18); }
+
+  .qr-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .qr-overlay.show { display: flex; }
+  .qr-modal {
+    background: #fff;
+    border-radius: 14px;
+    padding: 32px;
+    text-align: center;
+    max-width: 300px;
+    width: 90%;
+  }
+  .qr-modal h2 { font-size: 16px; font-weight: 600; color: #1a2744; margin-bottom: 6px; }
+  .qr-modal p  { font-size: 12px; color: #64748b; margin-bottom: 18px; line-height: 1.5; }
+  #qr-code { display: flex; justify-content: center; margin-bottom: 16px; }
+  #qr-url  { font-size: 11px; color: #94a3b8; word-break: break-all; margin-bottom: 18px; }
+  .qr-close {
+    background: #1a2744; color: #fff;
+    border: none; border-radius: 8px;
+    padding: 8px 24px; font-size: 13px;
+    cursor: pointer; font-family: inherit;
+  }
+
+  main {
+    max-width: 920px;
+    margin: 28px auto;
+    padding: 0 20px 48px;
+  }
+
+  .part {
+    background: #fff;
+    border: 1px solid #dde3ef;
+    border-radius: 12px;
+    padding: 22px 24px 24px;
+    margin-bottom: 22px;
+  }
+
+  .part-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .part-tag {
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    background: #1a2744;
+    padding: 3px 10px;
+    border-radius: 99px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+  .part-tag.practice { background: #D85A30; }
+  .part-tag.explore  { background: #3b7dd8; }
+  .part-tag.solve    { background: #7a5cb6; }
+  .part-tag.build    { background: #5a9e3a; }
+  .part-header h2 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -.01em;
+  }
+  .part-header .subtitle {
+    font-size: 13px;
+    color: #64748b;
+  }
+
+  .setup-box {
+    background: #f8f6f0;
+    border: 1px solid #e6dfd0;
+    border-radius: 9px;
+    padding: 14px 16px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: #334155;
+    margin-bottom: 16px;
+  }
+  .setup-box strong { color: #1a2744; }
+  .setup-box p + p { margin-top: 6px; }
+
+  .prompt {
+    font-size: 14px;
+    color: #1a2744;
+    margin-bottom: 12px;
+    line-height: 1.55;
+  }
+  .prompt strong { font-weight: 700; }
+
+  .cost-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-top: 10px;
+    font-variant-numeric: tabular-nums;
+  }
+  .cost-table thead th {
+    background: #fde9c8;
+    color: #1a2744;
+    font-size: 12.5px;
+    font-weight: 700;
+    text-align: center;
+    padding: 9px 8px;
+    border-bottom: 2px solid #f0c674;
+  }
+  .cost-table thead th:first-child {
+    border-top-left-radius: 8px;
+    text-align: left;
+    padding-left: 14px;
+  }
+  .cost-table thead th:last-child { border-top-right-radius: 8px; }
+  .cost-table tbody td {
+    background: #fff;
+    padding: 8px 8px;
+    text-align: right;
+    border-bottom: 1px solid #f0e9d6;
+    font-size: 13px;
+  }
+  .cost-table tbody td.row-label {
+    text-align: left;
+    padding-left: 14px;
+    font-weight: 600;
+    color: #1a2744;
+  }
+  .cost-table tbody tr.subtotal td {
+    background: #f8f6f0;
+    font-weight: 700;
+    color: #1a2744;
+    border-top: 1px solid #e6dfd0;
+  }
+
+  .qa-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 4px; }
+  .qa-row {
+    display: grid;
+    grid-template-columns: 1fr 200px;
+    gap: 14px;
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #e1eaf3;
+    border-radius: 9px;
+    padding: 13px 16px;
+  }
+  .qa-row .qa-prompt {
+    font-size: 13.5px;
+    color: #1a2744;
+    line-height: 1.5;
+  }
+  .qa-row .qa-prompt strong { font-weight: 700; }
+  .qa-row .qa-prompt small {
+    display: block;
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 3px;
+  }
+  .qa-row .answer { display: flex; flex-direction: column; }
+  .qa-row .answer label {
+    font-size: 10.5px;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 4px;
+  }
+  .qa-row .answer input,
+  .qa-row .answer select {
+    padding: 8px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .qa-row .answer select {
+    text-align: left;
+    text-align-last: center;
+    cursor: pointer;
+  }
+  .qa-row .answer input:focus,
+  .qa-row .answer select:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .qa-row .answer input.correct,
+  .qa-row .answer select.correct {
+    border-color: #5a9e3a;
+    background: #f0f9e8;
+    color: #2d6a1f;
+  }
+  .qa-row .answer input.wrong,
+  .qa-row .answer select.wrong {
+    border-color: #c94040;
+    background: #fff1f1;
+    color: #9b2020;
+  }
+  .corr-hint {
+    display: block;
+    font-size: 11px;
+    color: #5a9e3a;
+    font-weight: 600;
+    margin-top: 3px;
+    min-height: 14px;
+  }
+
+  /* Classify-step rows are narrower on the answer column */
+  .qa-row.classify {
+    grid-template-columns: 1fr 220px;
+  }
+
+  .reveal { display: none; animation: slideIn 0.4s ease-out; }
+  .reveal.show { display: block; }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .insight {
+    margin-top: 8px;
+    background: #eff6ff;
+    border: 1px solid #c7dcf5;
+    border-left: 4px solid #3b7dd8;
+    border-radius: 0 8px 8px 0;
+    padding: 11px 14px;
+    font-size: 13px;
+    line-height: 1.55;
+    color: #1a2744;
+  }
+  .insight strong { color: #1e40af; }
+  .insight.success {
+    background: #f0f9e8;
+    border-color: #c4e0a3;
+    border-left-color: #5a9e3a;
+  }
+  .insight.success strong { color: #2d6a1f; }
+
+  .footer {
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .check-btn {
+    background: #1a2744; color: #fff;
+    border: none; border-radius: 9px;
+    padding: 10px 24px; font-size: 14px;
+    cursor: pointer; font-family: inherit;
+    font-weight: 500;
+    transition: background .15s;
+  }
+  .check-btn:hover { background: #243660; }
+  .reset-btn {
+    font-size: 13px; color: #64748b;
+    background: none; border: none;
+    cursor: pointer; text-decoration: underline;
+    font-family: inherit;
+  }
+  .reveal-link {
+    margin-left: auto;
+    font-size: 12.5px;
+    color: #64748b;
+    background: none; border: none;
+    cursor: pointer; text-decoration: underline;
+    font-family: inherit;
+  }
+  .reveal-link:hover { color: #1a2744; }
+  .score-out {
+    font-size: 14px; font-weight: 600;
+    color: #1a2744;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 6px 14px;
+  }
+  .score-out:empty { display: none; }
+
+  @media (max-width: 700px) {
+    header { padding: 14px 16px; }
+    main { padding: 0 12px 40px; }
+    .part { padding: 18px 14px 18px; }
+    .cost-table thead th, .cost-table tbody td { font-size: 11.5px; padding: 6px 6px; }
+    .qa-row, .qa-row.classify { grid-template-columns: 1fr; gap: 8px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>Kaizen Costing &amp; the Pricing Toolkit &mdash; Crescent Fulfillment</h1>
+  </div>
+  <button class="qr-btn" onclick="showQR()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="2" height="2"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="19" width="3" height="2"/><rect x="19" y="19" width="2" height="2"/></svg>
+    Share with students
+  </button>
+</header>
+
+<div class="qr-overlay" id="qr-overlay" onclick="hideQR(event)">
+  <div class="qr-modal">
+    <h2>Scan to open on your device</h2>
+    <p>Students can scan this QR code or type the URL to open the activity on their phone or laptop.</p>
+    <div id="qr-code"></div>
+    <div id="qr-url"></div>
+    <button class="qr-close" onclick="hideQR()">Close</button>
+  </div>
+</div>
+
+<main>
+
+  <!-- ───────── STEP 1 — Year 2 budget, one category ───────── -->
+  <section class="part">
+    <div class="part-header">
+      <span class="part-tag practice">Step 1</span>
+      <h2>Year 2 Kaizen budget &mdash; pick &amp; pack labor</h2>
+      <span class="subtitle">stretch volume up, then push cost back down</span>
+    </div>
+
+    <div class="setup-box">
+      <p><strong>Crescent Fulfillment</strong> is a regional 3PL that runs pick / pack / ship operations for several direct-to-consumer brands. Management has been frustrated with creeping operating costs and adopts a <strong>Kaizen costing</strong> program for the upcoming year. Year 1 actual costs (in $ thousands) and the budgeting parameters:</p>
+      <table class="cost-table">
+        <thead>
+          <tr><th>Cost category</th><th>Year 1 actual</th><th>Volume growth</th><th>Kaizen target</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="row-label">Pick &amp; pack labor</td><td>$60,000</td><td>+6%</td><td>&minus;3%</td></tr>
+          <tr><td class="row-label">Packaging materials</td><td>$15,000</td><td>+6%</td><td>&minus;2%</td></tr>
+          <tr><td class="row-label">Outbound shipping</td><td>$45,000</td><td>+6%</td><td>&minus;1%</td></tr>
+          <tr class="subtotal"><td class="row-label">Total operating cost</td><td>$120,000</td><td colspan="2"></td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:10px;">Volume growth lifts cost; the Kaizen improvement target pulls it back down. Each category is budgeted independently.</p>
+    </div>
+
+    <p class="prompt">Compute the Year 2 budgeted amount for pick &amp; pack labor.</p>
+
+    <div class="qa-list">
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Year 2 budget &mdash; pick &amp; pack labor</strong><small>$60,000 &times; (1 + growth) &times; (1 &minus; improvement)</small></div>
+        <div class="answer">
+          <label>$ (thousands)</label>
+          <input type="text" id="s1-pp" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-s1-pp"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep1()">Check answer</button>
+      <button class="reset-btn" onclick="resetStep1()">Reset</button>
+      <span id="score1-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep2(true)" id="reveal-step2-btn">Skip ahead &rarr;</button>
+    </div>
+
+    <div id="step1-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 2 — Year 3 compounding ───────── -->
+  <section class="part reveal" id="step2">
+    <div class="part-header">
+      <span class="part-tag explore">Step 2</span>
+      <h2>Year 3 budget &mdash; the engine keeps turning</h2>
+      <span class="subtitle">apply the same mechanic to last year's budget, not Year 1</span>
+    </div>
+
+    <div class="setup-box">
+      <p>Kaizen costing isn't a one-shot reduction &mdash; it's a <strong>continuous improvement loop</strong>. Each year's budget becomes the new starting point. The 6% volume growth and 3% improvement target repeat for Year 3 pick &amp; pack labor.</p>
+    </div>
+
+    <p class="prompt">Compute the Year 3 budgeted amount for pick &amp; pack labor.</p>
+
+    <div class="qa-list">
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Year 3 budget &mdash; pick &amp; pack labor</strong><small>start from your Year 2 figure, then apply growth and improvement again</small></div>
+        <div class="answer">
+          <label>$ (thousands)</label>
+          <input type="text" id="s2-pp3" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-s2-pp3"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep2()">Check answer</button>
+      <button class="reset-btn" onclick="resetStep2()">Reset</button>
+      <span id="score2-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep3(true)" id="reveal-step3-btn">Skip ahead &rarr;</button>
+    </div>
+
+    <div id="step2-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 3 — Year 2 across all three categories ───────── -->
+  <section class="part reveal" id="step3">
+    <div class="part-header">
+      <span class="part-tag solve">Step 3</span>
+      <h2>Year 2 budget &mdash; all three categories</h2>
+      <span class="subtitle">same growth, different Kaizen targets per category</span>
+    </div>
+
+    <div class="setup-box">
+      <p>The three categories share the same 6% volume growth but face <em>different</em> Kaizen reduction targets. Labor and supervision are squeezed hardest (3%) because they're under direct management control. Packaging gets a moderate 2% (some redesign, less waste). Outbound shipping only carries a 1% target &mdash; most of that cost is carrier rates Crescent can't unilaterally cut.</p>
+    </div>
+
+    <p class="prompt">Compute the Year 2 budget for each category and the total.</p>
+
+    <div class="qa-list">
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Pick &amp; pack labor</strong> &mdash; Year 2 budget<small>$60,000 &times; 1.06 &times; 0.97</small></div>
+        <div class="answer">
+          <label>$ (thousands)</label>
+          <input type="text" id="s3-pp" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-s3-pp"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Packaging materials</strong> &mdash; Year 2 budget<small>$15,000 &times; 1.06 &times; 0.98</small></div>
+        <div class="answer">
+          <label>$ (thousands)</label>
+          <input type="text" id="s3-pkg" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-s3-pkg"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Outbound shipping</strong> &mdash; Year 2 budget<small>$45,000 &times; 1.06 &times; 0.99</small></div>
+        <div class="answer">
+          <label>$ (thousands)</label>
+          <input type="text" id="s3-sh" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-s3-sh"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Total operating cost</strong> &mdash; Year 2 budget</div>
+        <div class="answer">
+          <label>$ (thousands)</label>
+          <input type="text" id="s3-tot" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-s3-tot"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep3()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep3()">Reset</button>
+      <span id="score3-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep4(true)" id="reveal-step4-btn">Skip ahead &rarr;</button>
+    </div>
+
+    <div id="step3-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 4 — Classify scenarios ───────── -->
+  <section class="part reveal" id="step4">
+    <div class="part-header">
+      <span class="part-tag solve">Step 4</span>
+      <h2>Which tool is at work?</h2>
+      <span class="subtitle">target costing &middot; Kaizen &middot; benchmarking &middot; cost-based pricing</span>
+    </div>
+
+    <div class="setup-box">
+      <p>The chapter introduced four ways managers think about cost and price. Each of the scenarios below leans on one of them. Read the scenario; pick the tool.</p>
+      <p style="margin-top:8px;font-size:12.5px;color:#475569;">Quick reminders: <strong>cost-based pricing</strong> starts from cost and adds markup. <strong>Target costing</strong> starts from a market price and works backward to a cost ceiling, usually during product design. <strong>Kaizen costing</strong> sets year-over-year cost-reduction targets on existing operations. <strong>Benchmarking</strong> studies an outside reference point to set internal goals.</p>
+    </div>
+
+    <p class="prompt">Match each scenario to the right tool.</p>
+
+    <div class="qa-list">
+      <div class="qa-row classify">
+        <div class="qa-prompt">A product-design team is told a new fold-flat tote must cost no more than <strong>$4.10 per unit</strong> to manufacture so it can sell at the established $9.99 retail price and clear the brand's margin requirement.</div>
+        <div class="answer">
+          <label>Tool</label>
+          <select id="s4-q1"><option value="">— pick one —</option><option value="target">Target costing</option><option value="kaizen">Kaizen costing</option><option value="bench">Benchmarking</option><option value="cbp">Cost-based pricing</option></select>
+          <span class="corr-hint" id="h-s4-q1"></span>
+        </div>
+      </div>
+      <div class="qa-row classify">
+        <div class="qa-prompt">Crescent's operations director visits two best-in-class fulfillment centers in Ohio to study how they organize pick paths, then sets new internal productivity goals based on what she observed.</div>
+        <div class="answer">
+          <label>Tool</label>
+          <select id="s4-q2"><option value="">— pick one —</option><option value="target">Target costing</option><option value="kaizen">Kaizen costing</option><option value="bench">Benchmarking</option><option value="cbp">Cost-based pricing</option></select>
+          <span class="corr-hint" id="h-s4-q2"></span>
+        </div>
+      </div>
+      <div class="qa-row classify">
+        <div class="qa-prompt">A custom-cabinetry shop bids a kitchen install by adding up estimated direct materials and labor, then layering on a <strong>35% markup</strong> to cover overhead and profit.</div>
+        <div class="answer">
+          <label>Tool</label>
+          <select id="s4-q3"><option value="">— pick one —</option><option value="target">Target costing</option><option value="kaizen">Kaizen costing</option><option value="bench">Benchmarking</option><option value="cbp">Cost-based pricing</option></select>
+          <span class="corr-hint" id="h-s4-q3"></span>
+        </div>
+      </div>
+      <div class="qa-row classify">
+        <div class="qa-prompt">A warehouse supervisor announces a <strong>2% monthly cycle-time reduction target</strong> on existing inbound-receiving operations, and reviews variance reports with the team every Friday.</div>
+        <div class="answer">
+          <label>Tool</label>
+          <select id="s4-q4"><option value="">— pick one —</option><option value="target">Target costing</option><option value="kaizen">Kaizen costing</option><option value="bench">Benchmarking</option><option value="cbp">Cost-based pricing</option></select>
+          <span class="corr-hint" id="h-s4-q4"></span>
+        </div>
+      </div>
+      <div class="qa-row classify">
+        <div class="qa-prompt">A consumer electronics company designs a new smart speaker backward from a $79 retail price point. Engineering, suppliers, and contract manufacturers are all given a <strong>$31 per-unit cost ceiling</strong> they must hit before the product gets greenlit.</div>
+        <div class="answer">
+          <label>Tool</label>
+          <select id="s4-q5"><option value="">— pick one —</option><option value="target">Target costing</option><option value="kaizen">Kaizen costing</option><option value="bench">Benchmarking</option><option value="cbp">Cost-based pricing</option></select>
+          <span class="corr-hint" id="h-s4-q5"></span>
+        </div>
+      </div>
+      <div class="qa-row classify">
+        <div class="qa-prompt">A hospital system subscribes to a peer-reporting service that compares its <strong>cost per discharge</strong> against 40 similar hospitals nationwide. The CFO uses the median figures as targets for next year's budget planning.</div>
+        <div class="answer">
+          <label>Tool</label>
+          <select id="s4-q6"><option value="">— pick one —</option><option value="target">Target costing</option><option value="kaizen">Kaizen costing</option><option value="bench">Benchmarking</option><option value="cbp">Cost-based pricing</option></select>
+          <span class="corr-hint" id="h-s4-q6"></span>
+        </div>
+      </div>
+      <div class="qa-row classify">
+        <div class="qa-prompt">A small specialty printer prices its custom job quotes by computing full manufacturing cost per job and applying a <strong>40% markup</strong>, with no formal check against what competitors charge.</div>
+        <div class="answer">
+          <label>Tool</label>
+          <select id="s4-q7"><option value="">— pick one —</option><option value="target">Target costing</option><option value="kaizen">Kaizen costing</option><option value="bench">Benchmarking</option><option value="cbp">Cost-based pricing</option></select>
+          <span class="corr-hint" id="h-s4-q7"></span>
+        </div>
+      </div>
+      <div class="qa-row classify">
+        <div class="qa-prompt">An auto-parts plant runs weekly continuous-improvement huddles to find <strong>1% cost takeouts</strong> on the existing assembly line &mdash; trimming setup time, eliminating scrap, reorganizing tools at workstations.</div>
+        <div class="answer">
+          <label>Tool</label>
+          <select id="s4-q8"><option value="">— pick one —</option><option value="target">Target costing</option><option value="kaizen">Kaizen costing</option><option value="bench">Benchmarking</option><option value="cbp">Cost-based pricing</option></select>
+          <span class="corr-hint" id="h-s4-q8"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep4()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep4()">Reset</button>
+      <span id="score4-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep5(true)" id="reveal-step5-btn">Skip ahead &rarr;</button>
+    </div>
+
+    <div id="step4-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 5 — Build your own ───────── -->
+  <section class="part reveal" id="step5">
+    <div class="part-header">
+      <span class="part-tag build">Step 5</span>
+      <h2>Build your own &mdash; stress-test the budget</h2>
+      <span class="subtitle">three planning scenarios for Crescent's CFO</span>
+    </div>
+
+    <div class="setup-box">
+      <p>Three planning what-ifs. Each one varies the baseline (P&amp;P $60,000, Pkg $15,000, Ship $45,000, growth 6%, Kaizen targets 3% / 2% / 1%) along one axis. Use Kaizen logic for each category.</p>
+    </div>
+
+    <p class="prompt">Solve each one.</p>
+
+    <div class="qa-list">
+      <div class="qa-row">
+        <div class="qa-prompt">(a) A surprise viral product launch pushes expected volume growth to <strong>10%</strong> across all three categories. Kaizen targets unchanged. What is the new Year 2 <strong>total</strong> budget?</div>
+        <div class="answer">
+          <label>$ (thousands)</label>
+          <input type="text" id="s5-a" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-s5-a"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt">(b) Crescent's COO pushes leadership to <strong>double every Kaizen target</strong> (P&amp;P 6%, Pkg 4%, Ship 2%). Growth stays at 6%. What is the new Year 2 <strong>total</strong> budget?</div>
+        <div class="answer">
+          <label>$ (thousands)</label>
+          <input type="text" id="s5-b" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-s5-b"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt">(c) The CFO asks the reverse question: assuming 6% volume growth in every category, what single <strong>uniform Kaizen rate</strong> applied to all three categories would keep the total Year 2 budget exactly flat at $120,000?</div>
+        <div class="answer">
+          <label>%</label>
+          <input type="text" id="s5-c" inputmode="decimal" placeholder="%">
+          <span class="corr-hint" id="h-s5-c"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep5()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep5()">Reset</button>
+      <span id="score5-out" class="score-out"></span>
+    </div>
+
+    <div id="step5-insight"></div>
+  </section>
+
+</main>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════════════════ */
+function parseNum(s) {
+  if (typeof s !== 'string') return NaN;
+  return parseFloat(s.replace(/[\$,\s%]/g, ''));
+}
+function parsePct(s) {
+  if (typeof s !== 'string') return NaN;
+  var v = parseFloat(s.replace(/[\$,\s%]/g, ''));
+  if (isNaN(v)) return NaN;
+  return v <= 1 ? v * 100 : v;
+}
+function fmtMoney(v, decimals) {
+  var d = (decimals === undefined) ? 0 : decimals;
+  var rounded = Math.round(v * 100) / 100;
+  var sign = rounded < 0 ? '-$' : '$';
+  return sign + Math.abs(rounded).toLocaleString('en-US', {
+    minimumFractionDigits: d,
+    maximumFractionDigits: d
+  });
+}
+function fmtPct(v) { return v.toFixed(2) + '%'; }
+
+/* ═══════════════════════════════════════════════════════════════
+   AUDIO
+═══════════════════════════════════════════════════════════════ */
+var audioCtx = null;
+function getAudio() {
+  if (!audioCtx) {
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (AC) audioCtx = new AC();
+  }
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+function playBell() {
+  var ctx = getAudio(); if (!ctx) return;
+  var now = ctx.currentTime;
+  [523.25, 659.25, 783.99].forEach(function(f) {
+    var osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = 'sine'; osc.frequency.value = f;
+    osc.connect(g).connect(ctx.destination);
+    g.gain.setValueAtTime(0, now);
+    g.gain.linearRampToValueAtTime(0.15, now + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 1.6);
+    osc.start(now); osc.stop(now + 1.7);
+  });
+}
+function playHorn() {
+  var ctx = getAudio(); if (!ctx) return;
+  var now = ctx.currentTime;
+  var notes = [
+    { f: 466.16, t: 0.00, d: 0.18 },
+    { f: 440.00, t: 0.20, d: 0.18 },
+    { f: 415.30, t: 0.40, d: 0.55 }
+  ];
+  notes.forEach(function(n) {
+    var osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(n.f, now + n.t);
+    if (n.d > 0.3) osc.frequency.exponentialRampToValueAtTime(n.f * 0.88, now + n.t + n.d);
+    osc.connect(g).connect(ctx.destination);
+    g.gain.setValueAtTime(0, now + n.t);
+    g.gain.linearRampToValueAtTime(0.12, now + n.t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, now + n.t + n.d);
+    osc.start(now + n.t); osc.stop(now + n.t + n.d + 0.05);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   EXPECTED ANSWERS — Crescent Fulfillment baseline ($ thousands)
+═══════════════════════════════════════════════════════════════ */
+var PP1 = 60000, PKG1 = 15000, SH1 = 45000;
+var GROWTH = 0.06;
+var R_PP = 0.03, R_PKG = 0.02, R_SH = 0.01;
+
+var PP2  = PP1  * (1 + GROWTH) * (1 - R_PP);   // 61,692
+var PKG2 = PKG1 * (1 + GROWTH) * (1 - R_PKG);  // 15,582
+var SH2  = SH1  * (1 + GROWTH) * (1 - R_SH);   // 47,223
+var TOT2 = PP2 + PKG2 + SH2;                   // 124,497
+
+var PP3  = PP2 * (1 + GROWTH) * (1 - R_PP);    // 63,431.71
+
+// Build scenarios
+var S5_A = PP1 * 1.10 * (1 - R_PP)
+         + PKG1 * 1.10 * (1 - R_PKG)
+         + SH1 * 1.10 * (1 - R_SH);            // 129,195
+var S5_B = PP1 * (1 + GROWTH) * (1 - 2*R_PP)
+         + PKG1 * (1 + GROWTH) * (1 - 2*R_PKG)
+         + SH1 * (1 + GROWTH) * (1 - 2*R_SH);  // 121,794
+var S5_C_PCT = (1 - 1 / (1 + GROWTH)) * 100;   // 5.6604%
+
+// Step 4 answer key
+var STEP4_KEY = {
+  's4-q1': 'target',
+  's4-q2': 'bench',
+  's4-q3': 'cbp',
+  's4-q4': 'kaizen',
+  's4-q5': 'target',
+  's4-q6': 'bench',
+  's4-q7': 'cbp',
+  's4-q8': 'kaizen'
+};
+var STEP4_LABELS = {
+  'target': 'Target costing',
+  'kaizen': 'Kaizen costing',
+  'bench':  'Benchmarking',
+  'cbp':    'Cost-based pricing'
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   GENERIC CHECKER
+═══════════════════════════════════════════════════════════════ */
+function checkGroup(spec, scoreId, allCorrectFn) {
+  var correct = 0, total = 0, blanks = 0;
+  spec.forEach(function(f) {
+    var inp  = document.getElementById(f.inputId);
+    var hint = document.getElementById(f.hintId);
+    inp.classList.remove('correct', 'wrong');
+    hint.textContent = '';
+    total++;
+    if (inp.value.trim() === '') { blanks++; return; }
+    var val = (f.kind === 'pct') ? parsePct(inp.value) : parseNum(inp.value);
+    if (!isNaN(val) && Math.abs(val - f.expected) <= f.tol) {
+      inp.classList.add('correct');
+      correct++;
+    } else {
+      inp.classList.add('wrong');
+      hint.textContent = '';
+    }
+  });
+  var out = document.getElementById(scoreId);
+  if (blanks === total) { out.textContent = 'Fill in some answers first.'; return false; }
+  out.textContent = correct + ' / ' + total + ' correct' + (blanks ? ' (' + blanks + ' blank)' : '');
+  if (correct === total) { playBell(); if (allCorrectFn) allCorrectFn(); return true; }
+  playHorn();
+  return false;
+}
+function resetGroup(spec, scoreId, extraResetFn) {
+  spec.forEach(function(f) {
+    var inp = document.getElementById(f.inputId);
+    var hint = document.getElementById(f.hintId);
+    inp.value = '';
+    inp.classList.remove('correct', 'wrong');
+    hint.textContent = '';
+  });
+  document.getElementById(scoreId).textContent = '';
+  if (extraResetFn) extraResetFn();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 1
+═══════════════════════════════════════════════════════════════ */
+var S1 = [
+  { inputId:'s1-pp', hintId:'h-s1-pp', expected:PP2, tol:5, fmt:function(v){return fmtMoney(v,0);} }
+];
+function checkStep1() {
+  var fb = document.getElementById('step1-insight'); fb.innerHTML = '';
+  checkGroup(S1, 'score1-out', function() {
+    revealStep2(false);
+    fb.innerHTML = '<div class="insight success"><strong>$61,692.</strong> A 6% volume bump alone would have pushed pick &amp; pack to $63,600; the 3% Kaizen squeeze pulled it back. Net of both, costs grew about 2.8% &mdash; less than half the volume growth. That spread is what Kaizen is buying.</div>';
+  });
+}
+function resetStep1() { resetGroup(S1, 'score1-out', function(){ document.getElementById('step1-insight').innerHTML=''; }); }
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 2 — Year 3 compounding
+═══════════════════════════════════════════════════════════════ */
+var S2 = [
+  { inputId:'s2-pp3', hintId:'h-s2-pp3', expected:PP3, tol:10, fmt:function(v){return fmtMoney(v,2);} }
+];
+function checkStep2() {
+  var fb = document.getElementById('step2-insight'); fb.innerHTML = '';
+  checkGroup(S2, 'score2-out', function() {
+    revealStep3(false);
+    fb.innerHTML = '<div class="insight success"><strong>About $63,432.</strong> The mechanic compounds: Year 2 budget becomes the new starting point. Over time the gap between &ldquo;volume growth alone&rdquo; and &ldquo;Kaizen-adjusted budget&rdquo; widens &mdash; that&rsquo;s the strategic payoff of treating cost reduction as a standing target rather than a one-time project.</div>';
+  });
+}
+function resetStep2() { resetGroup(S2, 'score2-out', function(){ document.getElementById('step2-insight').innerHTML=''; }); }
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 3 — All three categories
+═══════════════════════════════════════════════════════════════ */
+var S3 = [
+  { inputId:'s3-pp',  hintId:'h-s3-pp',  expected:PP2,  tol:5,  fmt:function(v){return fmtMoney(v,0);} },
+  { inputId:'s3-pkg', hintId:'h-s3-pkg', expected:PKG2, tol:5,  fmt:function(v){return fmtMoney(v,0);} },
+  { inputId:'s3-sh',  hintId:'h-s3-sh',  expected:SH2,  tol:5,  fmt:function(v){return fmtMoney(v,0);} },
+  { inputId:'s3-tot', hintId:'h-s3-tot', expected:TOT2, tol:10, fmt:function(v){return fmtMoney(v,0);} }
+];
+function checkStep3() {
+  var fb = document.getElementById('step3-insight'); fb.innerHTML = '';
+  checkGroup(S3, 'score3-out', function() {
+    revealStep4(false);
+    fb.innerHTML = '<div class="insight success"><strong>$61,692 + $15,582 + $47,223 = $124,497.</strong> Total operating cost rose from $120,000 to $124,497 &mdash; about 3.7% &mdash; despite 6% volume growth. Note how shipping ate most of the cost increase: its 1% Kaizen target couldn&rsquo;t offset the volume effect because carrier rates aren&rsquo;t easily squeezable. That&rsquo;s why setting Kaizen rates by what a category can actually deliver matters more than picking one round number across the board.</div>';
+  });
+}
+function resetStep3() { resetGroup(S3, 'score3-out', function(){ document.getElementById('step3-insight').innerHTML=''; }); }
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 4 — Classify scenarios
+═══════════════════════════════════════════════════════════════ */
+function checkStep4() {
+  var fb = document.getElementById('step4-insight'); fb.innerHTML = '';
+  var correct = 0, total = 0, blanks = 0;
+  Object.keys(STEP4_KEY).forEach(function(id) {
+    var sel = document.getElementById(id);
+    var hint = document.getElementById('h-' + id);
+    sel.classList.remove('correct', 'wrong');
+    hint.textContent = '';
+    total++;
+    if (sel.value === '') { blanks++; return; }
+    if (sel.value === STEP4_KEY[id]) {
+      sel.classList.add('correct');
+      correct++;
+    } else {
+      sel.classList.add('wrong');
+      hint.textContent = '';
+    }
+  });
+  var out = document.getElementById('score4-out');
+  if (blanks === total) { out.textContent = 'Pick a tool for at least one scenario.'; return; }
+  out.textContent = correct + ' / ' + total + ' correct' + (blanks ? ' (' + blanks + ' blank)' : '');
+  if (correct === total) {
+    playBell();
+    revealStep5(false);
+    fb.innerHTML = '<div class="insight success"><strong>Eight scenarios, four tools.</strong> The clean way to keep them straight: <em>cost-based pricing</em> looks inward at cost and adds a margin. <em>Target costing</em> looks outward at the market first and pushes a cost ceiling backward into design. <em>Kaizen</em> looks at existing ops and demands a steady year-over-year squeeze. <em>Benchmarking</em> looks sideways at peers and imports their performance as a goal. Most companies use more than one &mdash; cost-based to set list prices, target costing during product design, Kaizen on production runs, and benchmarking when they need a credible outside reference.</div>';
+  } else {
+    playHorn();
+  }
+}
+function resetStep4() {
+  Object.keys(STEP4_KEY).forEach(function(id) {
+    var sel = document.getElementById(id);
+    var hint = document.getElementById('h-' + id);
+    sel.value = '';
+    sel.classList.remove('correct', 'wrong');
+    hint.textContent = '';
+  });
+  document.getElementById('score4-out').textContent = '';
+  document.getElementById('step4-insight').innerHTML = '';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 5 — Build
+═══════════════════════════════════════════════════════════════ */
+var S5 = [
+  { inputId:'s5-a', hintId:'h-s5-a', expected:S5_A,     tol:10, fmt:function(v){return fmtMoney(v,0);} },
+  { inputId:'s5-b', hintId:'h-s5-b', expected:S5_B,     tol:10, fmt:function(v){return fmtMoney(v,0);} },
+  { inputId:'s5-c', hintId:'h-s5-c', expected:S5_C_PCT, tol:0.3, kind:'pct', fmt:fmtPct }
+];
+function checkStep5() {
+  var fb = document.getElementById('step5-insight'); fb.innerHTML = '';
+  checkGroup(S5, 'score5-out', function() {
+    fb.innerHTML = '<div class="insight success"><strong>$129,195 &middot; $121,794 &middot; ~5.66%.</strong> Three lessons in one place. (a) volume growth on its own swells cost faster than Kaizen can pull it back &mdash; cost discipline gets harder as growth accelerates. (b) doubling Kaizen targets is the most direct way to bend the curve back down, but those numbers have to be achievable; a 6% labor cut might mean automation or layoffs, not weekly huddles. (c) the &ldquo;just stay flat&rdquo; rate is the cleanest stress test: at 6% growth, every category needs ~5.66% improvement just to <em>tread water</em>. Anything less and total cost still grows. That&rsquo;s the operating-leverage shape Kaizen is fighting against.</div>';
+  });
+}
+function resetStep5() { resetGroup(S5, 'score5-out', function(){ document.getElementById('step5-insight').innerHTML=''; }); }
+
+/* ═══════════════════════════════════════════════════════════════
+   REVEAL STEPS
+═══════════════════════════════════════════════════════════════ */
+var revealedSteps = new Set();
+function revealStep(stepNum, scroll) {
+  var el = document.getElementById('step' + stepNum);
+  if (!revealedSteps.has(stepNum)) {
+    el.classList.add('show');
+    revealedSteps.add(stepNum);
+    var btn = document.getElementById('reveal-step' + stepNum + '-btn');
+    if (btn) btn.style.display = 'none';
+  }
+  if (scroll) setTimeout(function() { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 60);
+}
+function revealStep2(scroll) { revealStep(2, scroll); }
+function revealStep3(scroll) { revealStep(3, scroll); }
+function revealStep4(scroll) { revealStep(4, scroll); }
+function revealStep5(scroll) { revealStep(5, scroll); }
+
+/* ═══════════════════════════════════════════════════════════════
+   QR / SHARE
+═══════════════════════════════════════════════════════════════ */
+function showQR() {
+  var url = location.href;
+  document.getElementById('qr-url').textContent = url;
+  var qrEl = document.getElementById('qr-code');
+  qrEl.innerHTML = '';
+  if (window.QRCode) {
+    new QRCode(qrEl, { text: url, width: 180, height: 180, colorDark: '#1a2744', colorLight: '#ffffff' });
+  }
+  document.getElementById('qr-overlay').classList.add('show');
+}
+function hideQR(ev) {
+  if (ev && ev.target.id !== 'qr-overlay' && ev.target.className !== 'qr-close') return;
+  document.getElementById('qr-overlay').classList.remove('show');
+}
+</script>
+
+</body>
+</html>

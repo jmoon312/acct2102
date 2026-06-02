@@ -958,7 +958,7 @@ function checkGroup(spec, scoreId, allCorrectFn) {
       correct++;
     } else {
       inp.classList.add('wrong');
-      hint.textContent = '\u2192 ' + f.fmt(exp);
+      hint.textContent = '';
     }
   });
   const out = document.getElementById(scoreId);
