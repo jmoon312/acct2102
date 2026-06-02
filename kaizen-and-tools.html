@@ -250,11 +250,12 @@
   }
   .corr-hint {
     display: block;
-    font-size: 11px;
-    color: #5a9e3a;
-    font-weight: 600;
-    margin-top: 3px;
+    font-size: 11.5px;
+    color: #64748b;
+    font-weight: 500;
+    margin-top: 4px;
     min-height: 14px;
+    line-height: 1.4;
   }
 
   /* Classify-step rows are narrower on the answer column */
@@ -761,23 +762,28 @@ var STEP4_LABELS = {
 
 /* ═══════════════════════════════════════════════════════════════
    GENERIC CHECKER
+   Per-input attempt counter — explanatory hint shown only on the
+   2nd (or later) wrong submission for the same input.
 ═══════════════════════════════════════════════════════════════ */
+var attemptCounts = {};
 function checkGroup(spec, scoreId, allCorrectFn) {
   var correct = 0, total = 0, blanks = 0;
   spec.forEach(function(f) {
     var inp  = document.getElementById(f.inputId);
     var hint = document.getElementById(f.hintId);
     inp.classList.remove('correct', 'wrong');
-    hint.textContent = '';
     total++;
-    if (inp.value.trim() === '') { blanks++; return; }
+    if (inp.value.trim() === '') { blanks++; hint.textContent = ''; return; }
     var val = (f.kind === 'pct') ? parsePct(inp.value) : parseNum(inp.value);
     if (!isNaN(val) && Math.abs(val - f.expected) <= f.tol) {
       inp.classList.add('correct');
+      hint.textContent = '';
+      attemptCounts[f.inputId] = 0;
       correct++;
     } else {
       inp.classList.add('wrong');
-      hint.textContent = '';
+      attemptCounts[f.inputId] = (attemptCounts[f.inputId] || 0) + 1;
+      hint.textContent = (attemptCounts[f.inputId] >= 2 && f.explain) ? f.explain : '';
     }
   });
   var out = document.getElementById(scoreId);
@@ -794,6 +800,7 @@ function resetGroup(spec, scoreId, extraResetFn) {
     inp.value = '';
     inp.classList.remove('correct', 'wrong');
     hint.textContent = '';
+    attemptCounts[f.inputId] = 0;
   });
   document.getElementById(scoreId).textContent = '';
   if (extraResetFn) extraResetFn();
@@ -803,7 +810,8 @@ function resetGroup(spec, scoreId, extraResetFn) {
    STEP 1
 ═══════════════════════════════════════════════════════════════ */
 var S1 = [
-  { inputId:'s1-pp', hintId:'h-s1-pp', expected:PP2, tol:5, fmt:function(v){return fmtMoney(v,0);} }
+  { inputId:'s1-pp', hintId:'h-s1-pp', expected:PP2, tol:5, fmt:function(v){return fmtMoney(v,0);},
+    explain:'Year 2 budget = Year 1 cost × (1 + volume growth) × (1 − Kaizen improvement). Volume pushes the cost up; Kaizen pulls it back down.' }
 ];
 function checkStep1() {
   var fb = document.getElementById('step1-insight'); fb.innerHTML = '';
@@ -818,7 +826,8 @@ function resetStep1() { resetGroup(S1, 'score1-out', function(){ document.getEle
    STEP 2 — Year 3 compounding
 ═══════════════════════════════════════════════════════════════ */
 var S2 = [
-  { inputId:'s2-pp3', hintId:'h-s2-pp3', expected:PP3, tol:10, fmt:function(v){return fmtMoney(v,2);} }
+  { inputId:'s2-pp3', hintId:'h-s2-pp3', expected:PP3, tol:10, fmt:function(v){return fmtMoney(v,2);},
+    explain:'Apply the same growth-then-Kaizen mechanic to your Year 2 figure (not Year 1). Each year, the prior year’s budget becomes the new starting point.' }
 ];
 function checkStep2() {
   var fb = document.getElementById('step2-insight'); fb.innerHTML = '';
@@ -833,10 +842,14 @@ function resetStep2() { resetGroup(S2, 'score2-out', function(){ document.getEle
    STEP 3 — All three categories
 ═══════════════════════════════════════════════════════════════ */
 var S3 = [
-  { inputId:'s3-pp',  hintId:'h-s3-pp',  expected:PP2,  tol:5,  fmt:function(v){return fmtMoney(v,0);} },
-  { inputId:'s3-pkg', hintId:'h-s3-pkg', expected:PKG2, tol:5,  fmt:function(v){return fmtMoney(v,0);} },
-  { inputId:'s3-sh',  hintId:'h-s3-sh',  expected:SH2,  tol:5,  fmt:function(v){return fmtMoney(v,0);} },
-  { inputId:'s3-tot', hintId:'h-s3-tot', expected:TOT2, tol:10, fmt:function(v){return fmtMoney(v,0);} }
+  { inputId:'s3-pp',  hintId:'h-s3-pp',  expected:PP2,  tol:5,  fmt:function(v){return fmtMoney(v,0);},
+    explain:'Year 1 cost × (1 + growth rate) × (1 − Kaizen rate). Each category has its own Kaizen rate; pull the right one from the setup table.' },
+  { inputId:'s3-pkg', hintId:'h-s3-pkg', expected:PKG2, tol:5,  fmt:function(v){return fmtMoney(v,0);},
+    explain:'Same mechanic — Year 1 × (1 + growth) × (1 − Kaizen). Packaging’s Kaizen target differs from pick & pack; check the table.' },
+  { inputId:'s3-sh',  hintId:'h-s3-sh',  expected:SH2,  tol:5,  fmt:function(v){return fmtMoney(v,0);},
+    explain:'Same mechanic — Year 1 × (1 + growth) × (1 − Kaizen). Shipping’s Kaizen target is the smallest of the three (carrier rates are hard to squeeze).' },
+  { inputId:'s3-tot', hintId:'h-s3-tot', expected:TOT2, tol:10, fmt:function(v){return fmtMoney(v,0);},
+    explain:'Sum the three category budgets you just computed.' }
 ];
 function checkStep3() {
   var fb = document.getElementById('step3-insight'); fb.innerHTML = '';
@@ -850,6 +863,16 @@ function resetStep3() { resetGroup(S3, 'score3-out', function(){ document.getEle
 /* ═══════════════════════════════════════════════════════════════
    STEP 4 — Classify scenarios
 ═══════════════════════════════════════════════════════════════ */
+var STEP4_EXPLAIN = {
+  's4-q1': 'A retail price has already been set ($9.99). A cost ceiling is being pushed backward into product development. Which tool starts from market price and works back to cost?',
+  's4-q2': 'External performance data — peer facilities — is shaping internal goals.',
+  's4-q3': 'A bid is being built from direct cost, with a markup layered on top. Pure inward-looking cost-plus.',
+  's4-q4': 'A recurring reduction target on an *existing* operation, with regular variance review. Hallmark of continuous improvement.',
+  's4-q5': 'Same logic as Q1 — the retail price ($79) is fixed first, and the cost ceiling ($31) is propagated backward into design.',
+  's4-q6': 'A peer-comparison data source is being used to set internal targets — comparing sideways to set goals.',
+  's4-q7': 'Cost + fixed markup, no external reference point. Pure inward-looking pricing.',
+  's4-q8': 'Year-over-year continuous-improvement targets on an *existing* production line. Small, recurring takeouts.'
+};
 function checkStep4() {
   var fb = document.getElementById('step4-insight'); fb.innerHTML = '';
   var correct = 0, total = 0, blanks = 0;
@@ -857,15 +880,17 @@ function checkStep4() {
     var sel = document.getElementById(id);
     var hint = document.getElementById('h-' + id);
     sel.classList.remove('correct', 'wrong');
-    hint.textContent = '';
     total++;
-    if (sel.value === '') { blanks++; return; }
+    if (sel.value === '') { blanks++; hint.textContent = ''; return; }
     if (sel.value === STEP4_KEY[id]) {
       sel.classList.add('correct');
+      hint.textContent = '';
+      attemptCounts[id] = 0;
       correct++;
     } else {
       sel.classList.add('wrong');
-      hint.textContent = '';
+      attemptCounts[id] = (attemptCounts[id] || 0) + 1;
+      hint.textContent = (attemptCounts[id] >= 2 && STEP4_EXPLAIN[id]) ? STEP4_EXPLAIN[id] : '';
     }
   });
   var out = document.getElementById('score4-out');
@@ -886,6 +911,7 @@ function resetStep4() {
     sel.value = '';
     sel.classList.remove('correct', 'wrong');
     hint.textContent = '';
+    attemptCounts[id] = 0;
   });
   document.getElementById('score4-out').textContent = '';
   document.getElementById('step4-insight').innerHTML = '';
@@ -895,9 +921,12 @@ function resetStep4() {
    STEP 5 — Build
 ═══════════════════════════════════════════════════════════════ */
 var S5 = [
-  { inputId:'s5-a', hintId:'h-s5-a', expected:S5_A,     tol:10, fmt:function(v){return fmtMoney(v,0);} },
-  { inputId:'s5-b', hintId:'h-s5-b', expected:S5_B,     tol:10, fmt:function(v){return fmtMoney(v,0);} },
-  { inputId:'s5-c', hintId:'h-s5-c', expected:S5_C_PCT, tol:0.3, kind:'pct', fmt:fmtPct }
+  { inputId:'s5-a', hintId:'h-s5-a', expected:S5_A,     tol:10, fmt:function(v){return fmtMoney(v,0);},
+    explain:'Same per-category mechanic, but with 10% growth replacing 6%. Kaizen rates stay 3% / 2% / 1%. Compute each category, then sum.' },
+  { inputId:'s5-b', hintId:'h-s5-b', expected:S5_B,     tol:10, fmt:function(v){return fmtMoney(v,0);},
+    explain:'Growth stays 6%, but every Kaizen rate doubles (so 6% / 4% / 2%). Compute each category at the new rates, then sum.' },
+  { inputId:'s5-c', hintId:'h-s5-c', expected:S5_C_PCT, tol:0.3, kind:'pct', fmt:fmtPct,
+    explain:'You want each category to come out equal to its Year 1 value, so (1 + 0.06) × (1 − r) = 1. Solve for the rate r that exactly cancels the 6% volume growth.' }
 ];
 function checkStep5() {
   var fb = document.getElementById('step5-insight'); fb.innerHTML = '';
