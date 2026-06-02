@@ -278,10 +278,11 @@
     color: #9b2020;
   }
   .qa-row .answer .corr-hint {
-    text-align: center; margin-top: 3px;
-    display: block; font-size: 11px;
-    color: #5a9e3a; font-weight: 600;
+    text-align: left; margin-top: 4px;
+    display: block; font-size: 11.5px;
+    color: #64748b; font-weight: 500;
     min-height: 14px;
+    line-height: 1.4;
   }
 
   /* ── Chart ── */
@@ -628,7 +629,6 @@
     <div class="qa-row">
       <div class="qa-prompt">
         <strong>Variable cost per dozen</strong>
-        <small>(High cost &minus; Low cost) &divide; (High activity &minus; Low activity)</small>
       </div>
       <div class="answer">
         <label>VC / Dozen</label>
@@ -639,7 +639,6 @@
     <div class="qa-row">
       <div class="qa-prompt">
         <strong>Fixed cost per week</strong>
-        <small>Total cost &minus; (VC &times; activity) at either point</small>
       </div>
       <div class="answer">
         <label>Fixed Cost</label>
@@ -1135,6 +1134,14 @@ function addStaticLine(svgId, sc, a, b, color, dash) {
 let selectMode = null;
 let selectedHigh = null, selectedLow = null;
 
+/* Per-input attempt counter — explanatory hint shown only on the
+   2nd (or later) wrong submission for the same input. */
+var attemptCounts = {};
+var HL_EXPLAIN = {
+  'hl-vc': 'Variable cost per dozen is the slope between the two extreme points: change in total cost divided by change in activity (ΔY ÷ ΔX). The high-low method assumes the slope between extremes is the variable rate.',
+  'hl-fc': 'Once you have the slope, plug either extreme point back into Y = a + b·X and solve for the intercept (a). Total cost minus the variable portion at that activity level leaves you with fixed cost.'
+};
+
 function buildHLTable() {
   const tbody = document.getElementById('hl-tbody');
   tbody.innerHTML = '';
@@ -1242,16 +1249,22 @@ function checkStep1() {
   let allOk = true;
   if (Math.abs(vcGuess - HL_VC) <= 0.05) {
     vcEl.classList.add('correct');
+    vcHint.textContent = '';
+    attemptCounts['hl-vc'] = 0;
   } else {
     vcEl.classList.add('wrong');
-    vcHint.textContent = '';
+    attemptCounts['hl-vc'] = (attemptCounts['hl-vc'] || 0) + 1;
+    vcHint.textContent = (attemptCounts['hl-vc'] >= 2 && HL_EXPLAIN['hl-vc']) ? HL_EXPLAIN['hl-vc'] : '';
     allOk = false;
   }
   if (Math.abs(fcGuess - HL_FC) <= 5) {
     fcEl.classList.add('correct');
+    fcHint.textContent = '';
+    attemptCounts['hl-fc'] = 0;
   } else {
     fcEl.classList.add('wrong');
-    fcHint.textContent = '';
+    attemptCounts['hl-fc'] = (attemptCounts['hl-fc'] || 0) + 1;
+    fcHint.textContent = (attemptCounts['hl-fc'] >= 2 && HL_EXPLAIN['hl-fc']) ? HL_EXPLAIN['hl-fc'] : '';
     allOk = false;
   }
 
@@ -1274,6 +1287,7 @@ function resetStep1() {
   ['hl-vc', 'hl-fc'].forEach(id => {
     const el = document.getElementById(id);
     el.value = ''; el.classList.remove('correct', 'wrong');
+    attemptCounts[id] = 0;
   });
   ['hl-vc-hint', 'hl-fc-hint'].forEach(id => document.getElementById(id).textContent = '');
   document.getElementById('score1-out').textContent = '';

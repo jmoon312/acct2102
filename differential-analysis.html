@@ -252,13 +252,15 @@
     border-color: #c94040;
   }
   .rel-row .corr-tag {
-    font-size: 11px;
-    font-weight: 600;
-    margin-top: 3px;
+    font-size: 11.5px;
+    font-weight: 500;
+    margin-top: 4px;
     min-height: 14px;
+    color: #64748b;
+    line-height: 1.4;
   }
   .rel-row .corr-tag.show-yes { color: #2d6a1f; }
-  .rel-row .corr-tag.show-no  { color: #9b2020; }
+  .rel-row .corr-tag.show-no  { color: #64748b; }
 
   /* ── Step 2: Differential input rows ── */
   .diff-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 4px; }
@@ -321,12 +323,13 @@
   }
   .diff-row .answer .corr-hint {
     display: block;
-    font-size: 11px;
-    color: #5a9e3a;
-    font-weight: 600;
-    margin-top: 3px;
+    font-size: 11.5px;
+    color: #64748b;
+    font-weight: 500;
+    margin-top: 4px;
     min-height: 14px;
-    text-align: center;
+    line-height: 1.4;
+    text-align: left;
   }
   .diff-row.irrelevant {
     opacity: 0.45;
@@ -603,11 +606,12 @@
 
   .corr-hint {
     display: block;
-    font-size: 11px;
-    color: #5a9e3a;
-    font-weight: 600;
-    margin-top: 3px;
+    font-size: 11.5px;
+    color: #64748b;
+    font-weight: 500;
+    margin-top: 4px;
     min-height: 14px;
+    line-height: 1.4;
   }
 
   /* ── Insight ── */
@@ -905,19 +909,39 @@
    DATA
 ═══════════════════════════════════════════════════════════════ */
 const ITEMS = [
-  { id: 'reg-rev',   label: 'Sales revenue from regular customers',    detail: 'Monthly sales to existing customers',   relevant: true,  diff:  80000 },
-  { id: 'reg-vprod', label: 'Variable production costs (regular)',      detail: 'DM + DL + variable MOH on regular units', relevant: true,  diff: -36000 },
-  { id: 'reg-vsa',   label: 'Variable selling & admin costs (regular)', detail: 'Variable S&A on regular units',         relevant: true,  diff:  -4000 },
-  { id: 'avoid-fc',  label: 'Avoidable fixed costs',                    detail: 'Supervisor, equipment lease, software',  relevant: true,  diff: -25000 },
-  { id: 'alloc-oh',  label: 'Allocated corporate overhead',             detail: 'Share of HQ costs assigned to the division', relevant: false, diff: 0 },
-  { id: 'equip',     label: 'Equipment purchased last year',            detail: 'Bought last year for division use',     relevant: false, diff: 0 },
-  { id: 'so-rev',    label: 'Special order revenue',                    detail: 'Revenue from the TechRetailer order',   relevant: true,  diff:  15000 },
-  { id: 'so-vprod',  label: 'Special order variable production costs',  detail: 'DM + DL + variable MOH on the special order', relevant: true,  diff:  -9000 },
-  { id: 'so-qc',     label: 'Temporary QC inspector',                   detail: 'Needed only if the special order is accepted', relevant: true,  diff:   -500 },
-  { id: 'deprec',    label: 'Depreciation on division equipment',       detail: 'Monthly depreciation charge',           relevant: false, diff: 0 }
+  { id: 'reg-rev',   label: 'Sales revenue from regular customers',    detail: 'Monthly sales to existing customers',   relevant: true,  diff:  80000,
+    explainRel:  'Would regular customer revenue disappear if HP shut the division down? If the cash flow changes between alternatives, it counts.',
+    explainDiff: 'How much regular-customer revenue does HP collect each month? That whole amount is the differential — it shows up only if the division stays open.' },
+  { id: 'reg-vprod', label: 'Variable production costs (regular)',      detail: 'DM + DL + variable MOH on regular units', relevant: true,  diff: -36000,
+    explainRel:  'Per-unit variable production costs only get incurred when HP actually produces. Does that change between keeping and shutting down?',
+    explainDiff: 'Total variable production cost per regular unit (DM + DL + variable MOH) × the regular unit count. Enter as a negative — it is a cost the division causes.' },
+  { id: 'reg-vsa',   label: 'Variable selling & admin costs (regular)', detail: 'Variable S&A on regular units',         relevant: true,  diff:  -4000,
+    explainRel:  'Variable S&A is incurred per regular unit sold. Does shutting the division down change how many regular units HP sells?',
+    explainDiff: 'Per-unit variable S&A × regular units. Enter as a negative — these costs disappear if the division closes.' },
+  { id: 'avoid-fc',  label: 'Avoidable fixed costs',                    detail: 'Supervisor, equipment lease, software',  relevant: true,  diff: -25000,
+    explainRel:  'The setup labels these as “avoidable.” That word is the key — what happens to avoidable fixed costs if the division goes away?',
+    explainDiff: 'These are a single monthly lump sum, not per-unit. Sign: cost (negative) if the division stays open.' },
+  { id: 'alloc-oh',  label: 'Allocated corporate overhead',             detail: 'Share of HQ costs assigned to the division', relevant: false, diff: 0,
+    explainRel:  'HQ keeps spending the same total regardless. Allocation just decides which division “owns” the bill on paper. Does the cash flow change?' },
+  { id: 'equip',     label: 'Equipment purchased last year',            detail: 'Bought last year for division use',     relevant: false, diff: 0,
+    explainRel:  'That $100,000 was spent last year. Can HP undo a past purchase by making a decision today?' },
+  { id: 'so-rev',    label: 'Special order revenue',                    detail: 'Revenue from the TechRetailer order',   relevant: true,  diff:  15000,
+    explainRel:  'The special order revenue exists only under one alternative. Compare across the two scenarios.',
+    explainDiff: 'Special order quantity × the special order price per unit. Positive — revenue HP collects.' },
+  { id: 'so-vprod',  label: 'Special order variable production costs',  detail: 'DM + DL + variable MOH on the special order', relevant: true,  diff:  -9000,
+    explainRel:  'These costs only get incurred if the order is produced. Does that change between alternatives?',
+    explainDiff: 'Same per-unit variable production cost as the regular units, applied to the special order quantity. Negative — a cost.' },
+  { id: 'so-qc',     label: 'Temporary QC inspector',                   detail: 'Needed only if the special order is accepted', relevant: true,  diff:   -500,
+    explainRel:  'The setup says this position is hired only if the special order is accepted. Read that phrasing carefully.',
+    explainDiff: 'A flat monthly cost, not per-unit. Negative — incurred only if HP takes the order.' },
+  { id: 'deprec',    label: 'Depreciation on division equipment',       detail: 'Monthly depreciation charge',           relevant: false, diff: 0,
+    explainRel:  'Depreciation is an accounting allocation of a cost that was already paid. Will the cash outlay differ between alternatives?' }
 ];
 const NET_DIFF = ITEMS.reduce((s, it) => s + (it.relevant ? it.diff : 0), 0); // 20,500
 const CORRECT_DECISION = 'keep';
+
+/* Per-input attempt counters — explanatory hint shown only on 2nd-or-later wrong submission. */
+var attemptCounts = {};
 
 /* ═══════════════════════════════════════════════════════════════
    HELPERS
@@ -1032,6 +1056,7 @@ function checkStep1() {
   ITEMS.forEach((item, i) => {
     const row = document.getElementById('rel-row-' + i);
     const corr = document.getElementById('rel-corr-' + i);
+    const key = 'rel-row-' + i;
     row.classList.remove('row-correct', 'row-wrong');
     corr.textContent = '';
     corr.className = 'corr-tag';
@@ -1040,11 +1065,15 @@ function checkStep1() {
 
     if (step1Picks[i] === item.relevant) {
       row.classList.add('row-correct');
+      attemptCounts[key] = 0;
       correct++;
     } else {
       row.classList.add('row-wrong');
-      corr.textContent = '';
-      corr.classList.add('show-no');
+      attemptCounts[key] = (attemptCounts[key] || 0) + 1;
+      if (attemptCounts[key] >= 2 && item.explainRel) {
+        corr.textContent = item.explainRel;
+        corr.classList.add('show-no');
+      }
     }
   });
 
@@ -1066,6 +1095,7 @@ function checkStep1() {
 function resetStep1() {
   ITEMS.forEach((_, i) => {
     step1Picks[i] = null;
+    attemptCounts['rel-row-' + i] = 0;
     document.getElementById('rel-yes-' + i).classList.remove('selected');
     document.getElementById('rel-no-'  + i).classList.remove('selected');
     const row = document.getElementById('rel-row-' + i);
@@ -1120,6 +1150,7 @@ function checkStep2() {
     total++;
     const inp = document.getElementById('diff-' + i);
     const hint = document.getElementById('hint-diff-' + i);
+    const key = 'diff-' + i;
     inp.classList.remove('correct', 'wrong');
     hint.textContent = '';
 
@@ -1127,10 +1158,12 @@ function checkStep2() {
     const val = parseNum(inp.value);
     if (!isNaN(val) && Math.abs(val - item.diff) <= 0.5) {
       inp.classList.add('correct');
+      attemptCounts[key] = 0;
       correct++;
     } else {
       inp.classList.add('wrong');
-      hint.textContent = '';
+      attemptCounts[key] = (attemptCounts[key] || 0) + 1;
+      if (attemptCounts[key] >= 2 && item.explainDiff) hint.textContent = item.explainDiff;
     }
   });
 
@@ -1157,6 +1190,7 @@ function resetStep2() {
     inp.value = '';
     inp.classList.remove('correct', 'wrong');
     hint.textContent = '';
+    attemptCounts['diff-' + i] = 0;
   });
   document.getElementById('score2-out').textContent = '';
 }
@@ -1183,6 +1217,8 @@ function checkStep3() {
   fb.innerHTML = '';
 
   let parts = 0, correct = 0;
+  const s3Key = 's3-net';
+  const s3Explain = 'Sum every differential you entered in Step 2 — revenues add, costs subtract. Items you marked irrelevant should not enter this total.';
 
   // Check net differential
   if (inp.value.trim() !== '') {
@@ -1190,10 +1226,12 @@ function checkStep3() {
     const val = parseNum(inp.value);
     if (!isNaN(val) && Math.abs(val - NET_DIFF) <= 0.5) {
       inp.classList.add('correct');
+      attemptCounts[s3Key] = 0;
       correct++;
     } else {
       inp.classList.add('wrong');
-      hint.textContent = '';
+      attemptCounts[s3Key] = (attemptCounts[s3Key] || 0) + 1;
+      if (attemptCounts[s3Key] >= 2) hint.textContent = s3Explain;
     }
   }
 
@@ -1232,6 +1270,7 @@ function resetStep3() {
   document.getElementById('hint-s3-net').textContent = '';
   document.getElementById('score3-out').textContent = '';
   document.getElementById('step3-insight').innerHTML = '';
+  attemptCounts['s3-net'] = 0;
   step3Decision = null;
   document.getElementById('decide-keep').classList.remove('selected');
   document.getElementById('decide-disc').classList.remove('selected');
@@ -1317,14 +1356,21 @@ function checkStep4() {
   const netGuess = netEl.value.trim();
   let parts = [], allCorrect = true;
 
+  // Where to put the build-step hint. Reuse the score-out area below; insert into feedback at end.
+  let bvNetHintMsg = '';
   if (netGuess) {
     const v = parseNum(netGuess);
     const tol = Math.max(0.5, Math.abs(actual) * 0.001);
     if (!isNaN(v) && Math.abs(v - actual) <= tol) {
       netEl.classList.add('correct');
+      attemptCounts['bv-net'] = 0;
       parts.push('\u2714 Net differential');
     } else {
       netEl.classList.add('wrong');
+      attemptCounts['bv-net'] = (attemptCounts['bv-net'] || 0) + 1;
+      if (attemptCounts['bv-net'] >= 2) {
+        bvNetHintMsg = 'Add up: regular CM (units \u00d7 (price \u2212 var prod \u2212 var S&A)) minus avoidable fixed costs, plus special-order CM (SO units \u00d7 (SO price \u2212 var prod)) minus the special-order fixed cost. Allocated overhead does not enter.';
+      }
       parts.push('\u2718 Net differential');
       allCorrect = false;
     }
@@ -1351,6 +1397,9 @@ function checkStep4() {
     fb.innerHTML = `<div class="insight success">${summaryLine}</div>`;
     playBell();
   } else {
+    if (bvNetHintMsg) {
+      fb.innerHTML = `<div class="insight">${bvNetHintMsg}</div>`;
+    }
     playHorn();
   }
 }
@@ -1369,6 +1418,7 @@ function resetStep4() {
   document.getElementById('bv-net').classList.remove('correct', 'wrong');
   document.getElementById('score4-out').textContent = '';
   document.getElementById('step4-feedback').innerHTML = '';
+  attemptCounts['bv-net'] = 0;
 
   bvDecision = null;
   document.getElementById('bv-decide-keep').classList.remove('selected');

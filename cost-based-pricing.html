@@ -249,11 +249,12 @@
   }
   .corr-hint {
     display: block;
-    font-size: 11px;
-    color: #5a9e3a;
-    font-weight: 600;
-    margin-top: 3px;
+    font-size: 11.5px;
+    color: #64748b;
+    font-weight: 500;
+    margin-top: 4px;
     min-height: 14px;
+    line-height: 1.4;
   }
 
   .reveal { display: none; animation: slideIn 0.4s ease-out; }
@@ -784,23 +785,28 @@ var S6_C = ((4.50 + DL + VMOH + VSA) * V + TFC_TOT + PROFIT) / V;  // 10.30
 
 /* ═══════════════════════════════════════════════════════════════
    GENERIC CHECKER
+   Per-input attempt counter — explanatory hint shown only on the
+   2nd (or later) wrong submission for the same input.
 ═══════════════════════════════════════════════════════════════ */
+var attemptCounts = {};
 function checkGroup(spec, scoreId, allCorrectFn) {
   var correct = 0, total = 0, blanks = 0;
   spec.forEach(function(f) {
     var inp  = document.getElementById(f.inputId);
     var hint = document.getElementById(f.hintId);
     inp.classList.remove('correct', 'wrong');
-    hint.textContent = '';
     total++;
-    if (inp.value.trim() === '') { blanks++; return; }
+    if (inp.value.trim() === '') { blanks++; hint.textContent = ''; return; }
     var val = (f.kind === 'pct') ? parsePct(inp.value) : parseNum(inp.value);
     if (!isNaN(val) && Math.abs(val - f.expected) <= f.tol) {
       inp.classList.add('correct');
+      hint.textContent = '';
+      attemptCounts[f.inputId] = 0;
       correct++;
     } else {
       inp.classList.add('wrong');
-      hint.textContent = '';
+      attemptCounts[f.inputId] = (attemptCounts[f.inputId] || 0) + 1;
+      hint.textContent = (attemptCounts[f.inputId] >= 2 && f.explain) ? f.explain : '';
     }
   });
   var out = document.getElementById(scoreId);
@@ -817,6 +823,7 @@ function resetGroup(spec, scoreId, extraResetFn) {
     inp.value = '';
     inp.classList.remove('correct', 'wrong');
     hint.textContent = '';
+    attemptCounts[f.inputId] = 0;
   });
   document.getElementById(scoreId).textContent = '';
   if (extraResetFn) extraResetFn();
@@ -826,8 +833,10 @@ function resetGroup(spec, scoreId, extraResetFn) {
    STEP 1
 ═══════════════════════════════════════════════════════════════ */
 var S1 = [
-  { inputId:'s1-profit', hintId:'h-s1-profit', expected:PROFIT,     tol:50,   fmt:function(v){return fmtMoney(v,0);} },
-  { inputId:'s1-price',  hintId:'h-s1-price',  expected:TARG_PRICE, tol:0.05, fmt:function(v){return fmtMoney(v,2);} }
+  { inputId:'s1-profit', hintId:'h-s1-profit', expected:PROFIT,     tol:50,   fmt:function(v){return fmtMoney(v,0);},
+    explain:'Desired profit = ROI × invested assets. Apply the required return rate to the asset base; it’s an annual dollar figure, not a per-bag amount.' },
+  { inputId:'s1-price',  hintId:'h-s1-price',  expected:TARG_PRICE, tol:0.05, fmt:function(v){return fmtMoney(v,2);},
+    explain:'Profit equation: Revenue = Total cost + Desired profit. Add up every cost line (variable per-unit × volume, plus all fixed costs), tack on the desired profit, then divide by planned volume to get $ per bag.' }
 ];
 function checkStep1() {
   var fb = document.getElementById('step1-insight'); fb.innerHTML = '';
@@ -842,9 +851,12 @@ function resetStep1() { resetGroup(S1, 'score1-out', function(){ document.getEle
    STEP 2 — Full mfg markup
 ═══════════════════════════════════════════════════════════════ */
 var S2 = [
-  { inputId:'s2-base',  hintId:'h-s2-base',  expected:FULL_MFG_UNIT,   tol:0.05, fmt:function(v){return fmtMoney(v,2);} },
-  { inputId:'s2-pct',   hintId:'h-s2-pct',   expected:MARKUP_FULL_PCT, tol:0.6,  kind:'pct', fmt:fmtPct },
-  { inputId:'s2-price', hintId:'h-s2-price', expected:TARG_PRICE,      tol:0.05, fmt:function(v){return fmtMoney(v,2);} }
+  { inputId:'s2-base',  hintId:'h-s2-base',  expected:FULL_MFG_UNIT,   tol:0.05, fmt:function(v){return fmtMoney(v,2);},
+    explain:'Full manufacturing cost per bag = DM + DL + variable MOH + (fixed MOH spread across planned volume). The fixed MOH piece is the total annual amount divided by units.' },
+  { inputId:'s2-pct',   hintId:'h-s2-pct',   expected:MARKUP_FULL_PCT, tol:0.6,  kind:'pct', fmt:fmtPct,
+    explain:'Markup % = (Price − Base) / Base. The dollar markup has to cover every cost not in the base (here: all S&A) plus the desired profit. Solve as a percent of the base, not of price.' },
+  { inputId:'s2-price', hintId:'h-s2-price', expected:TARG_PRICE,      tol:0.05, fmt:function(v){return fmtMoney(v,2);},
+    explain:'Selling price = Base × (1 + markup %). If your markup % is right, this should match the target-profit price you found in Step 1.' }
 ];
 function checkStep2() {
   var fb = document.getElementById('step2-insight'); fb.innerHTML = '';
@@ -859,9 +871,12 @@ function resetStep2() { resetGroup(S2, 'score2-out', function(){ document.getEle
    STEP 3 — Variable mfg markup
 ═══════════════════════════════════════════════════════════════ */
 var S3 = [
-  { inputId:'s3-base',  hintId:'h-s3-base',  expected:VAR_MFG_UNIT,   tol:0.05, fmt:function(v){return fmtMoney(v,2);} },
-  { inputId:'s3-pct',   hintId:'h-s3-pct',   expected:MARKUP_VAR_PCT, tol:0.6,  kind:'pct', fmt:fmtPct },
-  { inputId:'s3-price', hintId:'h-s3-price', expected:TARG_PRICE,     tol:0.05, fmt:function(v){return fmtMoney(v,2);} }
+  { inputId:'s3-base',  hintId:'h-s3-base',  expected:VAR_MFG_UNIT,   tol:0.05, fmt:function(v){return fmtMoney(v,2);},
+    explain:'Variable manufacturing cost per bag = DM + DL + variable MOH. No fixed MOH and no S&A in this base — it’s strictly the per-unit production costs that vary with volume.' },
+  { inputId:'s3-pct',   hintId:'h-s3-pct',   expected:MARKUP_VAR_PCT, tol:0.6,  kind:'pct', fmt:fmtPct,
+    explain:'Markup % = (Price − Base) / Base. Same target price as Step 2, but the base shrank, so the markup has to absorb fixed MOH on top of S&A and profit. Expect a much bigger percent.' },
+  { inputId:'s3-price', hintId:'h-s3-price', expected:TARG_PRICE,     tol:0.05, fmt:function(v){return fmtMoney(v,2);},
+    explain:'Selling price = Base × (1 + markup %). The price should land at the same dollar amount as Steps 1 and 2 — only the route there changed.' }
 ];
 function checkStep3() {
   var fb = document.getElementById('step3-insight'); fb.innerHTML = '';
@@ -876,9 +891,12 @@ function resetStep3() { resetGroup(S3, 'score3-out', function(){ document.getEle
    STEP 4 — Direct materials markup
 ═══════════════════════════════════════════════════════════════ */
 var S4 = [
-  { inputId:'s4-base',  hintId:'h-s4-base',  expected:DM,            tol:0.05, fmt:function(v){return fmtMoney(v,2);} },
-  { inputId:'s4-pct',   hintId:'h-s4-pct',   expected:MARKUP_DM_PCT, tol:1.0,  kind:'pct', fmt:fmtPct },
-  { inputId:'s4-price', hintId:'h-s4-price', expected:TARG_PRICE,    tol:0.05, fmt:function(v){return fmtMoney(v,2);} }
+  { inputId:'s4-base',  hintId:'h-s4-base',  expected:DM,            tol:0.05, fmt:function(v){return fmtMoney(v,2);},
+    explain:'The base now is just the direct-materials cost per bag — pull the green-bean number straight from the cost table. Everything else (DL, all OH, S&A, profit) will ride inside the markup.' },
+  { inputId:'s4-pct',   hintId:'h-s4-pct',   expected:MARKUP_DM_PCT, tol:1.0,  kind:'pct', fmt:fmtPct,
+    explain:'Markup % = (Price − Base) / Base. With only materials in the base, the markup has to cover labor, all overhead, all S&A, and profit — so expect a markup well over 100%.' },
+  { inputId:'s4-price', hintId:'h-s4-price', expected:TARG_PRICE,    tol:0.05, fmt:function(v){return fmtMoney(v,2);},
+    explain:'Selling price = Base × (1 + markup %). Same target price as Steps 1–3 — different base, different markup, same destination.' }
 ];
 function checkStep4() {
   var fb = document.getElementById('step4-insight'); fb.innerHTML = '';
@@ -893,8 +911,10 @@ function resetStep4() { resetGroup(S4, 'score4-out', function(){ document.getEle
    STEP 5 — Target-cost flip
 ═══════════════════════════════════════════════════════════════ */
 var S5 = [
-  { inputId:'s5-total',    hintId:'h-s5-total',    expected:MAX_TOTAL_OPS, tol:50,   fmt:function(v){return fmtMoney(v,0);} },
-  { inputId:'s5-prodcost', hintId:'h-s5-prodcost', expected:MAX_PROD_UNIT, tol:0.05, fmt:function(v){return fmtMoney(v,2);} }
+  { inputId:'s5-total',    hintId:'h-s5-total',    expected:MAX_TOTAL_OPS, tol:50,   fmt:function(v){return fmtMoney(v,0);},
+    explain:'Flip the profit equation: Max total cost = Revenue − Desired profit. Revenue here is the market-set price × planned volume; profit is the same dollar target as before.' },
+  { inputId:'s5-prodcost', hintId:'h-s5-prodcost', expected:MAX_PROD_UNIT, tol:0.05, fmt:function(v){return fmtMoney(v,2);},
+    explain:'Strip the unchanged S&A (variable S&A × volume, plus fixed S&A) out of your total-cost ceiling. What’s left is what production gets — divide by volume to convert to $ per bag.' }
 ];
 function checkStep5() {
   var fb = document.getElementById('step5-insight'); fb.innerHTML = '';
@@ -909,9 +929,12 @@ function resetStep5() { resetGroup(S5, 'score5-out', function(){ document.getEle
    STEP 6 — Build your own
 ═══════════════════════════════════════════════════════════════ */
 var S6 = [
-  { inputId:'s6-a', hintId:'h-s6-a', expected:S6_A, tol:0.05, fmt:function(v){return fmtMoney(v,2);} },
-  { inputId:'s6-b', hintId:'h-s6-b', expected:S6_B, tol:0.05, fmt:function(v){return fmtMoney(v,2);} },
-  { inputId:'s6-c', hintId:'h-s6-c', expected:S6_C, tol:0.05, fmt:function(v){return fmtMoney(v,2);} }
+  { inputId:'s6-a', hintId:'h-s6-a', expected:S6_A, tol:0.05, fmt:function(v){return fmtMoney(v,2);},
+    explain:'Same profit-equation price formula as Step 1, but the desired-profit dollar amount went up. Costs and volume are baseline; only the numerator (cost + profit) changes.' },
+  { inputId:'s6-b', hintId:'h-s6-b', expected:S6_B, tol:0.05, fmt:function(v){return fmtMoney(v,2);},
+    explain:'Volume drops, so rebuild total cost at the new volume (variable cost per bag × new volume, plus unchanged fixed costs) before adding profit and dividing by the new volume.' },
+  { inputId:'s6-c', hintId:'h-s6-c', expected:S6_C, tol:0.05, fmt:function(v){return fmtMoney(v,2);},
+    explain:'Only one input changed: direct materials per bag. Rebuild total variable cost per bag with the new DM, then plug back into the profit-equation price formula.' }
 ];
 function checkStep6() {
   var fb = document.getElementById('step6-insight'); fb.innerHTML = '';

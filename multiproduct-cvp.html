@@ -228,11 +228,12 @@
   }
   .corr-hint {
     display: block;
-    font-size: 11px;
-    color: #5a9e3a;
-    font-weight: 600;
-    margin-top: 3px;
+    font-size: 11.5px;
+    color: #64748b;
+    font-weight: 500;
+    margin-top: 4px;
     min-height: 14px;
+    line-height: 1.4;
   }
 
   /* Single-cell solve box (Steps 2/3/4) */
@@ -865,14 +866,12 @@
       <div class="solve-card">
         <label>
           Profit at expected sales
-          <small>= (WACM × total units) − FC</small>
         </label>
         <input type="text" id="bv-profit" placeholder="$">
       </div>
       <div class="solve-card">
         <label>
           Breakeven units (total)
-          <small>= FC ÷ WACM</small>
         </label>
         <input type="text" id="bv-be" inputmode="numeric" placeholder="units">
       </div>
@@ -914,6 +913,26 @@ const ORIG_TOTAL_CM    = totalCM(PRODUCTS);                // 25000
 const ORIG_WACM        = wacmOf(PRODUCTS);                 // 2.50
 const ORIG_PROFIT      = ORIG_TOTAL_CM - FC;               // -5000
 const ORIG_BE_UNITS    = FC / ORIG_WACM;                   // 12000
+
+/* ═══════════════════════════════════════════════════════════════
+   ATTEMPT COUNTER — per-input
+   Explanatory hints only fire on the 2nd (or later) wrong submission.
+═══════════════════════════════════════════════════════════════ */
+const attemptCounts = {};
+const STEP1_EXPLAIN = {
+  'cm-bars':    'Contribution margin per unit = selling price per unit − variable cost per unit. Subtract the VC column from the price column.',
+  'cm-sundaes': 'Same mechanic — price minus variable cost. Each product gets its own CM/unit; don’t reuse the Bars number.',
+  'cm-pints':   'Price minus variable cost, per unit. The dollar amount will look much larger than Bars or Sundaes because Pints sell for more.',
+  'cm-cakes':   'Cakes have the highest price and highest VC; the CM is just the difference between them.'
+};
+const STEP2_EXPLAIN_WACM = 'WACM = total contribution margin ÷ total units. Weight each product’s CM/unit by how many units of that product are sold, then divide by the total unit count.';
+const STEP3_EXPLAIN_PROFIT = 'Profit at expected volume = (WACM × total units) − fixed costs. Total CM may not cover FC at 10,000 units — the result can be negative.';
+const STEP4_EXPLAIN = {
+  'be-bars':    'Break-even total units × that product’s share of the mix. First find total break-even units (FC ÷ WACM), then apply each sales-mix percentage.',
+  'be-sundaes': 'Same logic — total break-even units × this product’s sales-mix percentage.',
+  'be-pints':   'Total break-even units × Pints’ share of the mix. The mix holds constant across all volumes.',
+  'be-cakes':   'Cakes are 5% of the mix, so they get 5% of the total break-even units.'
+};
 
 /* ═══════════════════════════════════════════════════════════════
    HELPERS
@@ -998,20 +1017,23 @@ function playHorn() {
 function checkStep1() {
   let correct = 0, total = 0, blanks = 0;
   PRODUCTS.forEach(p => {
-    const inp  = document.getElementById('cm-' + p.key);
-    const hint = document.getElementById('hint-cm-' + p.key);
+    const inpId = 'cm-' + p.key;
+    const inp  = document.getElementById(inpId);
+    const hint = document.getElementById('hint-' + inpId);
     inp.classList.remove('correct', 'wrong');
-    hint.textContent = '';
     total++;
-    if (inp.value.trim() === '') { blanks++; return; }
+    if (inp.value.trim() === '') { blanks++; hint.textContent = ''; return; }
     const val = parseNum(inp.value);
     const exp = p.SP - p.VC;
     if (!isNaN(val) && Math.abs(val - exp) <= 0.005) {
       inp.classList.add('correct');
+      hint.textContent = '';
+      attemptCounts[inpId] = 0;
       correct++;
     } else {
       inp.classList.add('wrong');
-      hint.textContent = '';
+      attemptCounts[inpId] = (attemptCounts[inpId] || 0) + 1;
+      hint.textContent = (attemptCounts[inpId] >= 2 && STEP1_EXPLAIN[inpId]) ? STEP1_EXPLAIN[inpId] : '';
     }
   });
   const out = document.getElementById('score1-out');
@@ -1030,11 +1052,13 @@ function checkStep1() {
 
 function resetStep1() {
   PRODUCTS.forEach(p => {
-    const inp = document.getElementById('cm-' + p.key);
-    const hint = document.getElementById('hint-cm-' + p.key);
+    const inpId = 'cm-' + p.key;
+    const inp = document.getElementById(inpId);
+    const hint = document.getElementById('hint-' + inpId);
     inp.value = '';
     inp.classList.remove('correct', 'wrong');
     hint.textContent = '';
+    attemptCounts[inpId] = 0;
   });
   document.getElementById('score1-out').textContent = '';
 }
@@ -1043,14 +1067,15 @@ function resetStep1() {
    STEP 2 — WACM
 ═══════════════════════════════════════════════════════════════ */
 function checkStep2() {
-  const inp  = document.getElementById('wacm-input');
+  const inpId = 'wacm-input';
+  const inp  = document.getElementById(inpId);
   const hint = document.getElementById('hint-wacm');
   const out  = document.getElementById('score2-out');
   inp.classList.remove('correct', 'wrong');
-  hint.textContent = '';
   out.textContent = '';
 
   if (inp.value.trim() === '') {
+    hint.textContent = '';
     out.textContent = 'Enter a value first.';
     return;
   }
@@ -1058,12 +1083,15 @@ function checkStep2() {
   const exp = ORIG_WACM;  // 2.50
   if (!isNaN(val) && Math.abs(val - exp) <= 0.01) {
     inp.classList.add('correct');
+    hint.textContent = '';
+    attemptCounts[inpId] = 0;
     out.textContent = 'Correct!';
     playBell();
     revealStep3(false);
   } else {
     inp.classList.add('wrong');
-    hint.textContent = '';
+    attemptCounts[inpId] = (attemptCounts[inpId] || 0) + 1;
+    hint.textContent = (attemptCounts[inpId] >= 2) ? STEP2_EXPLAIN_WACM : '';
     out.textContent = 'Not quite.';
     playHorn();
   }
@@ -1075,22 +1103,24 @@ function resetStep2() {
   inp.classList.remove('correct', 'wrong');
   document.getElementById('hint-wacm').textContent = '';
   document.getElementById('score2-out').textContent = '';
+  attemptCounts['wacm-input'] = 0;
 }
 
 /* ═══════════════════════════════════════════════════════════════
    STEP 3 — Profit at expected sales
 ═══════════════════════════════════════════════════════════════ */
 function checkStep3() {
-  const inp  = document.getElementById('profit-input');
+  const inpId = 'profit-input';
+  const inp  = document.getElementById(inpId);
   const hint = document.getElementById('hint-profit');
   const out  = document.getElementById('score3-out');
   const fb   = document.getElementById('step3-insight');
   inp.classList.remove('correct', 'wrong');
-  hint.textContent = '';
   out.textContent = '';
   fb.innerHTML = '';
 
   if (inp.value.trim() === '') {
+    hint.textContent = '';
     out.textContent = 'Enter a value first.';
     return;
   }
@@ -1098,6 +1128,8 @@ function checkStep3() {
   const exp = ORIG_PROFIT;  // -5000
   if (!isNaN(val) && Math.abs(val - exp) <= 0.5) {
     inp.classList.add('correct');
+    hint.textContent = '';
+    attemptCounts[inpId] = 0;
     out.textContent = 'Correct!';
     fb.innerHTML = `
       <div class="insight success">
@@ -1108,7 +1140,8 @@ function checkStep3() {
     revealStep4(false);
   } else {
     inp.classList.add('wrong');
-    hint.textContent = '';
+    attemptCounts[inpId] = (attemptCounts[inpId] || 0) + 1;
+    hint.textContent = (attemptCounts[inpId] >= 2) ? STEP3_EXPLAIN_PROFIT : '';
     out.textContent = 'Not quite.';
     playHorn();
   }
@@ -1121,6 +1154,7 @@ function resetStep3() {
   document.getElementById('hint-profit').textContent = '';
   document.getElementById('score3-out').textContent = '';
   document.getElementById('step3-insight').innerHTML = '';
+  attemptCounts['profit-input'] = 0;
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1136,19 +1170,22 @@ const STEP4_EXPECTED = PRODUCTS.map(p => ({
 function checkStep4() {
   let correct = 0, total = 0, blanks = 0;
   STEP4_EXPECTED.forEach(item => {
-    const inp  = document.getElementById('be-' + item.key);
-    const hint = document.getElementById('hint-be-' + item.key);
+    const inpId = 'be-' + item.key;
+    const inp  = document.getElementById(inpId);
+    const hint = document.getElementById('hint-' + inpId);
     inp.classList.remove('correct', 'wrong');
-    hint.textContent = '';
     total++;
-    if (inp.value.trim() === '') { blanks++; return; }
+    if (inp.value.trim() === '') { blanks++; hint.textContent = ''; return; }
     const val = parseNum(inp.value);
     if (!isNaN(val) && Math.abs(val - item.expected) <= 1) {
       inp.classList.add('correct');
+      hint.textContent = '';
+      attemptCounts[inpId] = 0;
       correct++;
     } else {
       inp.classList.add('wrong');
-      hint.textContent = '';
+      attemptCounts[inpId] = (attemptCounts[inpId] || 0) + 1;
+      hint.textContent = (attemptCounts[inpId] >= 2 && STEP4_EXPLAIN[inpId]) ? STEP4_EXPLAIN[inpId] : '';
     }
   });
   const out = document.getElementById('score4-out');
@@ -1174,11 +1211,13 @@ function checkStep4() {
 
 function resetStep4() {
   STEP4_EXPECTED.forEach(item => {
-    const inp  = document.getElementById('be-' + item.key);
-    const hint = document.getElementById('hint-be-' + item.key);
+    const inpId = 'be-' + item.key;
+    const inp  = document.getElementById(inpId);
+    const hint = document.getElementById('hint-' + inpId);
     inp.value = '';
     inp.classList.remove('correct', 'wrong');
     hint.textContent = '';
+    attemptCounts[inpId] = 0;
   });
   document.getElementById('score4-out').textContent = '';
   document.getElementById('step4-insight').innerHTML = '';

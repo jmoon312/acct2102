@@ -239,20 +239,22 @@
   }
   .qa-row .answer .corr-hint {
     display: block;
-    font-size: 11px;
-    color: #5a9e3a;
-    font-weight: 600;
-    margin-top: 3px;
+    font-size: 11.5px;
+    color: #64748b;
+    font-weight: 500;
+    margin-top: 4px;
     min-height: 14px;
-    text-align: center;
+    line-height: 1.4;
+    text-align: left;
   }
   .corr-hint {
     display: block;
-    font-size: 11px;
-    color: #5a9e3a;
-    font-weight: 600;
-    margin-top: 3px;
+    font-size: 11.5px;
+    color: #64748b;
+    font-weight: 500;
+    margin-top: 4px;
     min-height: 14px;
+    line-height: 1.4;
   }
 
   /* ── Yes/No toggle (sunk cost questions) ── */
@@ -730,9 +732,7 @@
 
     <div class="qa-list">
       <div class="qa-row">
-        <div class="qa-prompt">ProConnect Plus — <strong>CM per extra capacity unit</strong> used
-          <small>Incremental CM ÷ extra capacity consumed per upgrade</small>
-        </div>
+        <div class="qa-prompt">ProConnect Plus — <strong>CM per extra capacity unit</strong> used</div>
         <div class="answer">
           <label>$ / cap unit</label>
           <input type="text" id="s3-plus-cphr" inputmode="decimal" placeholder="$">
@@ -973,23 +973,28 @@ function playHorn() {
 
 /* ═══════════════════════════════════════════════════════════════
    GENERIC CHECKER
+   Per-input attempt counter — explanatory hint shown only on the
+   2nd (or later) wrong submission for the same input.
 ═══════════════════════════════════════════════════════════════ */
+var attemptCounts = {};
 function checkGroup(spec, scoreId, allCorrectFn) {
   let correct = 0, total = 0, blanks = 0;
   spec.forEach(f => {
     const inp = document.getElementById(f.inputId);
     const hint = document.getElementById(f.hintId);
     inp.classList.remove('correct', 'wrong');
-    hint.textContent = '';
     total++;
-    if (inp.value.trim() === '') { blanks++; return; }
+    if (inp.value.trim() === '') { blanks++; hint.textContent = ''; return; }
     const val = parseNum(inp.value);
     if (!isNaN(val) && Math.abs(val - f.expected) <= f.tol) {
       inp.classList.add('correct');
+      hint.textContent = '';
+      attemptCounts[f.inputId] = 0;
       correct++;
     } else {
       inp.classList.add('wrong');
-      hint.textContent = '';
+      attemptCounts[f.inputId] = (attemptCounts[f.inputId] || 0) + 1;
+      hint.textContent = (attemptCounts[f.inputId] >= 2 && f.explain) ? f.explain : '';
     }
   });
   const out = document.getElementById(scoreId);
@@ -1003,6 +1008,7 @@ function resetGroup(spec, scoreId, extraFn) {
     const inp = document.getElementById(f.inputId);
     const hint = document.getElementById(f.hintId);
     inp.value = ''; inp.classList.remove('correct', 'wrong'); hint.textContent = '';
+    attemptCounts[f.inputId] = 0;
   });
   document.getElementById(scoreId).textContent = '';
   if (extraFn) extraFn();
@@ -1012,9 +1018,12 @@ function resetGroup(spec, scoreId, extraFn) {
    STEP 1
 ═══════════════════════════════════════════════════════════════ */
 const S1 = [
-  { inputId: 's1-cm',    hintId: 'hint-s1-cm',    expected: CM,    tol: 0.05, fmt: v => fmtMoney(v) },
-  { inputId: 's1-oi',    hintId: 'hint-s1-oi',    expected: OI,    tol: 0.5,  fmt: v => fmtMoney(v) },
-  { inputId: 's1-spare', hintId: 'hint-s1-spare', expected: SPARE, tol: 1,    fmt: v => fmtUnits(v) + ' units' }
+  { inputId: 's1-cm',    hintId: 'hint-s1-cm',    expected: CM,    tol: 0.05, fmt: v => fmtMoney(v),
+    explain: 'Per-unit contribution margin = selling price − all variable costs per unit (production + S&A).' },
+  { inputId: 's1-oi',    hintId: 'hint-s1-oi',    expected: OI,    tol: 0.5,  fmt: v => fmtMoney(v),
+    explain: 'Operating income = total contribution margin (CM/unit × units) minus fixed costs.' },
+  { inputId: 's1-spare', hintId: 'hint-s1-spare', expected: SPARE, tol: 1,    fmt: v => fmtUnits(v) + ' units',
+    explain: 'Spare capacity = production capacity − units currently produced. Express in standard-equivalent units.' }
 ];
 function checkStep1() { checkGroup(S1, 'score1-out', () => revealStep2(false)); }
 function resetStep1() { resetGroup(S1, 'score1-out'); }
@@ -1035,9 +1044,15 @@ function pickSunk(key, val) {
 }
 
 const S2_INPUTS = [
-  { inputId: 's2-plus-cm', hintId: 'hint-s2-plus-cm', expected: PLUS_INCR_CM, tol: 0.05, fmt: v => fmtMoney(v) },
-  { inputId: 's2-so-cm',   hintId: 'hint-s2-so-cm',   expected: SO_CM,        tol: 0.05, fmt: v => fmtMoney(v) }
+  { inputId: 's2-plus-cm', hintId: 'hint-s2-plus-cm', expected: PLUS_INCR_CM, tol: 0.05, fmt: v => fmtMoney(v),
+    explain: 'You’re comparing the upgrade to selling a standard adapter. Incremental CM = the extra revenue from going Plus minus the extra processing cost. The standard variable costs cancel out.' },
+  { inputId: 's2-so-cm',   hintId: 'hint-s2-so-cm',   expected: SO_CM,        tol: 0.05, fmt: v => fmtMoney(v),
+    explain: 'Special-order CM per unit = SO price − only the variable costs HP actually incurs on the order. Re-read the setup for which variable costs disappear on this order.' }
 ];
+const SUNK_EXPLAIN = {
+  study: 'A cost that has already been incurred and can’t change based on the decision — is it still a relevant cash flow?',
+  book:  'Book value comes from a purchase that was already made. Does choosing one alternative versus the other change what HP paid for the equipment?'
+};
 
 function checkStep2() {
   const fb = document.getElementById('step2-insight');
@@ -1048,12 +1063,20 @@ function checkStep2() {
   S2_INPUTS.forEach(f => {
     const inp = document.getElementById(f.inputId);
     const hint = document.getElementById(f.hintId);
-    inp.classList.remove('correct', 'wrong'); hint.textContent = '';
+    inp.classList.remove('correct', 'wrong');
     total++;
-    if (inp.value.trim() === '') { blanks++; return; }
+    if (inp.value.trim() === '') { blanks++; hint.textContent = ''; return; }
     const val = parseNum(inp.value);
-    if (!isNaN(val) && Math.abs(val - f.expected) <= f.tol) { inp.classList.add('correct'); correct++; }
-    else { inp.classList.add('wrong'); hint.textContent = ''; }
+    if (!isNaN(val) && Math.abs(val - f.expected) <= f.tol) {
+      inp.classList.add('correct');
+      hint.textContent = '';
+      attemptCounts[f.inputId] = 0;
+      correct++;
+    } else {
+      inp.classList.add('wrong');
+      attemptCounts[f.inputId] = (attemptCounts[f.inputId] || 0) + 1;
+      hint.textContent = (attemptCounts[f.inputId] >= 2 && f.explain) ? f.explain : '';
+    }
   });
 
   // Check sunk cost picks
@@ -1061,6 +1084,7 @@ function checkStep2() {
     const yesBtn = document.getElementById('s2-' + key + '-yes');
     const noBtn  = document.getElementById('s2-' + key + '-no');
     const hint   = document.getElementById('hint-s2-' + key);
+    const attKey = 's2-' + key;
     yesBtn.classList.remove('yn-correct', 'yn-wrong');
     noBtn.classList.remove('yn-correct', 'yn-wrong');
     hint.textContent = '';
@@ -1069,10 +1093,12 @@ function checkStep2() {
     if (sunkPicks[key] === false) {
       // Correct — both are sunk
       noBtn.classList.remove('selected'); noBtn.classList.add('yn-correct');
+      attemptCounts[attKey] = 0;
       correct++;
     } else {
       yesBtn.classList.remove('selected'); yesBtn.classList.add('yn-wrong');
-      hint.textContent = '';
+      attemptCounts[attKey] = (attemptCounts[attKey] || 0) + 1;
+      if (attemptCounts[attKey] >= 2 && SUNK_EXPLAIN[key]) hint.textContent = SUNK_EXPLAIN[key];
     }
   });
 
@@ -1098,6 +1124,7 @@ function resetStep2() {
     document.getElementById('step2-insight').innerHTML = '';
     ['study', 'book'].forEach(key => {
       sunkPicks[key] = null;
+      attemptCounts['s2-' + key] = 0;
       document.getElementById('s2-' + key + '-yes').classList.remove('selected', 'yn-correct', 'yn-wrong');
       document.getElementById('s2-' + key + '-no').classList.remove('selected', 'yn-correct', 'yn-wrong');
       document.getElementById('hint-s2-' + key).textContent = '';
@@ -1117,10 +1144,14 @@ function pickS3(choice) {
 }
 
 const S3_INPUTS = [
-  { inputId: 's3-plus-cphr', hintId: 'hint-s3-plus-cphr', expected: PLUS_CM_PER_CAP, tol: 0.05, fmt: v => fmtMoney(v) },
-  { inputId: 's3-so-cphr',   hintId: 'hint-s3-so-cphr',   expected: SO_CM_PER_CAP,   tol: 0.05, fmt: v => fmtMoney(v) },
-  { inputId: 's3-so-net',    hintId: 'hint-s3-so-net',    expected: SO_IMPROVE,       tol: 0.5,  fmt: v => fmtMoneySigned(v) },
-  { inputId: 's3-plus-net',  hintId: 'hint-s3-plus-net',  expected: PLUS_IMPROVE,     tol: 0.5,  fmt: v => fmtMoneySigned(v) }
+  { inputId: 's3-plus-cphr', hintId: 'hint-s3-plus-cphr', expected: PLUS_CM_PER_CAP, tol: 0.05, fmt: v => fmtMoney(v),
+    explain: 'Each upgrade only consumes the *extra* capacity above a standard unit. Divide the incremental CM by that extra capacity per upgrade (not by the full 1.5).' },
+  { inputId: 's3-so-cphr',   hintId: 'hint-s3-so-cphr',   expected: SO_CM_PER_CAP,   tol: 0.05, fmt: v => fmtMoney(v),
+    explain: 'CM per capacity unit = CM per order unit ÷ capacity used per order unit. A standard adapter uses 1.0 capacity unit per piece.' },
+  { inputId: 's3-so-net',    hintId: 'hint-s3-so-net',    expected: SO_IMPROVE,       tol: 0.5,  fmt: v => fmtMoneySigned(v),
+    explain: 'Total order CM, minus the CM HP gives up on the regular customers it has to turn away to fit the order. Spare capacity isn’t enough for the full order — find the shortfall.' },
+  { inputId: 's3-plus-net',  hintId: 'hint-s3-plus-net',  expected: PLUS_IMPROVE,     tol: 0.5,  fmt: v => fmtMoneySigned(v),
+    explain: 'Find how many adapters HP can upgrade given spare capacity and the extra capacity each upgrade burns. Then multiply by incremental CM per upgrade.' }
 ];
 
 function checkStep3() {
@@ -1131,12 +1162,20 @@ function checkStep3() {
   S3_INPUTS.forEach(f => {
     const inp = document.getElementById(f.inputId);
     const hint = document.getElementById(f.hintId);
-    inp.classList.remove('correct', 'wrong'); hint.textContent = '';
+    inp.classList.remove('correct', 'wrong');
     total++;
-    if (inp.value.trim() === '') { blanks++; return; }
+    if (inp.value.trim() === '') { blanks++; hint.textContent = ''; return; }
     const val = parseNum(inp.value);
-    if (!isNaN(val) && Math.abs(val - f.expected) <= f.tol) { inp.classList.add('correct'); correct++; }
-    else { inp.classList.add('wrong'); hint.textContent = ''; }
+    if (!isNaN(val) && Math.abs(val - f.expected) <= f.tol) {
+      inp.classList.add('correct');
+      hint.textContent = '';
+      attemptCounts[f.inputId] = 0;
+      correct++;
+    } else {
+      inp.classList.add('wrong');
+      attemptCounts[f.inputId] = (attemptCounts[f.inputId] || 0) + 1;
+      hint.textContent = (attemptCounts[f.inputId] >= 2 && f.explain) ? f.explain : '';
+    }
   });
 
   if (s3Decision !== null) { total++; if (s3Decision === 'plus') correct++; }
@@ -1260,18 +1299,39 @@ function checkStep4() {
 
   const { plusImp, soImp, best } = computeBV(p);
   let parts = [], allCorrect = true;
+  const hintMsgs = [];
+  const PLUS_EXPLAIN = 'How many adapters can HP upgrade given spare capacity (capacity \u2212 regular units) and the extra capacity each upgrade consumes (multiplier \u2212 1.0)? Multiply that by incremental CM per upgrade (Plus price \u2212 std price \u2212 extra processing).';
+  const SO_EXPLAIN = 'Total order CM (units \u00d7 (SO price \u2212 std var prod)), minus the standard-unit CM you lose on any customers HP must turn away. The displacement equals SO units minus spare capacity, if positive.';
 
   if (plusEl.value.trim()) {
     const v = parseNum(plusEl.value);
     const tol = Math.max(0.5, Math.abs(plusImp) * 0.001);
-    if (!isNaN(v) && Math.abs(v - plusImp) <= tol) { plusEl.classList.add('correct'); parts.push('\u2714 Plus'); }
-    else { plusEl.classList.add('wrong'); parts.push('\u2718 Plus'); allCorrect = false; }
+    if (!isNaN(v) && Math.abs(v - plusImp) <= tol) {
+      plusEl.classList.add('correct');
+      attemptCounts['bv-plus-imp'] = 0;
+      parts.push('\u2714 Plus');
+    } else {
+      plusEl.classList.add('wrong');
+      attemptCounts['bv-plus-imp'] = (attemptCounts['bv-plus-imp'] || 0) + 1;
+      if (attemptCounts['bv-plus-imp'] >= 2) hintMsgs.push('Plus: ' + PLUS_EXPLAIN);
+      parts.push('\u2718 Plus');
+      allCorrect = false;
+    }
   }
   if (soEl.value.trim()) {
     const v = parseNum(soEl.value);
     const tol = Math.max(0.5, Math.abs(soImp) * 0.001);
-    if (!isNaN(v) && Math.abs(v - soImp) <= tol) { soEl.classList.add('correct'); parts.push('\u2714 SO'); }
-    else { soEl.classList.add('wrong'); parts.push('\u2718 SO'); allCorrect = false; }
+    if (!isNaN(v) && Math.abs(v - soImp) <= tol) {
+      soEl.classList.add('correct');
+      attemptCounts['bv-so-imp'] = 0;
+      parts.push('\u2714 SO');
+    } else {
+      soEl.classList.add('wrong');
+      attemptCounts['bv-so-imp'] = (attemptCounts['bv-so-imp'] || 0) + 1;
+      if (attemptCounts['bv-so-imp'] >= 2) hintMsgs.push('SO: ' + SO_EXPLAIN);
+      parts.push('\u2718 SO');
+      allCorrect = false;
+    }
   }
   if (bvDecision !== null) {
     if (bvDecision === best) parts.push('\u2714 Decision');
@@ -1289,7 +1349,11 @@ function checkStep4() {
     fb.innerHTML = `<div class="insight success">${line}</div>`;
     playBell();
   } else {
-    fb.innerHTML = '';
+    if (hintMsgs.length > 0) {
+      fb.innerHTML = '<div class="insight">' + hintMsgs.join('<br><br>') + '</div>';
+    } else {
+      fb.innerHTML = '';
+    }
     playHorn();
   }
 }
@@ -1308,6 +1372,7 @@ function resetStep4() {
   ['bv-plus-imp', 'bv-so-imp'].forEach(id => {
     document.getElementById(id).value = '';
     document.getElementById(id).classList.remove('correct', 'wrong');
+    attemptCounts[id] = 0;
   });
   document.getElementById('score4-out').textContent = '';
   document.getElementById('step4-feedback').innerHTML = '';

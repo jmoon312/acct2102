@@ -239,11 +239,12 @@
   }
   .corr-hint {
     display: block;
-    font-size: 11px;
-    color: #5a9e3a;
-    font-weight: 600;
-    margin-top: 3px;
+    font-size: 11.5px;
+    color: #64748b;
+    font-weight: 500;
+    margin-top: 4px;
     min-height: 14px;
+    line-height: 1.4;
   }
 
   .footer {
@@ -750,7 +751,6 @@
     <div class="solve-card">
       <div class="solve-label">
         Your predicted profit
-        <small>Profit = (Price − VC per bar) × Units − Fixed costs</small>
       </div>
       <input type="text" id="bv-profit" placeholder="$">
     </div>
@@ -872,11 +872,18 @@ function playHorn() {
 
 /* ═══════════════════════════════════════════════════════════════
    STEP 1 — Per-unit metrics
+   Per-input attempt counter — explanatory hint shown only on the
+   2nd (or later) wrong submission for the same input.
 ═══════════════════════════════════════════════════════════════ */
+const attemptCounts = {};
+
 const STEP1_FIELDS = [
-  { key: 'sp',  expected: ORIG.SP,        kind: 'money',   tol: 0.005, displayDecimals: 2 },
-  { key: 'cmu', expected: ORIG_CM_UNIT,   kind: 'money',   tol: 0.005, displayDecimals: 2 },
-  { key: 'cmr', expected: ORIG_CM_RATIO,  kind: 'percent', tol: 0.0006 } // ±0.06% absolute
+  { key: 'sp',  expected: ORIG.SP,        kind: 'money',   tol: 0.005, displayDecimals: 2,
+    explain: 'Selling price per bar = total sales ÷ units sold. The income statement shows total revenue and total units — divide.' },
+  { key: 'cmu', expected: ORIG_CM_UNIT,   kind: 'money',   tol: 0.005, displayDecimals: 2,
+    explain: 'CM per bar = total contribution margin ÷ units sold (or equivalently, sales price − variable cost per bar). Both routes land on the same number.' },
+  { key: 'cmr', expected: ORIG_CM_RATIO,  kind: 'percent', tol: 0.0006, // ±0.06% absolute
+    explain: 'CM ratio = CM per bar ÷ sales price per bar (or total CM ÷ total sales). It’s the fraction of every dollar of revenue that contributes toward fixed costs and profit.' }
 ];
 
 function checkStep1() {
@@ -884,18 +891,21 @@ function checkStep1() {
   STEP1_FIELDS.forEach(f => {
     const inp  = document.getElementById('in-' + f.key);
     const hint = document.getElementById('hint-' + f.key);
+    const id = 'in-' + f.key;
     inp.classList.remove('correct', 'wrong');
-    hint.textContent = '';
     total++;
-    if (inp.value.trim() === '') { blanks++; return; }
+    if (inp.value.trim() === '') { blanks++; hint.textContent = ''; return; }
     const val = (f.kind === 'percent') ? parsePercent(inp.value) : parseNum(inp.value);
     const exp = f.expected;
     if (!isNaN(val) && Math.abs(val - exp) <= f.tol) {
       inp.classList.add('correct');
+      hint.textContent = '';
+      attemptCounts[id] = 0;
       correct++;
     } else {
       inp.classList.add('wrong');
-      hint.textContent = '';
+      attemptCounts[id] = (attemptCounts[id] || 0) + 1;
+      hint.textContent = (attemptCounts[id] >= 2 && f.explain) ? f.explain : '';
     }
   });
   const out = document.getElementById('score1-out');
@@ -919,6 +929,7 @@ function resetStep1() {
     inp.value = '';
     inp.classList.remove('correct', 'wrong');
     hint.textContent = '';
+    attemptCounts['in-' + f.key] = 0;
   });
   document.getElementById('score1-out').textContent = '';
 }
@@ -941,11 +952,16 @@ const ANS_D = ORIG.Q * (ORIG_CM_UNIT * 0.10);                        // +278
 const ANS_E = 4450 * ORIG_CM_UNIT - ORIG.FC;                         // 0
 
 const STEP2_FIELDS = [
-  { key: 'A', expected: ANS_A, signed: true,  decimals: 0 },
-  { key: 'B', expected: ANS_B, signed: true,  decimals: 0 },
-  { key: 'C', expected: ANS_C, signed: true,  decimals: 2 },
-  { key: 'D', expected: ANS_D, signed: true,  decimals: 0 },
-  { key: 'E', expected: ANS_E, signed: false, decimals: 0 }
+  { key: 'A', expected: ANS_A, signed: true,  decimals: 0,
+    explain: 'Only volume changes — selling price, VC per bar, and fixed costs are all unchanged. So every extra bar adds exactly one CM per bar to profit. Multiply.' },
+  { key: 'B', expected: ANS_B, signed: true,  decimals: 0,
+    explain: 'A drop in revenue at the same selling price means fewer units sold. Convert the revenue change into a unit change (Δrevenue ÷ price), then multiply by CM per bar. Sign matters — revenue fell, so the change is negative.' },
+  { key: 'C', expected: ANS_C, signed: true,  decimals: 2,
+    explain: 'If VC per bar drops while price and volume hold, CM per bar rises by the same amount the VC fell. Multiply that per-bar increase by the original units sold; fixed costs don’t move.' },
+  { key: 'D', expected: ANS_D, signed: true,  decimals: 0,
+    explain: 'Both price and VC scale by the same percent, so CM per bar also scales by that percent. Compute the new CM per bar (or just CM × 10%), multiply by volume, and that lift drops straight to profit.' },
+  { key: 'E', expected: ANS_E, signed: false, decimals: 0,
+    explain: 'This one asks for total profit, not the change. Profit = CM per bar × new units − fixed costs. Compute it from scratch at the new volume.' }
 ];
 
 function checkStep2() {
@@ -953,20 +969,23 @@ function checkStep2() {
   STEP2_FIELDS.forEach(f => {
     const inp  = document.getElementById('in-' + f.key);
     const hint = document.getElementById('hint-' + f.key);
+    const id = 'in-' + f.key;
     inp.classList.remove('correct', 'wrong');
-    hint.textContent = '';
     total++;
-    if (inp.value.trim() === '') { blanks++; return; }
+    if (inp.value.trim() === '') { blanks++; hint.textContent = ''; return; }
     const val = parseNum(inp.value);
     const exp = f.expected;
     // Tolerance: $0.50 for whole-dollar answers, $0.05 for cents-precision answers
     const tol = (f.decimals >= 2) ? 0.05 : 0.5;
     if (!isNaN(val) && Math.abs(val - exp) <= tol) {
       inp.classList.add('correct');
+      hint.textContent = '';
+      attemptCounts[id] = 0;
       correct++;
     } else {
       inp.classList.add('wrong');
-      hint.textContent = '';
+      attemptCounts[id] = (attemptCounts[id] || 0) + 1;
+      hint.textContent = (attemptCounts[id] >= 2 && f.explain) ? f.explain : '';
     }
   });
   const out = document.getElementById('score2-out');
@@ -991,6 +1010,7 @@ function resetStep2() {
     inp.value = '';
     inp.classList.remove('correct', 'wrong');
     hint.textContent = '';
+    attemptCounts['in-' + f.key] = 0;
   });
   document.getElementById('score2-out').textContent = '';
   document.getElementById('step2-insight').innerHTML = '';
@@ -1042,6 +1062,8 @@ BV_INPUTS.forEach(spec => {
   });
 });
 
+const STEP3_EXPLAIN = 'Profit = (Selling price − VC per bar) × Units − Fixed costs. CM per bar times the new volume, minus the fixed-cost block — that’s the whole formula.';
+
 function checkStep3() {
   // Parse the four inputs
   const Q  = parseNum(document.getElementById('bv-q').value);
@@ -1073,6 +1095,7 @@ function checkStep3() {
 
   if (Math.abs(guess - actual) <= tol) {
     profitEl.classList.add('correct');
+    attemptCounts['bv-profit'] = 0;
     out.textContent = 'Correct!';
     fb.innerHTML = `
       <div class="insight success">
@@ -1083,7 +1106,11 @@ function checkStep3() {
     playBell();
   } else {
     profitEl.classList.add('wrong');
+    attemptCounts['bv-profit'] = (attemptCounts['bv-profit'] || 0) + 1;
     out.textContent = 'Not quite.';
+    if (attemptCounts['bv-profit'] >= 2) {
+      fb.innerHTML = `<div class="insight">${STEP3_EXPLAIN}</div>`;
+    }
     playHorn();
   }
 }
@@ -1095,6 +1122,7 @@ function resetStep3() {
   const profitEl = document.getElementById('bv-profit');
   profitEl.value = '';
   profitEl.classList.remove('correct', 'wrong');
+  attemptCounts['bv-profit'] = 0;
   document.getElementById('score3-out').textContent = '';
   document.getElementById('step3-feedback').innerHTML = '';
   refreshChangedFlags();

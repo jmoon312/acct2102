@@ -143,6 +143,16 @@
     display: none;
   }
   .sc-res { font-size: 11.5px; font-weight: 600; }
+  .corr-hint {
+    display: block;
+    font-size: 11.5px;
+    color: #64748b;
+    font-weight: 500;
+    margin-top: 4px;
+    min-height: 14px;
+    line-height: 1.4;
+  }
+  .corr-hint:empty { min-height: 0; }
 
   /* ── Graph grid ── */
   .g-grid {
@@ -288,6 +298,7 @@
         <div class="sc-body">
           <div class="sc-txt">Total costs per day for a consultant paid $200/hour with a maximum fee of $1,000</div>
           <div class="sc-meta"><span class="sc-bdg" id="bdg-a"></span><span class="sc-res" id="res-a"></span></div>
+          <span class="corr-hint" id="hint-a"></span>
         </div>
       </div>
 
@@ -296,6 +307,7 @@
         <div class="sc-body">
           <div class="sc-txt">Rent on an exhibit space at a convention</div>
           <div class="sc-meta"><span class="sc-bdg" id="bdg-b"></span><span class="sc-res" id="res-b"></span></div>
+          <span class="corr-hint" id="hint-b"></span>
         </div>
       </div>
 
@@ -304,6 +316,7 @@
         <div class="sc-body">
           <div class="sc-txt">Total costs for salaries of social workers where each can handle a max of 25 cases</div>
           <div class="sc-meta"><span class="sc-bdg" id="bdg-c"></span><span class="sc-res" id="res-c"></span></div>
+          <span class="corr-hint" id="hint-c"></span>
         </div>
       </div>
 
@@ -312,6 +325,7 @@
         <div class="sc-body">
           <div class="sc-txt">A water bill with a flat fee of $800 plus $0.05 for every gallon after 10,000</div>
           <div class="sc-meta"><span class="sc-bdg" id="bdg-d"></span><span class="sc-res" id="res-d"></span></div>
+          <span class="corr-hint" id="hint-d"></span>
         </div>
       </div>
 
@@ -320,6 +334,7 @@
         <div class="sc-body">
           <div class="sc-txt">Variable cost per unit</div>
           <div class="sc-meta"><span class="sc-bdg" id="bdg-e"></span><span class="sc-res" id="res-e"></span></div>
+          <span class="corr-hint" id="hint-e"></span>
         </div>
       </div>
 
@@ -328,6 +343,7 @@
         <div class="sc-body">
           <div class="sc-txt">Average fixed costs per unit</div>
           <div class="sc-meta"><span class="sc-bdg" id="bdg-f"></span><span class="sc-res" id="res-f"></span></div>
+          <span class="corr-hint" id="hint-f"></span>
         </div>
       </div>
 
@@ -336,6 +352,7 @@
         <div class="sc-body">
           <div class="sc-txt">Total costs for an employee paid $15/hr for first 40 hours and $20/hr thereafter</div>
           <div class="sc-meta"><span class="sc-bdg" id="bdg-g"></span><span class="sc-res" id="res-g"></span></div>
+          <span class="corr-hint" id="hint-g"></span>
         </div>
       </div>
 
@@ -344,6 +361,7 @@
         <div class="sc-body">
           <div class="sc-txt">Total material costs</div>
           <div class="sc-meta"><span class="sc-bdg" id="bdg-h"></span><span class="sc-res" id="res-h"></span></div>
+          <span class="corr-hint" id="hint-h"></span>
         </div>
       </div>
 
@@ -352,6 +370,7 @@
         <div class="sc-body">
           <div class="sc-txt">Total fixed costs</div>
           <div class="sc-meta"><span class="sc-bdg" id="bdg-i"></span><span class="sc-res" id="res-i"></span></div>
+          <span class="corr-hint" id="hint-i"></span>
         </div>
       </div>
     </div>
@@ -468,17 +487,36 @@
 <script>
 const scenarios = ['a','b','c','d','e','f','g','h','i'];
 const correct   = {a:3, b:2, c:5, d:6, e:2, f:4, g:7, h:1, i:2};
+
+/* Per-scenario attempt counter — conceptual nudge shown only on the
+   2nd (or later) wrong check for that scenario. Hints describe the
+   shape the student should look for, never name the cost type. */
+const EXPLAIN = {
+  a: 'Look for a line that climbs at a steady rate as activity grows but then flattens permanently once a cap is reached. Two distinct slopes — rising, then horizontal.',
+  b: 'A single fixed amount that does not budge as activity changes. Flat horizontal line for the entire range.',
+  c: 'Total cost is flat across a range of activity, then jumps up to a new flat level once capacity is exceeded — repeating staircase.',
+  d: 'For low activity the bill is just a single flat amount; past a threshold an extra per-unit charge kicks in. Flat, then sloping upward.',
+  e: 'On a per-unit basis, this cost is the same whether you make one or a thousand. Flat horizontal line.',
+  f: 'On a per-unit basis, a fixed total spread over more and more units gets smaller and smaller — a curve that drops steeply at first, then levels off near (but never touches) zero.',
+  g: 'A rate that changes mid-range: steady slope for the first portion of activity, then a steeper slope after a threshold. Two slopes, both rising, with a kink.',
+  h: 'Total cost rises in direct proportion to activity, starting from the origin. Straight line through (0, 0).',
+  i: 'A single total amount that does not change as activity changes. Flat horizontal line at one level.'
+};
+
 let sel = null, assignments = {}, checked = false;
+var attemptCounts = {};
 
 function clickScenario(l) {
-  if (checked) return;
+  // Allow re-assignment even after a check, so students can fix wrong items.
   sel = sel === l ? null : l;
   render();
 }
 
 function clickGraph(n) {
-  if (checked) return;
-  if (sel !== null) { assignments[sel] = n; sel = null; }
+  if (sel !== null) {
+    assignments[sel] = n;
+    sel = null;
+  }
   render();
 }
 
@@ -535,7 +573,15 @@ function checkAnswers() {
     return;
   }
   checked = true;
-  const score = scenarios.filter(l => assignments[l] === correct[l]).length;
+  let score = 0;
+  scenarios.forEach(l => {
+    if (assignments[l] === correct[l]) {
+      attemptCounts[l] = 0;
+      score++;
+    } else {
+      attemptCounts[l] = (attemptCounts[l] || 0) + 1;
+    }
+  });
   document.getElementById('score-out').textContent = score + ' / 9 correct';
   if (score === 9) playBell(); else playHorn();
   render();
@@ -543,6 +589,11 @@ function checkAnswers() {
 
 function resetAll() {
   sel = null; assignments = {}; checked = false;
+  attemptCounts = {};
+  scenarios.forEach(l => {
+    const h = document.getElementById('hint-' + l);
+    if (h) h.textContent = '';
+  });
   document.getElementById('score-out').textContent = '';
   render();
 }
@@ -557,6 +608,7 @@ function render() {
     const item = document.getElementById('sc-' + l);
     const bdg  = document.getElementById('bdg-' + l);
     const res  = document.getElementById('res-' + l);
+    const hint = document.getElementById('hint-' + l);
 
     let cls = 'sc-item';
     if (sel === l)               cls += ' sel';
@@ -575,14 +627,21 @@ function render() {
       item.className = 'sc-item ' + (ok ? 'correct' : 'wrong');
       res.textContent = ok ? '✓ Correct' : '';
       res.style.color = ok ? '#2d6a1f' : '#9b2020';
+      // Conceptual nudge appears only after the 2nd (or later) wrong check.
+      if (!ok && (attemptCounts[l] || 0) >= 2 && EXPLAIN[l]) {
+        if (hint) hint.textContent = EXPLAIN[l];
+      } else {
+        if (hint) hint.textContent = '';
+      }
     } else {
       res.textContent = '';
+      if (hint) hint.textContent = '';
     }
   }
 
   for (let n = 1; n <= 7; n++) {
     document.getElementById('gc-' + n).className =
-      'g-card' + (sel !== null && !checked ? ' clickable' : '');
+      'g-card' + (sel !== null ? ' clickable' : '');
   }
 }
 

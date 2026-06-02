@@ -601,12 +601,23 @@
   }
   .corr-hint {
     display: block;
-    font-size: 11px;
-    color: #5a9e3a;
-    font-weight: 600;
-    margin-top: 3px;
+    font-size: 11.5px;
+    color: #64748b;
+    font-weight: 500;
+    margin-top: 4px;
     min-height: 14px;
+    line-height: 1.4;
   }
+  .flow-tx .flow-hint {
+    display: block;
+    font-size: 11.5px;
+    color: #64748b;
+    font-weight: 500;
+    margin-top: 8px;
+    line-height: 1.4;
+    min-height: 0;
+  }
+  .flow-tx .flow-hint:empty { display: none; }
 
   .intuition-box {
     background: #f8fafc;
@@ -959,6 +970,7 @@
           <div class="flow-grid-cell"><label>COGS</label><input type="text" id="flow-a-cogs" placeholder="0"></div>
           <button class="flow-check-btn" onclick="checkFlow('a')">Check</button>
         </div>
+        <span class="flow-hint" id="flow-a-hint"></span>
       </div>
 
       <!-- Flow B (hidden) -->
@@ -973,6 +985,7 @@
           <div class="flow-grid-cell"><label>COGS</label><input type="text" id="flow-b-cogs" placeholder="0"></div>
           <button class="flow-check-btn" onclick="checkFlow('b')">Check</button>
         </div>
+        <span class="flow-hint" id="flow-b-hint"></span>
       </div>
 
       <!-- Flow C (hidden) -->
@@ -987,6 +1000,7 @@
           <div class="flow-grid-cell"><label>COGS</label><input type="text" id="flow-c-cogs" placeholder="0"></div>
           <button class="flow-check-btn" onclick="checkFlow('c')">Check</button>
         </div>
+        <span class="flow-hint" id="flow-c-hint"></span>
       </div>
 
       <!-- Flow D (hidden) -->
@@ -1001,6 +1015,7 @@
           <div class="flow-grid-cell"><label>COGS</label><input type="text" id="flow-d-cogs" placeholder="0"></div>
           <button class="flow-check-btn" onclick="checkFlow('d')">Check</button>
         </div>
+        <span class="flow-hint" id="flow-d-hint"></span>
       </div>
 
       <!-- Flow E (hidden) -->
@@ -1015,6 +1030,7 @@
           <div class="flow-grid-cell"><label>COGS</label><input type="text" id="flow-e-cogs" placeholder="0"></div>
           <button class="flow-check-btn" onclick="checkFlow('e')">Check</button>
         </div>
+        <span class="flow-hint" id="flow-e-hint"></span>
       </div>
 
     </div>
@@ -1244,8 +1260,9 @@ const COST_CARDS = [
 
 let selectedCard = null;
 let sortedCards = {};  // cardId → bucketKey
-let wrongAttempts = {}; // cardId → count
+let wrongAttempts = {}; // cardId → count (hint shown only on 2nd+ wrong)
 let firstTryCount = 0;
+var attemptCounts = {}; // shared store for flow and step-3 inputs
 
 function shuffleArray(arr) {
   const a = arr.slice();
@@ -1321,9 +1338,15 @@ function clickBucket(bucketKey) {
     // Wrong
     wrongAttempts[card.id] = (wrongAttempts[card.id] || 0) + 1;
     var cardEl = document.getElementById('card-' + card.id);
-    cardEl.classList.add('flash-wrong', 'show-hint');
+    cardEl.classList.add('flash-wrong');
     var hintEl = document.getElementById('card-hint-' + card.id);
-    hintEl.textContent = card.hint;
+    // Conceptual hint only after the 2nd (or later) wrong attempt on this card.
+    if (wrongAttempts[card.id] >= 2) {
+      cardEl.classList.add('show-hint');
+      hintEl.textContent = card.hint;
+    } else {
+      hintEl.textContent = '';
+    }
     setTimeout(function() { cardEl.classList.remove('flash-wrong'); }, 600);
     selectedCard = null;
     playHorn();
@@ -1406,6 +1429,16 @@ var FLOW_DEFS = {
   e: { rm: 0,      supplies: 0, moh: 0,       wip: 0,     fg: -42500, cogs: 42500 }
 };
 
+// Per-flow explain strings — describe what moves where, conceptually.
+// No literal numbers, no journal entries — just the account flow.
+var FLOW_EXPLAIN = {
+  a: 'Direct materials leaving the Raw Materials storeroom and entering production: RM goes down by the total requisitioned, WIP goes up by the same amount. No other accounts move.',
+  b: 'Indirect materials drawn for production: Supplies goes down, but indirect materials are part of overhead — so the offset flows into MOH, not WIP. Two accounts move, equal and opposite.',
+  c: 'Applying overhead means moving the budgeted amount out of MOH and into WIP at the predetermined rate × actual activity. MOH goes down by applied OH, WIP goes up by the same.',
+  d: 'Jobs finishing means production cost leaves WIP and arrives in Finished Goods inventory. WIP goes down, FG goes up — equal and opposite. Nothing else moves until those jobs are sold.',
+  e: 'When finished goods are sold, the cost side of the entry moves the production cost out of FG and into COGS (an expense). FG goes down, COGS goes up. The revenue side is separate from this entry.'
+};
+
 var FLOW_ORDER = ['a', 'b', 'c', 'd', 'e'];
 var flowIndex = 0;
 
@@ -1432,6 +1465,7 @@ function checkFlow(key) {
 
   var cols = ['rm', 'supplies', 'moh', 'wip', 'fg', 'cogs'];
   var allCorrect = true;
+  var hintEl = document.getElementById('flow-' + key + '-hint');
 
   cols.forEach(function(col) {
     var inp = document.getElementById('flow-' + key + '-' + col);
@@ -1451,6 +1485,8 @@ function checkFlow(key) {
   });
 
   if (allCorrect) {
+    if (hintEl) hintEl.textContent = '';
+    attemptCounts['flow-' + key] = 0;
     // Apply changes to pipeState
     cols.forEach(function(col) {
       pipeState[col] += def[col];
@@ -1494,6 +1530,12 @@ function checkFlow(key) {
       revealStep(3, false);
     }
   } else {
+    // Wrong: track attempt for this flow and surface explain on 2nd+
+    var fkey = 'flow-' + key;
+    attemptCounts[fkey] = (attemptCounts[fkey] || 0) + 1;
+    if (hintEl) {
+      hintEl.textContent = (attemptCounts[fkey] >= 2 && FLOW_EXPLAIN[key]) ? FLOW_EXPLAIN[key] : '';
+    }
     playHorn();
   }
 }
@@ -1504,6 +1546,10 @@ function checkFlow(key) {
 // After all flows: MOH = 12,600 + 800 - 13,300 = 100 (debit balance)
 // Underapplied by $100
 let mohChoice = null;
+var S3_EXPLAIN = {
+  's3-bal': 'Look at MOH after every flow: actual overhead debits (the costs that landed in MOH) minus applied overhead credits (what got pushed into WIP). A small remaining balance means actual and applied did not match exactly.',
+  's3-amt': 'Same arithmetic as the balance itself — the gap between actual MOH costs incurred and overhead applied to WIP. The sign of that gap tells you over- vs. underapplied; the absolute value is the amount.'
+};
 
 function pickMOH(choice) {
   mohChoice = choice;
@@ -1536,10 +1582,12 @@ function checkStep3() {
     blanks++;
   } else if (!isNaN(balVal) && Math.abs(balVal - 100) <= 0.50) {
     balInp.classList.add('correct');
+    attemptCounts['s3-bal'] = 0;
     correct++;
   } else {
     balInp.classList.add('wrong');
-    hintBal.textContent = '';
+    attemptCounts['s3-bal'] = (attemptCounts['s3-bal'] || 0) + 1;
+    hintBal.textContent = (attemptCounts['s3-bal'] >= 2 && S3_EXPLAIN['s3-bal']) ? S3_EXPLAIN['s3-bal'] : '';
   }
 
   // Check over/under
@@ -1556,10 +1604,12 @@ function checkStep3() {
     blanks++;
   } else if (!isNaN(amtVal) && Math.abs(amtVal - 100) <= 0.50) {
     amtInp.classList.add('correct');
+    attemptCounts['s3-amt'] = 0;
     correct++;
   } else {
     amtInp.classList.add('wrong');
-    hintAmt.textContent = '';
+    attemptCounts['s3-amt'] = (attemptCounts['s3-amt'] || 0) + 1;
+    hintAmt.textContent = (attemptCounts['s3-amt'] >= 2 && S3_EXPLAIN['s3-amt']) ? S3_EXPLAIN['s3-amt'] : '';
   }
 
   if (blanks === total) {
@@ -1583,6 +1633,7 @@ function resetStep3() {
     var el = document.getElementById(id);
     el.value = '';
     el.classList.remove('correct', 'wrong');
+    attemptCounts[id] = 0;
   });
   document.getElementById('hint-s3-bal').textContent = '';
   document.getElementById('hint-s3-amt').textContent = '';

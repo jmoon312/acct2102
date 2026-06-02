@@ -249,11 +249,12 @@
   }
   .corr-hint {
     display: block;
-    font-size: 11px;
-    color: #5a9e3a;
-    font-weight: 600;
-    margin-top: 3px;
+    font-size: 11.5px;
+    color: #64748b;
+    font-weight: 500;
+    margin-top: 4px;
     min-height: 14px;
+    line-height: 1.4;
   }
 
   /* Reveal */
@@ -475,7 +476,7 @@
         </div>
       </div>
       <div class="qa-row">
-        <div class="qa-prompt"><strong>ABC overhead per batch</strong> of CBC<small>annual OH &divide; 1,000 batches</small></div>
+        <div class="qa-prompt"><strong>ABC overhead per batch</strong> of CBC</div>
         <div class="answer">
           <label>$ / batch</label>
           <input type="text" id="s2-cbc-batch" inputmode="decimal" placeholder="$">
@@ -585,7 +586,7 @@
 
     <div class="qa-list">
       <div class="qa-row">
-        <div class="qa-prompt">How much <strong>more</strong> overhead does Whole Bean carry annually under ABC than under plantwide?<small>($44.50 &minus; $30.00) &times; 1,000 batches</small></div>
+        <div class="qa-prompt">How much <strong>more</strong> overhead does Whole Bean carry annually under ABC than under plantwide?</div>
         <div class="answer">
           <label>$ / year</label>
           <input type="text" id="s4-wb-shift" inputmode="decimal" placeholder="$">
@@ -793,25 +794,30 @@ var WB_TOTAL_NEW    = 35 + 30 + WB_OH_BATCH_NEW;  // $123.00
 
 /* ═══════════════════════════════════════════════════════════════
    GENERIC CHECKER
+   Per-input attempt counter — explanatory hint shown only on the
+   2nd (or later) wrong submission for the same input.
 ═══════════════════════════════════════════════════════════════ */
+var attemptCounts = {};
 function checkGroup(spec, scoreId, allCorrectFn) {
   var correct = 0, total = 0, blanks = 0;
   spec.forEach(function(f) {
     var inp  = document.getElementById(f.inputId);
     var hint = document.getElementById(f.hintId);
     inp.classList.remove('correct', 'wrong');
-    hint.textContent = '';
     total++;
-    if (inp.value.trim() === '') { blanks++; return; }
+    if (inp.value.trim() === '') { blanks++; hint.textContent = ''; return; }
     var val = parseNum(inp.value);
     var exp = f.expected;
     var tol = f.tol;
     if (!isNaN(val) && Math.abs(val - exp) <= tol) {
       inp.classList.add('correct');
+      hint.textContent = '';
+      attemptCounts[f.inputId] = 0;
       correct++;
     } else {
       inp.classList.add('wrong');
-      hint.textContent = '';
+      attemptCounts[f.inputId] = (attemptCounts[f.inputId] || 0) + 1;
+      hint.textContent = (attemptCounts[f.inputId] >= 2 && f.explain) ? f.explain : '';
     }
   });
   var out = document.getElementById(scoreId);
@@ -831,6 +837,7 @@ function resetGroup(spec, scoreId, extraResetFn) {
     inp.value = '';
     inp.classList.remove('correct', 'wrong');
     hint.textContent = '';
+    attemptCounts[f.inputId] = 0;
   });
   document.getElementById(scoreId).textContent = '';
   if (extraResetFn) extraResetFn();
@@ -840,9 +847,12 @@ function resetGroup(spec, scoreId, extraResetFn) {
    STEP 1
 ═══════════════════════════════════════════════════════════════ */
 var STEP1_SPEC = [
-  { inputId: 's1-roast', hintId: 'hint-s1-roast', expected: ROAST_RATE, tol: 0.05, fmt: function(v){ return fmtMoney(v,2); } },
-  { inputId: 's1-test',  hintId: 'hint-s1-test',  expected: TEST_RATE,  tol: 0.5,  fmt: function(v){ return fmtMoney(v,0); } },
-  { inputId: 's1-setup', hintId: 'hint-s1-setup', expected: SETUP_RATE, tol: 0.5,  fmt: function(v){ return fmtMoney(v,0); } }
+  { inputId: 's1-roast', hintId: 'hint-s1-roast', expected: ROAST_RATE, tol: 0.05, fmt: function(v){ return fmtMoney(v,2); },
+    explain: 'Activity rate = annual cost of the pool &divide; total driver activity. Roasting is costed per machine hour, so pull the right numerator and denominator from the table.' },
+  { inputId: 's1-test',  hintId: 'hint-s1-test',  expected: TEST_RATE,  tol: 0.5,  fmt: function(v){ return fmtMoney(v,0); },
+    explain: 'Same mechanic — pool cost &divide; number of tests. Tests are infrequent (30 a year), so the rate per test will be much larger than the rate per machine hour.' },
+  { inputId: 's1-setup', hintId: 'hint-s1-setup', expected: SETUP_RATE, tol: 0.5,  fmt: function(v){ return fmtMoney(v,0); },
+    explain: 'Pool cost &divide; number of setups. The driver here is each changeover event, not units or hours.' }
 ];
 function checkStep1() {
   var fb = document.getElementById('step1-insight'); fb.innerHTML = '';
@@ -857,8 +867,10 @@ function resetStep1() { resetGroup(STEP1_SPEC, 'score1-out', function(){ documen
    STEP 2 — CBC
 ═══════════════════════════════════════════════════════════════ */
 var STEP2_SPEC = [
-  { inputId: 's2-cbc-annual', hintId: 'hint-s2-cbc-annual', expected: CBC_OH_ANNUAL, tol: 5,    fmt: function(v){ return fmtMoney(v,0); } },
-  { inputId: 's2-cbc-batch',  hintId: 'hint-s2-cbc-batch',  expected: CBC_OH_BATCH,  tol: 0.10, fmt: function(v){ return fmtMoney(v,2); } }
+  { inputId: 's2-cbc-annual', hintId: 'hint-s2-cbc-annual', expected: CBC_OH_ANNUAL, tol: 5,    fmt: function(v){ return fmtMoney(v,0); },
+    explain: 'For each of the six activities, multiply CBC&rsquo;s driver usage by that activity&rsquo;s rate, then sum the six dollar amounts. The Cost column in the table already shows each product.' },
+  { inputId: 's2-cbc-batch',  hintId: 'hint-s2-cbc-batch',  expected: CBC_OH_BATCH,  tol: 0.10, fmt: function(v){ return fmtMoney(v,2); },
+    explain: 'Spread CBC&rsquo;s annual ABC overhead across the 1,000 batches it produces in the year.' }
 ];
 function checkStep2() {
   var fb = document.getElementById('step2-insight'); fb.innerHTML = '';
@@ -873,8 +885,10 @@ function resetStep2() { resetGroup(STEP2_SPEC, 'score2-out', function(){ documen
    STEP 3 — WB
 ═══════════════════════════════════════════════════════════════ */
 var STEP3_SPEC = [
-  { inputId: 's3-wb-annual', hintId: 'hint-s3-wb-annual', expected: WB_OH_ANNUAL, tol: 5,    fmt: function(v){ return fmtMoney(v,0); } },
-  { inputId: 's3-wb-batch',  hintId: 'hint-s3-wb-batch',  expected: WB_OH_BATCH,  tol: 0.10, fmt: function(v){ return fmtMoney(v,2); } }
+  { inputId: 's3-wb-annual', hintId: 'hint-s3-wb-annual', expected: WB_OH_ANNUAL, tol: 5,    fmt: function(v){ return fmtMoney(v,0); },
+    explain: 'Same approach as CBC &mdash; sum the six activity costs for Whole Bean. WB consumes less roasting but more packaging, setups, and order processing than CBC.' },
+  { inputId: 's3-wb-batch',  hintId: 'hint-s3-wb-batch',  expected: WB_OH_BATCH,  tol: 0.10, fmt: function(v){ return fmtMoney(v,2); },
+    explain: 'WB also runs 1,000 batches a year. Spread the annual ABC overhead across them.' }
 ];
 function checkStep3() {
   var fb = document.getElementById('step3-insight'); fb.innerHTML = '';
@@ -889,9 +903,12 @@ function resetStep3() { resetGroup(STEP3_SPEC, 'score3-out', function(){ documen
    STEP 4 — three-method comparison
 ═══════════════════════════════════════════════════════════════ */
 var STEP4_SPEC = [
-  { inputId: 's4-wb-shift',  hintId: 'hint-s4-wb-shift',  expected: WB_ABC_SHIFT_ANNUAL, tol: 50,   fmt: function(v){ return fmtMoney(v,0); } },
-  { inputId: 's4-cbc-total', hintId: 'hint-s4-cbc-total', expected: CBC_TOTAL_ABC,       tol: 0.10, fmt: function(v){ return fmtMoney(v,2); } },
-  { inputId: 's4-wb-total',  hintId: 'hint-s4-wb-total',  expected: WB_TOTAL_ABC,        tol: 0.10, fmt: function(v){ return fmtMoney(v,2); } }
+  { inputId: 's4-wb-shift',  hintId: 'hint-s4-wb-shift',  expected: WB_ABC_SHIFT_ANNUAL, tol: 50,   fmt: function(v){ return fmtMoney(v,0); },
+    explain: 'Find the per-batch difference in WB&rsquo;s overhead between the two methods in the comparison table, then scale that gap up by WB&rsquo;s annual batch count.' },
+  { inputId: 's4-cbc-total', hintId: 'hint-s4-cbc-total', expected: CBC_TOTAL_ABC,       tol: 0.10, fmt: function(v){ return fmtMoney(v,2); },
+    explain: 'Total cost = direct materials + direct labor + overhead. Use the ABC overhead figure from the comparison table for CBC, and the DM and DL amounts listed in the prompt.' },
+  { inputId: 's4-wb-total',  hintId: 'hint-s4-wb-total',  expected: WB_TOTAL_ABC,        tol: 0.10, fmt: function(v){ return fmtMoney(v,2); },
+    explain: 'Same recipe (DM + DL + ABC OH) but with WB&rsquo;s direct materials, direct labor, and ABC overhead per batch.' }
 ];
 function checkStep4() {
   var fb = document.getElementById('step4-insight'); fb.innerHTML = '';
@@ -906,9 +923,12 @@ function resetStep4() { resetGroup(STEP4_SPEC, 'score4-out', function(){ documen
    STEP 5 — scenario
 ═══════════════════════════════════════════════════════════════ */
 var STEP5_SPEC = [
-  { inputId: 's5-wb-annual', hintId: 'hint-s5-wb-annual', expected: WB_OH_ANNUAL_NEW, tol: 5,    fmt: function(v){ return fmtMoney(v,0); } },
-  { inputId: 's5-wb-batch',  hintId: 'hint-s5-wb-batch',  expected: WB_OH_BATCH_NEW,  tol: 0.10, fmt: function(v){ return fmtMoney(v,2); } },
-  { inputId: 's5-wb-total',  hintId: 'hint-s5-wb-total',  expected: WB_TOTAL_NEW,     tol: 0.10, fmt: function(v){ return fmtMoney(v,2); } }
+  { inputId: 's5-wb-annual', hintId: 'hint-s5-wb-annual', expected: WB_OH_ANNUAL_NEW, tol: 5,    fmt: function(v){ return fmtMoney(v,0); },
+    explain: 'Redo the six-activity sum for WB with only setups and tests changed to the new volumes. The other four driver quantities and all activity rates from Step 1 stay the same.' },
+  { inputId: 's5-wb-batch',  hintId: 'hint-s5-wb-batch',  expected: WB_OH_BATCH_NEW,  tol: 0.10, fmt: function(v){ return fmtMoney(v,2); },
+    explain: 'Spread the new annual overhead across the same 1,000 batches &mdash; total batches don&rsquo;t change in this scenario, only activity volume does.' },
+  { inputId: 's5-wb-total',  hintId: 'hint-s5-wb-total',  expected: WB_TOTAL_NEW,     tol: 0.10, fmt: function(v){ return fmtMoney(v,2); },
+    explain: 'Same DM + DL + ABC OH recipe as Step 4, but plug in the new ABC overhead per batch you just computed.' }
 ];
 function checkStep5() {
   var fb = document.getElementById('step5-insight'); fb.innerHTML = '';

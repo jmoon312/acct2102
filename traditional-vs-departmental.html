@@ -248,11 +248,12 @@
   }
   .corr-hint {
     display: block;
-    font-size: 11px;
-    color: #5a9e3a;
-    font-weight: 600;
-    margin-top: 3px;
+    font-size: 11.5px;
+    color: #64748b;
+    font-weight: 500;
+    margin-top: 4px;
     min-height: 14px;
+    line-height: 1.4;
   }
 
   /* Reveal animation */
@@ -481,7 +482,7 @@
 
     <div class="qa-list">
       <div class="qa-row">
-        <div class="qa-prompt"><strong>Plantwide overhead rate</strong><small>$120,000 total OH &divide; total machine hours</small></div>
+        <div class="qa-prompt"><strong>Plantwide overhead rate</strong></div>
         <div class="answer">
           <label>$ per MH</label>
           <input type="text" id="s1-rate" inputmode="decimal" placeholder="$">
@@ -540,8 +541,7 @@
           <tr><td class="row-label">Packaging</td><td>$20,000</td><td>Direct labor hours</td><td>4,000</td></tr>
         </tbody>
       </table>
-      <p class="meta-line">Roasting machine hours: 1,000 batches &times; 3 hrs (CBC) + 1,000 batches &times; 1 hr (WB) = 4,000.<br>
-      Packaging labor hours: 1,000 &times; 1 (CBC) + 1,000 &times; 3 (WB) = 4,000.</p>
+      <p class="meta-line">The driver-hour totals above come from rolling up batches across both products (per-batch hours are shown back in Step 1).</p>
     </div>
 
     <p class="prompt">Compute the overhead rate for each department.</p>
@@ -591,7 +591,7 @@
 
     <div class="qa-list">
       <div class="qa-row">
-        <div class="qa-prompt">Total OH per batch &mdash; <strong>Cold Brew Concentrate</strong><small>3 roasting MH + 1 packaging LH</small></div>
+        <div class="qa-prompt">Total OH per batch &mdash; <strong>Cold Brew Concentrate</strong></div>
         <div class="answer">
           <label>$ / batch</label>
           <input type="text" id="s3-cbc" inputmode="decimal" placeholder="$">
@@ -599,7 +599,7 @@
         </div>
       </div>
       <div class="qa-row">
-        <div class="qa-prompt">Total OH per batch &mdash; <strong>Whole Bean</strong><small>1 roasting MH + 3 packaging LH</small></div>
+        <div class="qa-prompt">Total OH per batch &mdash; <strong>Whole Bean</strong></div>
         <div class="answer">
           <label>$ / batch</label>
           <input type="text" id="s3-wb" inputmode="decimal" placeholder="$">
@@ -668,7 +668,7 @@
           </div>
         </div>
         <div class="qa-row">
-          <div class="qa-prompt">Total cost per batch of <strong>Cold Brew Concentrate</strong>, under departmental costing<small>DM + DL + departmental OH</small></div>
+          <div class="qa-prompt">Total cost per batch of <strong>Cold Brew Concentrate</strong>, under departmental costing</div>
           <div class="answer">
             <label>$ / batch</label>
             <input type="text" id="s4-cbc-total" inputmode="decimal" placeholder="$">
@@ -775,25 +775,30 @@ var CBC_TOTAL_DEPT = CBC_DM + CBC_DL + CBC_OH_DEPT;       // $145
 
 /* ═══════════════════════════════════════════════════════════════
    GENERIC CHECKER
+   Per-input attempt counter — explanatory hint shown only on the
+   2nd (or later) wrong submission for the same input.
 ═══════════════════════════════════════════════════════════════ */
+var attemptCounts = {};
 function checkGroup(spec, scoreId, allCorrectFn) {
   var correct = 0, total = 0, blanks = 0;
   spec.forEach(function(f) {
     var inp  = document.getElementById(f.inputId);
     var hint = document.getElementById(f.hintId);
     inp.classList.remove('correct', 'wrong');
-    hint.textContent = '';
     total++;
-    if (inp.value.trim() === '') { blanks++; return; }
+    if (inp.value.trim() === '') { blanks++; hint.textContent = ''; return; }
     var val = parseNum(inp.value);
     var exp = f.expected;
     var tol = f.tol;
     if (!isNaN(val) && Math.abs(val - exp) <= tol) {
       inp.classList.add('correct');
+      hint.textContent = '';
+      attemptCounts[f.inputId] = 0;
       correct++;
     } else {
       inp.classList.add('wrong');
-      hint.textContent = '';
+      attemptCounts[f.inputId] = (attemptCounts[f.inputId] || 0) + 1;
+      hint.textContent = (attemptCounts[f.inputId] >= 2 && f.explain) ? f.explain : '';
     }
   });
   var out = document.getElementById(scoreId);
@@ -819,6 +824,7 @@ function resetGroup(spec, scoreId, extraResetFn) {
     inp.value = '';
     inp.classList.remove('correct', 'wrong');
     hint.textContent = '';
+    attemptCounts[f.inputId] = 0;
   });
   document.getElementById(scoreId).textContent = '';
   if (extraResetFn) extraResetFn();
@@ -828,9 +834,12 @@ function resetGroup(spec, scoreId, extraResetFn) {
    STEP 1 — Plantwide
 ═══════════════════════════════════════════════════════════════ */
 var STEP1_SPEC = [
-  { inputId: 's1-rate', hintId: 'hint-s1-rate', expected: PLANTWIDE_RATE, tol: 0.05, fmt: function(v){ return fmtMoney(v,2); } },
-  { inputId: 's1-cbc',  hintId: 'hint-s1-cbc',  expected: CBC_OH_PLANTWIDE, tol: 0.5,  fmt: function(v){ return fmtMoney(v,0); } },
-  { inputId: 's1-wb',   hintId: 'hint-s1-wb',   expected: WB_OH_PLANTWIDE,  tol: 0.5,  fmt: function(v){ return fmtMoney(v,0); } }
+  { inputId: 's1-rate', hintId: 'hint-s1-rate', expected: PLANTWIDE_RATE, tol: 0.05, fmt: function(v){ return fmtMoney(v,2); },
+    explain: 'A plantwide rate divides all budgeted overhead by a single activity total. Here the activity is machine hours across both products.' },
+  { inputId: 's1-cbc',  hintId: 'hint-s1-cbc',  expected: CBC_OH_PLANTWIDE, tol: 0.5,  fmt: function(v){ return fmtMoney(v,0); },
+    explain: 'Applied OH = rate × hours consumed. Multiply the plantwide rate by Cold Brew’s machine hours per batch (the per-batch table is in the setup).' },
+  { inputId: 's1-wb',   hintId: 'hint-s1-wb',   expected: WB_OH_PLANTWIDE,  tol: 0.5,  fmt: function(v){ return fmtMoney(v,0); },
+    explain: 'Same mechanic — plantwide rate × Whole Bean’s machine hours per batch. WB barely touches roasting, so its applied OH will be small.' }
 ];
 function checkStep1() {
   var fb = document.getElementById('step1-insight'); fb.innerHTML = '';
@@ -845,8 +854,10 @@ function resetStep1() { resetGroup(STEP1_SPEC, 'score1-out', function(){ documen
    STEP 2 — Departmental rates
 ═══════════════════════════════════════════════════════════════ */
 var STEP2_SPEC = [
-  { inputId: 's2-roast', hintId: 'hint-s2-roast', expected: ROAST_RATE, tol: 0.05, fmt: function(v){ return fmtMoney(v,2); } },
-  { inputId: 's2-pkg',   hintId: 'hint-s2-pkg',   expected: PKG_RATE,   tol: 0.05, fmt: function(v){ return fmtMoney(v,2); } }
+  { inputId: 's2-roast', hintId: 'hint-s2-roast', expected: ROAST_RATE, tol: 0.05, fmt: function(v){ return fmtMoney(v,2); },
+    explain: 'Each departmental rate uses only that department’s overhead and its own driver hours — don’t mix the two pools.' },
+  { inputId: 's2-pkg',   hintId: 'hint-s2-pkg',   expected: PKG_RATE,   tol: 0.05, fmt: function(v){ return fmtMoney(v,2); },
+    explain: 'Same idea — use only packaging’s overhead pool and packaging’s driver (labor hours, not machine hours).' }
 ];
 function checkStep2() {
   var fb = document.getElementById('step2-insight'); fb.innerHTML = '';
@@ -861,8 +872,10 @@ function resetStep2() { resetGroup(STEP2_SPEC, 'score2-out', function(){ documen
    STEP 3 — Apply departmental rates
 ═══════════════════════════════════════════════════════════════ */
 var STEP3_SPEC = [
-  { inputId: 's3-cbc', hintId: 'hint-s3-cbc', expected: CBC_OH_DEPT, tol: 0.5, fmt: function(v){ return fmtMoney(v,0); } },
-  { inputId: 's3-wb',  hintId: 'hint-s3-wb',  expected: WB_OH_DEPT,  tol: 0.5, fmt: function(v){ return fmtMoney(v,0); } }
+  { inputId: 's3-cbc', hintId: 'hint-s3-cbc', expected: CBC_OH_DEPT, tol: 0.5, fmt: function(v){ return fmtMoney(v,0); },
+    explain: 'Each batch picks up overhead from BOTH departments. Apply the roasting rate to CBC’s machine hours, the packaging rate to CBC’s labor hours, then add the two pieces.' },
+  { inputId: 's3-wb',  hintId: 'hint-s3-wb',  expected: WB_OH_DEPT,  tol: 0.5, fmt: function(v){ return fmtMoney(v,0); },
+    explain: 'Same two-piece approach for Whole Bean. WB has the opposite usage pattern from CBC — much heavier in packaging than in roasting.' }
 ];
 function checkStep3() {
   var fb = document.getElementById('step3-insight'); fb.innerHTML = '';
@@ -912,8 +925,10 @@ function pickIntuition(choice) {
 }
 
 var STEP4_SPEC = [
-  { inputId: 's4-annual',    hintId: 'hint-s4-annual',    expected: CBC_ANNUAL_DIFF, tol: 50,  fmt: function(v){ return fmtMoney(v,0); } },
-  { inputId: 's4-cbc-total', hintId: 'hint-s4-cbc-total', expected: CBC_TOTAL_DEPT,  tol: 0.5, fmt: function(v){ return fmtMoney(v,0); } }
+  { inputId: 's4-annual',    hintId: 'hint-s4-annual',    expected: CBC_ANNUAL_DIFF, tol: 50,  fmt: function(v){ return fmtMoney(v,0); },
+    explain: 'Take the per-batch difference between the two methods (from the comparison table just above) and scale it by annual batches of CBC.' },
+  { inputId: 's4-cbc-total', hintId: 'hint-s4-cbc-total', expected: CBC_TOTAL_DEPT,  tol: 0.5, fmt: function(v){ return fmtMoney(v,0); },
+    explain: 'Total product cost = direct materials + direct labor + applied overhead. Use the per-batch DM and DL from Step 1 and the departmental OH you just computed.' }
 ];
 function checkStep4() {
   var fb = document.getElementById('step4-insight'); fb.innerHTML = '';

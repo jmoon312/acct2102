@@ -269,11 +269,21 @@
   }
   .alloc-table .corr-hint {
     display: block;
-    font-size: 10.5px;
-    color: #5a9e3a;
-    font-weight: 600;
-    margin-top: 2px;
-    min-height: 12px;
+    font-size: 11.5px;
+    color: #64748b;
+    font-weight: 500;
+    margin-top: 4px;
+    min-height: 14px;
+    line-height: 1.4;
+  }
+  .corr-hint {
+    display: block;
+    font-size: 11.5px;
+    color: #64748b;
+    font-weight: 500;
+    margin-top: 4px;
+    min-height: 14px;
+    line-height: 1.4;
   }
 
   /* Dropdown row for ordering */
@@ -1021,25 +1031,30 @@ var S_TOT_BAK = S_C_BAK + S_M_BAK + S_H_BAK;   // 38,120
 
 /* ═══════════════════════════════════════════════════════════════
    GENERIC CHECKER
+   Per-input attempt counter — explanatory hint shown only on the
+   2nd (or later) wrong submission for the same input.
 ═══════════════════════════════════════════════════════════════ */
+var attemptCounts = {};
 function checkGroup(spec, scoreId, allCorrectFn) {
   var correct = 0, total = 0, blanks = 0;
   spec.forEach(function(f) {
     var inp  = document.getElementById(f.inputId);
     var hint = document.getElementById(f.hintId);
     inp.classList.remove('correct', 'wrong');
-    if (hint) hint.textContent = '';
     total++;
-    if (inp.value.trim() === '') { blanks++; return; }
+    if (inp.value.trim() === '') { blanks++; if (hint) hint.textContent = ''; return; }
     var val = parseNum(inp.value);
     var exp = f.expected;
     var tol = f.tol;
     if (!isNaN(val) && Math.abs(val - exp) <= tol) {
       inp.classList.add('correct');
+      if (hint) hint.textContent = '';
+      attemptCounts[f.inputId] = 0;
       correct++;
     } else {
       inp.classList.add('wrong');
-      if (hint) hint.textContent = '';
+      attemptCounts[f.inputId] = (attemptCounts[f.inputId] || 0) + 1;
+      if (hint) hint.textContent = (attemptCounts[f.inputId] >= 2 && f.explain) ? f.explain : '';
     }
   });
   var out = document.getElementById(scoreId);
@@ -1059,6 +1074,7 @@ function resetGroup(spec, scoreId, extraResetFn) {
     inp.value = '';
     inp.classList.remove('correct', 'wrong');
     if (hint) hint.textContent = '';
+    attemptCounts[f.inputId] = 0;
   });
   document.getElementById(scoreId).textContent = '';
   if (extraResetFn) extraResetFn();
@@ -1068,14 +1084,22 @@ function resetGroup(spec, scoreId, extraResetFn) {
    STEP 1 — Direct method
 ═══════════════════════════════════════════════════════════════ */
 var STEP1_SPEC = [
-  { inputId:'d-m-mix',  hintId:'hd-m-mix',  expected:D_M_MIX,  tol:1 },
-  { inputId:'d-m-bak',  hintId:'hd-m-bak',  expected:D_M_BAK,  tol:1 },
-  { inputId:'d-h-mix',  hintId:'hd-h-mix',  expected:D_H_MIX,  tol:1 },
-  { inputId:'d-h-bak',  hintId:'hd-h-bak',  expected:D_H_BAK,  tol:1 },
-  { inputId:'d-c-mix',  hintId:'hd-c-mix',  expected:D_C_MIX,  tol:1 },
-  { inputId:'d-c-bak',  hintId:'hd-c-bak',  expected:D_C_BAK,  tol:1 },
-  { inputId:'d-tot-mix',hintId:'hd-tot-mix',expected:D_TOT_MIX,tol:2 },
-  { inputId:'d-tot-bak',hintId:'hd-tot-bak',expected:D_TOT_BAK,tol:2 }
+  { inputId:'d-m-mix',  hintId:'hd-m-mix',  expected:D_M_MIX,  tol:1,
+    explain:'Direct method ignores other service depts. Mixing’s share = Maintenance’s cost × (Mixing’s machine hours ÷ machine hours in producing depts only).' },
+  { inputId:'d-m-bak',  hintId:'hd-m-bak',  expected:D_M_BAK,  tol:1,
+    explain:'Same direct-method rule for Baking — use only Mixing + Baking machine hours in the denominator, then apply Baking’s share.' },
+  { inputId:'d-h-mix',  hintId:'hd-h-mix',  expected:D_H_MIX,  tol:1,
+    explain:'HR allocates on employees. Denominator is employees in producing depts only — the HR and Cafeteria employee counts are excluded under direct method.' },
+  { inputId:'d-h-bak',  hintId:'hd-h-bak',  expected:D_H_BAK,  tol:1,
+    explain:'Same employee-based split, Baking’s share of producing-dept employees.' },
+  { inputId:'d-c-mix',  hintId:'hd-c-mix',  expected:D_C_MIX,  tol:1,
+    explain:'Cafeteria allocates on square feet. The Maintenance/HR square feet are ignored under direct — denominator is only Mixing’s + Baking’s sq ft.' },
+  { inputId:'d-c-bak',  hintId:'hd-c-bak',  expected:D_C_BAK,  tol:1,
+    explain:'Same sq-ft rule, Baking’s share of the producing-dept square footage.' },
+  { inputId:'d-tot-mix',hintId:'hd-tot-mix',expected:D_TOT_MIX,tol:2,
+    explain:'Add the three Mixing allocations (Maintenance + HR + Cafeteria) you just computed.' },
+  { inputId:'d-tot-bak',hintId:'hd-tot-bak',expected:D_TOT_BAK,tol:2,
+    explain:'Add the three Baking allocations together.' }
 ];
 function checkStep1() {
   var fb = document.getElementById('step1-insight'); fb.innerHTML = '';
@@ -1089,6 +1113,7 @@ function resetStep1() { resetGroup(STEP1_SPEC, 'score1-out', function(){ documen
 /* ═══════════════════════════════════════════════════════════════
    STEP 2 — Step method ordering
 ═══════════════════════════════════════════════════════════════ */
+var STEP2_EXPLAIN = 'Look at each service dept’s base hitting the OTHER two service depts. Whichever sends the most service-to-service dollars goes first; whichever sends the least goes last.';
 function checkStep2() {
   var ord1 = document.getElementById('ord-1');
   var ord2 = document.getElementById('ord-2');
@@ -1123,11 +1148,17 @@ function checkStep2() {
   }
   if (allRight) {
     out.textContent = '3 / 3 correct';
+    attemptCounts['step2-order'] = 0;
     playBell();
     revealStep3(false);
     fb.innerHTML = '<div class="insight success"><strong>Cafeteria → Maintenance → HR.</strong> Cafeteria sends real dollars to both other service depts, so closing it first means those flows aren\'t lost. Once Cafeteria is allocated, Maintenance picks up $2,000 from it. HR closes last because it only sends 9% of its base back into the service-dept chain.</div>';
   } else {
-    out.textContent = 'Not quite. Cafeteria first (largest interdept dollar flow); HR last (smallest).';
+    attemptCounts['step2-order'] = (attemptCounts['step2-order'] || 0) + 1;
+    if (attemptCounts['step2-order'] >= 2) {
+      out.textContent = 'Not quite. ' + STEP2_EXPLAIN;
+    } else {
+      out.textContent = 'Not quite.';
+    }
     playHorn();
   }
 }
@@ -1137,6 +1168,7 @@ function resetStep2() {
     s.value = '';
     s.classList.remove('correct','wrong');
   });
+  attemptCounts['step2-order'] = 0;
   document.getElementById('score2-out').textContent = '';
   document.getElementById('step2-insight').innerHTML = '';
 }
@@ -1145,10 +1177,14 @@ function resetStep2() {
    STEP 3 — Step method Phase 1 (Cafeteria)
 ═══════════════════════════════════════════════════════════════ */
 var STEP3_SPEC = [
-  { inputId:'s-c-maint', hintId:'hs-c-maint', expected:S_C_MAINT, tol:1 },
-  { inputId:'s-c-hr',    hintId:'hs-c-hr',    expected:S_C_HR,    tol:1 },
-  { inputId:'s-c-mix',   hintId:'hs-c-mix',   expected:S_C_MIX,   tol:1 },
-  { inputId:'s-c-bak',   hintId:'hs-c-bak',   expected:S_C_BAK,   tol:1 }
+  { inputId:'s-c-maint', hintId:'hs-c-maint', expected:S_C_MAINT, tol:1,
+    explain:'Cafeteria’s pool spreads across ALL other departments (incl. Maintenance and HR) using square feet. Denominator is the sum of every other dept’s sq ft.' },
+  { inputId:'s-c-hr',    hintId:'hs-c-hr',    expected:S_C_HR,    tol:1,
+    explain:'HR’s slice = Cafeteria $ × (HR sq ft ÷ total sq ft of all other depts). Don’t exclude HR — under step method the first dept reaches everybody.' },
+  { inputId:'s-c-mix',   hintId:'hs-c-mix',   expected:S_C_MIX,   tol:1,
+    explain:'Same sq-ft ratio applied to Mixing. The four destinations (Maintenance, HR, Mixing, Baking) share the Cafeteria pool proportionally.' },
+  { inputId:'s-c-bak',   hintId:'hs-c-bak',   expected:S_C_BAK,   tol:1,
+    explain:'Baking gets the biggest slice because it has the most sq ft. Check that the four allocations you wrote add back up to Cafeteria’s full $20,000.' }
 ];
 function checkStep3() {
   var fb = document.getElementById('step3-insight'); fb.innerHTML = '';
@@ -1165,15 +1201,24 @@ function resetStep3() { resetGroup(STEP3_SPEC, 'score3-out', function(){ documen
 var S_M_POOL = 24000 + S_C_MAINT;   // 26,000
 var S_H_POOL = 18000 + S_C_HR + S_M_HR;  // 25,200
 var STEP4_SPEC = [
-  { inputId:'s-m-pool', hintId:'hs-m-pool', expected:S_M_POOL, tol:1 },
-  { inputId:'s-m-hr',   hintId:'hs-m-hr',   expected:S_M_HR,   tol:1 },
-  { inputId:'s-m-mix',  hintId:'hs-m-mix',  expected:S_M_MIX,  tol:1 },
-  { inputId:'s-m-bak',  hintId:'hs-m-bak',  expected:S_M_BAK,  tol:1 },
-  { inputId:'s-h-pool', hintId:'hs-h-pool', expected:S_H_POOL, tol:1 },
-  { inputId:'s-h-mix',  hintId:'hs-h-mix',  expected:S_H_MIX,  tol:1 },
-  { inputId:'s-h-bak',  hintId:'hs-h-bak',  expected:S_H_BAK,  tol:1 },
-  { inputId:'s-tot-mix', hintId:'hs-tot-mix', expected:S_TOT_MIX, tol:2 },
-  { inputId:'s-tot-bak', hintId:'hs-tot-bak', expected:S_TOT_BAK, tol:2 }
+  { inputId:'s-m-pool', hintId:'hs-m-pool', expected:S_M_POOL, tol:1,
+    explain:'Maintenance’s new pool is its original cost plus whatever Cafeteria sent it in Step 3. Add the two figures together.' },
+  { inputId:'s-m-hr',   hintId:'hs-m-hr',   expected:S_M_HR,   tol:1,
+    explain:'Allocate the Maintenance pool by machine hours, but only across departments still open (Cafeteria is closed; Maintenance can’t allocate to itself). HR’s machine hours are part of the denominator.' },
+  { inputId:'s-m-mix',  hintId:'hs-m-mix',  expected:S_M_MIX,  tol:1,
+    explain:'Same machine-hour ratio applied to Mixing — Mixing MH ÷ (HR + Mixing + Baking MH).' },
+  { inputId:'s-m-bak',  hintId:'hs-m-bak',  expected:S_M_BAK,  tol:1,
+    explain:'Baking’s machine hours over the same denominator. The three Maintenance allocations should sum back to the pool you just computed.' },
+  { inputId:'s-h-pool', hintId:'hs-h-pool', expected:S_H_POOL, tol:1,
+    explain:'HR’s pool stacks three pieces — its original cost plus what Cafeteria contributed plus what Maintenance just contributed.' },
+  { inputId:'s-h-mix',  hintId:'hs-h-mix',  expected:S_H_MIX,  tol:1,
+    explain:'HR allocates on employees, but only Mixing and Baking are still open. Mixing’s share = Mixing employees ÷ (Mixing + Baking employees).' },
+  { inputId:'s-h-bak',  hintId:'hs-h-bak',  expected:S_H_BAK,  tol:1,
+    explain:'Baking’s employee share of the HR pool. The two HR allocations should add back up to the HR pool.' },
+  { inputId:'s-tot-mix', hintId:'hs-tot-mix', expected:S_TOT_MIX, tol:2,
+    explain:'Add Mixing’s three step-method allocations together (one from each service-dept pool).' },
+  { inputId:'s-tot-bak', hintId:'hs-tot-bak', expected:S_TOT_BAK, tol:2,
+    explain:'Same — sum Baking’s three allocations. Mixing + Baking totals should add to $62,000 (the full service-dept cost).' }
 ];
 function checkStep4() {
   var fb = document.getElementById('step4-insight'); fb.innerHTML = '';

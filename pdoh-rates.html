@@ -248,11 +248,12 @@
   }
   .corr-hint {
     display: block;
-    font-size: 11px;
-    color: #5a9e3a;
-    font-weight: 600;
-    margin-top: 3px;
+    font-size: 11.5px;
+    color: #64748b;
+    font-weight: 500;
+    margin-top: 4px;
     min-height: 14px;
+    line-height: 1.4;
   }
 
   /* Reveal animation */
@@ -708,25 +709,30 @@ var APPLIED_MH  = JAN_MH * PDOH_MH;    // $14,000
 
 /* ═══════════════════════════════════════════════════════════════
    GENERIC CHECKER
+   Per-input attempt counter — explanatory hint shown only on the
+   2nd (or later) wrong submission for the same input.
 ═══════════════════════════════════════════════════════════════ */
+var attemptCounts = {};
 function checkGroup(spec, scoreId, allCorrectFn) {
   var correct = 0, total = 0, blanks = 0;
   spec.forEach(function(f) {
     var inp  = document.getElementById(f.inputId);
     var hint = document.getElementById(f.hintId);
     inp.classList.remove('correct', 'wrong');
-    hint.textContent = '';
     total++;
-    if (inp.value.trim() === '') { blanks++; return; }
+    if (inp.value.trim() === '') { blanks++; hint.textContent = ''; return; }
     var val = parseNum(inp.value);
     var exp = f.expected;
     var tol = f.tol;
     if (!isNaN(val) && Math.abs(val - exp) <= tol) {
       inp.classList.add('correct');
+      hint.textContent = '';
+      attemptCounts[f.inputId] = 0;
       correct++;
     } else {
       inp.classList.add('wrong');
-      hint.textContent = '';
+      attemptCounts[f.inputId] = (attemptCounts[f.inputId] || 0) + 1;
+      hint.textContent = (attemptCounts[f.inputId] >= 2 && f.explain) ? f.explain : '';
     }
   });
   var out = document.getElementById(scoreId);
@@ -752,6 +758,7 @@ function resetGroup(spec, scoreId, extraResetFn) {
     inp.value = '';
     inp.classList.remove('correct', 'wrong');
     hint.textContent = '';
+    attemptCounts[f.inputId] = 0;
   });
   document.getElementById(scoreId).textContent = '';
   if (extraResetFn) extraResetFn();
@@ -761,8 +768,10 @@ function resetGroup(spec, scoreId, extraResetFn) {
    STEP 1
 ═══════════════════════════════════════════════════════════════ */
 var STEP1_SPEC = [
-  { inputId: 's1-dlh', hintId: 'hint-s1-dlh', expected: PDOH_DLH, tol: 0.05, fmt: function(v) { return fmtMoney(v, 2); } },
-  { inputId: 's1-mh',  hintId: 'hint-s1-mh',  expected: PDOH_MH,  tol: 0.05, fmt: function(v) { return fmtMoney(v, 2); } }
+  { inputId: 's1-dlh', hintId: 'hint-s1-dlh', expected: PDOH_DLH, tol: 0.05, fmt: function(v) { return fmtMoney(v, 2); },
+    explain: 'PDOH rate = budgeted overhead &divide; budgeted activity in the driver. Use the projected (upcoming-year) numbers, not the prior-year actuals, and pick the column for direct labor hours.' },
+  { inputId: 's1-mh',  hintId: 'hint-s1-mh',  expected: PDOH_MH,  tol: 0.05, fmt: function(v) { return fmtMoney(v, 2); },
+    explain: 'Same numerator as the DLH rate (the projected overhead), but the denominator is the projected machine hours. Projected figures only &mdash; PDOH rates are set forward, not back.' }
 ];
 function checkStep1() {
   var fb = document.getElementById('step1-insight');
@@ -782,8 +791,10 @@ function resetStep1() {
    STEP 2
 ═══════════════════════════════════════════════════════════════ */
 var STEP2_SPEC = [
-  { inputId: 's2-dlh', hintId: 'hint-s2-dlh', expected: APPLIED_DLH, tol: 0.5, fmt: function(v) { return fmtMoney(v, 0); } },
-  { inputId: 's2-mh',  hintId: 'hint-s2-mh',  expected: APPLIED_MH,  tol: 0.5, fmt: function(v) { return fmtMoney(v, 0); } }
+  { inputId: 's2-dlh', hintId: 'hint-s2-dlh', expected: APPLIED_DLH, tol: 0.5, fmt: function(v) { return fmtMoney(v, 0); },
+    explain: 'Applied overhead = actual driver activity for the period &times; the PDOH rate for that driver. Use January&rsquo;s actual DLH and the DLH rate you computed in Step 1.' },
+  { inputId: 's2-mh',  hintId: 'hint-s2-mh',  expected: APPLIED_MH,  tol: 0.5, fmt: function(v) { return fmtMoney(v, 0); },
+    explain: 'Same formula &mdash; actual activity &times; PDOH rate &mdash; but plug in January&rsquo;s actual machine hours and the MH rate from Step 1.' }
 ];
 function checkStep2() {
   var fb = document.getElementById('step2-insight');

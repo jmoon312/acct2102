@@ -212,11 +212,12 @@
   }
   .corr-hint {
     display: block;
-    font-size: 11px;
-    color: #5a9e3a;
-    font-weight: 600;
-    margin-top: 3px;
+    font-size: 11.5px;
+    color: #64748b;
+    font-weight: 500;
+    margin-top: 4px;
     min-height: 14px;
+    line-height: 1.4;
   }
 
   /* ── QA rows ── */
@@ -279,7 +280,7 @@
     background: #fff1f1;
     color: #9b2020;
   }
-  .qa-row .answer .corr-hint { text-align: center; margin-top: 3px; }
+  .qa-row .answer .corr-hint { text-align: left; margin-top: 4px; }
 
   /* ── Decision buttons ── */
   .decision-box {
@@ -796,7 +797,6 @@
     <div class="single-solve">
       <div class="solve-prompt">
         Now combine the outsourcing cost from Step 2 with the capacity opportunity. What is the <strong>combined net effect</strong> on monthly profit?
-        <small>Outsourcing effect + additional hub CM.</small>
       </div>
       <div class="answer">
         <label>Combined net</label>
@@ -1010,25 +1010,30 @@ function playHorn() {
 
 /* ═══════════════════════════════════════════════════════════════
    GENERIC CHECKER
+   Per-input attempt counter — explanatory hint shown only on the
+   2nd (or later) wrong submission for the same input.
 ═══════════════════════════════════════════════════════════════ */
+var attemptCounts = {};
 function checkGroup(spec, scoreId, allCorrectFn) {
   let correct = 0, total = 0, blanks = 0;
   spec.forEach(f => {
     const inp  = document.getElementById(f.inputId);
     const hint = document.getElementById(f.hintId);
     inp.classList.remove('correct', 'wrong');
-    hint.textContent = '';
     total++;
-    if (inp.value.trim() === '') { blanks++; return; }
+    if (inp.value.trim() === '') { blanks++; hint.textContent = ''; return; }
     const val = parseNum(inp.value);
     const exp = f.expected;
     const tol = f.tol;
     if (!isNaN(val) && Math.abs(val - exp) <= tol) {
       inp.classList.add('correct');
+      hint.textContent = '';
+      attemptCounts[f.inputId] = 0;
       correct++;
     } else {
       inp.classList.add('wrong');
-      hint.textContent = '';
+      attemptCounts[f.inputId] = (attemptCounts[f.inputId] || 0) + 1;
+      hint.textContent = (attemptCounts[f.inputId] >= 2 && f.explain) ? f.explain : '';
     }
   });
   const out = document.getElementById(scoreId);
@@ -1054,6 +1059,7 @@ function resetGroup(spec, scoreId, extraFn) {
     inp.value = '';
     inp.classList.remove('correct', 'wrong');
     hint.textContent = '';
+    attemptCounts[f.inputId] = 0;
   });
   document.getElementById(scoreId).textContent = '';
   if (extraFn) extraFn();
@@ -1063,10 +1069,14 @@ function resetGroup(spec, scoreId, extraFn) {
    STEP 1 — Baseline metrics
 ═══════════════════════════════════════════════════════════════ */
 const STEP1_SPEC = [
-  { inputId: 's1-cm-std',   hintId: 'hint-s1-cm-std',   expected: STD_CM,    tol: 0.05, fmt: v => fmtMoney(v) },
-  { inputId: 's1-cmhr-std', hintId: 'hint-s1-cmhr-std', expected: STD_CM_HR, tol: 0.05, fmt: v => fmtMoney(v) },
-  { inputId: 's1-cm-hub',   hintId: 'hint-s1-cm-hub',   expected: HUB_CM,    tol: 0.05, fmt: v => fmtMoney(v) },
-  { inputId: 's1-cmhr-hub', hintId: 'hint-s1-cmhr-hub', expected: HUB_CM_HR, tol: 0.05, fmt: v => fmtMoney(v) }
+  { inputId: 's1-cm-std',   hintId: 'hint-s1-cm-std',   expected: STD_CM,    tol: 0.05, fmt: v => fmtMoney(v),
+    explain: 'CM per unit = selling price − all variable costs per unit (production + S&A). Use the adapter row.' },
+  { inputId: 's1-cmhr-std', hintId: 'hint-s1-cmhr-std', expected: STD_CM_HR, tol: 0.05, fmt: v => fmtMoney(v),
+    explain: 'CM per machine hour = CM per unit ÷ machine hours per unit. This converts product profitability into resource profitability.' },
+  { inputId: 's1-cm-hub',   hintId: 'hint-s1-cm-hub',   expected: HUB_CM,    tol: 0.05, fmt: v => fmtMoney(v),
+    explain: 'Same idea as the adapter row but using the hub’s price and its variable costs. The hub’s costs are listed in the setup paragraph.' },
+  { inputId: 's1-cmhr-hub', hintId: 'hint-s1-cmhr-hub', expected: HUB_CM_HR, tol: 0.05, fmt: v => fmtMoney(v),
+    explain: 'Hub CM per unit ÷ hub machine hours per unit. The hub is more expensive per unit but it’s the per-hour figure that decides scarce-resource priority.' }
 ];
 function checkStep1() {
   checkGroup(STEP1_SPEC, 'score1-out', () => {
@@ -1095,8 +1105,10 @@ function pickS2(choice) {
 }
 
 const STEP2_SPEC = [
-  { inputId: 's2-make', hintId: 'hint-s2-make', expected: MAKE_COST,       tol: 0.05, fmt: v => fmtMoney(v) },
-  { inputId: 's2-net',  hintId: 'hint-s2-net',  expected: OUTSOURCE_PURE,  tol: 0.5,  fmt: v => fmtMoneySigned(v) }
+  { inputId: 's2-make', hintId: 'hint-s2-make', expected: MAKE_COST,       tol: 0.05, fmt: v => fmtMoney(v),
+    explain: 'Only include costs that disappear if HP stops making the adapter. Variable S&A stays either way (HP still distributes), so it’s not part of the make cost here.' },
+  { inputId: 's2-net',  hintId: 'hint-s2-net',  expected: OUTSOURCE_PURE,  tol: 0.5,  fmt: v => fmtMoneySigned(v),
+    explain: 'Pure cost effect = avoidable fixed costs HP saves − extra variable cost from buying. Extra variable cost = (buy price − make cost per unit) × units. Sign: positive means outsourcing helps profit.' }
 ];
 
 function checkStep2() {
@@ -1108,16 +1120,18 @@ function checkStep2() {
     const inp  = document.getElementById(f.inputId);
     const hint = document.getElementById(f.hintId);
     inp.classList.remove('correct', 'wrong');
-    hint.textContent = '';
     total++;
-    if (inp.value.trim() === '') { blanks++; return; }
+    if (inp.value.trim() === '') { blanks++; hint.textContent = ''; return; }
     const val = parseNum(inp.value);
     if (!isNaN(val) && Math.abs(val - f.expected) <= f.tol) {
       inp.classList.add('correct');
+      hint.textContent = '';
+      attemptCounts[f.inputId] = 0;
       correct++;
     } else {
       inp.classList.add('wrong');
-      hint.textContent = '';
+      attemptCounts[f.inputId] = (attemptCounts[f.inputId] || 0) + 1;
+      hint.textContent = (attemptCounts[f.inputId] >= 2 && f.explain) ? f.explain : '';
     }
   });
 
@@ -1164,10 +1178,14 @@ function pickS3(choice) {
 }
 
 const STEP3_SPEC = [
-  { inputId: 's3-hours', hintId: 'hint-s3-hours', expected: FREED_HOURS,  tol: 1,   fmt: v => fmtUnits(v) + ' hrs' },
-  { inputId: 's3-hubs',  hintId: 'hint-s3-hubs',  expected: ACTUAL_HUBS,  tol: 1,   fmt: v => fmtUnits(v) + ' hubs' },
-  { inputId: 's3-cm',    hintId: 'hint-s3-cm',    expected: CAPACITY_CM,  tol: 0.5, fmt: v => fmtMoney(v) },
-  { inputId: 's3-net',   hintId: 'hint-s3-net',   expected: COMBINED_NET, tol: 0.5, fmt: v => fmtMoneySigned(v) }
+  { inputId: 's3-hours', hintId: 'hint-s3-hours', expected: FREED_HOURS,  tol: 1,   fmt: v => fmtUnits(v) + ' hrs',
+    explain: 'Outsourcing means HP no longer runs adapters on the line. Multiply adapter units by machine hours per adapter to see what comes free.' },
+  { inputId: 's3-hubs',  hintId: 'hint-s3-hubs',  expected: ACTUAL_HUBS,  tol: 1,   fmt: v => fmtUnits(v) + ' hubs',
+    explain: 'HP is constrained by the smaller of two things: how many hubs the freed capacity can produce, and how many extra hubs customers actually want to buy.' },
+  { inputId: 's3-cm',    hintId: 'hint-s3-cm',    expected: CAPACITY_CM,  tol: 0.5, fmt: v => fmtMoney(v),
+    explain: 'Additional hubs × CM per hub. Use the per-hub CM you computed in Step 1, not CM per machine hour.' },
+  { inputId: 's3-net',   hintId: 'hint-s3-net',   expected: COMBINED_NET, tol: 0.5, fmt: v => fmtMoneySigned(v),
+    explain: 'Combine the two effects: the pure outsourcing cost effect from Step 2 plus the new CM from the extra hubs. Watch the signs — the pure effect was negative.' }
 ];
 
 function checkStep3() {
@@ -1179,16 +1197,18 @@ function checkStep3() {
     const inp  = document.getElementById(f.inputId);
     const hint = document.getElementById(f.hintId);
     inp.classList.remove('correct', 'wrong');
-    hint.textContent = '';
     total++;
-    if (inp.value.trim() === '') { blanks++; return; }
+    if (inp.value.trim() === '') { blanks++; hint.textContent = ''; return; }
     const val = parseNum(inp.value);
     if (!isNaN(val) && Math.abs(val - f.expected) <= f.tol) {
       inp.classList.add('correct');
+      hint.textContent = '';
+      attemptCounts[f.inputId] = 0;
       correct++;
     } else {
       inp.classList.add('wrong');
-      hint.textContent = '';
+      attemptCounts[f.inputId] = (attemptCounts[f.inputId] || 0) + 1;
+      hint.textContent = (attemptCounts[f.inputId] >= 2 && f.explain) ? f.explain : '';
     }
   });
 
@@ -1307,15 +1327,20 @@ function checkStep4() {
 
   const netGuess = netEl.value.trim();
   let parts = [], allCorrect = true;
+  let bvNetHintMsg = '';
+  const BV_NET_EXPLAIN = 'Combine two pieces: (a) pure outsourcing effect = avoidable fixed costs saved \u2212 (buy price \u2212 var prod) \u00d7 adapter units; (b) capacity gain = extra hubs sold \u00d7 hub CM, where extra hubs is the smaller of (freed hours \u00f7 hub hrs/unit) and unfilled hub demand.';
 
   if (netGuess) {
     const v = parseNum(netGuess);
     const tol = Math.max(0.5, Math.abs(actual) * 0.001);
     if (!isNaN(v) && Math.abs(v - actual) <= tol) {
       netEl.classList.add('correct');
+      attemptCounts['bv-net'] = 0;
       parts.push('\u2714 Net effect');
     } else {
       netEl.classList.add('wrong');
+      attemptCounts['bv-net'] = (attemptCounts['bv-net'] || 0) + 1;
+      if (attemptCounts['bv-net'] >= 2) bvNetHintMsg = BV_NET_EXPLAIN;
       parts.push('\u2718 Net effect');
       allCorrect = false;
     }
@@ -1341,6 +1366,7 @@ function checkStep4() {
     fb.innerHTML = `<div class="insight success">${line}</div>`;
     playBell();
   } else {
+    if (bvNetHintMsg) fb.innerHTML = `<div class="insight">${bvNetHintMsg}</div>`;
     playHorn();
   }
 }
@@ -1361,6 +1387,7 @@ function resetStep4() {
   document.getElementById('bv-net').classList.remove('correct', 'wrong');
   document.getElementById('score4-out').textContent = '';
   document.getElementById('step4-feedback').innerHTML = '';
+  attemptCounts['bv-net'] = 0;
 
   bvDecision = null;
   document.getElementById('bv-decide-make').classList.remove('selected');

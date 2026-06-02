@@ -218,11 +218,12 @@
   }
   .corr-hint {
     display: block;
-    font-size: 11px;
-    color: #5a9e3a;
-    font-weight: 600;
-    margin-top: 3px;
+    font-size: 11.5px;
+    color: #64748b;
+    font-weight: 500;
+    margin-top: 4px;
     min-height: 14px;
+    line-height: 1.4;
   }
 
   /* ── Per-question stacked layout ── */
@@ -1212,25 +1213,30 @@ function playHorn() {
 
 /* ═══════════════════════════════════════════════════════════════
    GENERIC CHECKER for stacked qa-row groups
+   Per-input attempt counter — explanatory hint shown only on the
+   2nd (or later) wrong submission for the same input.
 ═══════════════════════════════════════════════════════════════ */
+const attemptCounts = {};
 function checkGroup(spec, scoreId, allCorrectFn) {
   let correct = 0, total = 0, blanks = 0;
   spec.forEach(f => {
     const inp  = document.getElementById(f.inputId);
     const hint = document.getElementById(f.hintId);
     inp.classList.remove('correct', 'wrong');
-    hint.textContent = '';
     total++;
-    if (inp.value.trim() === '') { blanks++; return; }
+    if (inp.value.trim() === '') { blanks++; hint.textContent = ''; return; }
     const val = (f.kind === 'pct') ? parsePct(inp.value) : parseNum(inp.value);
     const exp = f.expected;
     const tol = f.tol;
     if (!isNaN(val) && Math.abs(val - exp) <= tol) {
       inp.classList.add('correct');
+      hint.textContent = '';
+      attemptCounts[f.inputId] = 0;
       correct++;
     } else {
       inp.classList.add('wrong');
-      hint.textContent = '→ ' + f.fmt(exp);
+      attemptCounts[f.inputId] = (attemptCounts[f.inputId] || 0) + 1;
+      hint.textContent = (attemptCounts[f.inputId] >= 2 && f.explain) ? f.explain : '';
     }
   });
   const out = document.getElementById(scoreId);
@@ -1256,6 +1262,7 @@ function resetGroup(spec, scoreId, extraResetFn) {
     inp.value = '';
     inp.classList.remove('correct', 'wrong');
     hint.textContent = '';
+    attemptCounts[f.inputId] = 0;
   });
   document.getElementById(scoreId).textContent = '';
   if (extraResetFn) extraResetFn();
@@ -1265,9 +1272,12 @@ function resetGroup(spec, scoreId, extraResetFn) {
    STEP 1
 ═══════════════════════════════════════════════════════════════ */
 const STEP1_SPEC = [
-  { inputId: 's1-cm', hintId: 'hint-s1-cm', expected: ORIG_TOTAL_CM, tol: 0.5, kind: 'money', fmt: v => fmtMoney(v, 0) },
-  { inputId: 's1-oi', hintId: 'hint-s1-oi', expected: ORIG_OI,       tol: 0.5, kind: 'money', fmt: v => fmtMoney(v, 0) },
-  { inputId: 's1-ni', hintId: 'hint-s1-ni', expected: ORIG_NI,       tol: 0.5, kind: 'money', fmt: v => fmtMoney(v, 0) }
+  { inputId: 's1-cm', hintId: 'hint-s1-cm', expected: ORIG_TOTAL_CM, tol: 0.5, kind: 'money', fmt: v => fmtMoney(v, 0),
+    explain: 'Total contribution margin = sum over products of (CM per unit × expected units). Compute each product’s contribution, then add the four together.' },
+  { inputId: 's1-oi', hintId: 'hint-s1-oi', expected: ORIG_OI,       tol: 0.5, kind: 'money', fmt: v => fmtMoney(v, 0),
+    explain: 'Operating income = total contribution margin − fixed costs. Fixed costs are the same regardless of mix.' },
+  { inputId: 's1-ni', hintId: 'hint-s1-ni', expected: ORIG_NI,       tol: 0.5, kind: 'money', fmt: v => fmtMoney(v, 0),
+    explain: 'Net income = operating income × (1 − tax rate). The tax only chips into what’s left after fixed costs are covered.' }
 ];
 function checkStep1() {
   checkGroup(STEP1_SPEC, 'score1-out', () => revealStep2(false));
@@ -1280,9 +1290,12 @@ function resetStep1() {
    STEP 2
 ═══════════════════════════════════════════════════════════════ */
 const STEP2_SPEC = [
-  { inputId: 's2-dol', hintId: 'hint-s2-dol', expected: ORIG_DOL,        tol: 0.05, kind: 'money',  fmt: v => fmtDol(v) },
-  { inputId: 's2-pct', hintId: 'hint-s2-pct', expected: S2_OI_PCT * 100, tol: 0.5,  kind: 'pct',    fmt: v => fmtPct(v) },
-  { inputId: 's2-ni',  hintId: 'hint-s2-ni',  expected: S2_NEW_NI,       tol: 0.5,  kind: 'money',  fmt: v => fmtMoney(v, 0) }
+  { inputId: 's2-dol', hintId: 'hint-s2-dol', expected: ORIG_DOL,        tol: 0.05, kind: 'money',  fmt: v => fmtDol(v),
+    explain: 'Degree of operating leverage = total contribution margin ÷ operating income. Both come from Step 1’s baseline figures.' },
+  { inputId: 's2-pct', hintId: 'hint-s2-pct', expected: S2_OI_PCT * 100, tol: 0.5,  kind: 'pct',    fmt: v => fmtPct(v),
+    explain: '% change in operating income = DOL × % change in sales. Multiply the leverage factor by the percent sales lift.' },
+  { inputId: 's2-ni',  hintId: 'hint-s2-ni',  expected: S2_NEW_NI,       tol: 0.5,  kind: 'money',  fmt: v => fmtMoney(v, 0),
+    explain: 'Scale the original OI by (1 + % change in OI), then apply (1 − tax rate). Two multiplicative steps.' }
 ];
 function checkStep2() {
   checkGroup(STEP2_SPEC, 'score2-out', () => revealStep3(false));
@@ -1307,9 +1320,12 @@ function pickIntuition(choice) {
 }
 
 const STEP3_SPEC = [
-  { inputId: 's3-cm', hintId: 'hint-s3-cm', expected: STEP3_CM, tol: 0.5, kind: 'money', fmt: v => fmtMoney(v, 0) },
-  { inputId: 's3-oi', hintId: 'hint-s3-oi', expected: STEP3_OI, tol: 0.5, kind: 'money', fmt: v => fmtMoney(v, 0) },
-  { inputId: 's3-ni', hintId: 'hint-s3-ni', expected: STEP3_NI, tol: 0.5, kind: 'money', fmt: v => fmtMoney(v, 0) }
+  { inputId: 's3-cm', hintId: 'hint-s3-cm', expected: STEP3_CM, tol: 0.5, kind: 'money', fmt: v => fmtMoney(v, 0),
+    explain: 'Same formula as Step 1’s total CM, but plug in the new mix volumes. Prices and per-unit CMs are unchanged — only how many of each product changed.' },
+  { inputId: 's3-oi', hintId: 'hint-s3-oi', expected: STEP3_OI, tol: 0.5, kind: 'money', fmt: v => fmtMoney(v, 0),
+    explain: 'OI = new total CM − fixed costs. Fixed costs are unchanged from baseline.' },
+  { inputId: 's3-ni', hintId: 'hint-s3-ni', expected: STEP3_NI, tol: 0.5, kind: 'money', fmt: v => fmtMoney(v, 0),
+    explain: 'NI = OI × (1 − tax rate). Same tax rate as Step 1.' }
 ];
 function checkStep3() {
   const fb = document.getElementById('step3-insight');
@@ -1354,24 +1370,28 @@ function updateStep4Autofill() {
   });
 }
 
+const STEP4_EXPLAIN = 'Work backward through the income statement. From target NI → required OI (NI ÷ (1 − tax rate)) → required total CM (OI + fixed costs) → required total units (CM ÷ weighted-average CM per unit). Use the baseline mix to compute the weighted-average CM per unit.';
+
 function checkStep4() {
   const inp  = document.getElementById('s4-total');
   const hint = document.getElementById('hint-s4-total');
   const out  = document.getElementById('score4-out');
   const fb   = document.getElementById('step4-insight');
   inp.classList.remove('correct', 'wrong');
-  hint.textContent = '';
   out.textContent = '';
   fb.innerHTML = '';
 
   if (inp.value.trim() === '') {
     out.textContent = 'Enter a value first.';
+    hint.textContent = '';
     return;
   }
   const val = parseNum(inp.value);
   const exp = STEP4_REQ_UNITS;
   if (!isNaN(val) && Math.abs(val - exp) <= 1) {
     inp.classList.add('correct');
+    hint.textContent = '';
+    attemptCounts['s4-total'] = 0;
     out.textContent = 'Correct!';
     fb.innerHTML = `
       <div class="insight success">
@@ -1382,7 +1402,8 @@ function checkStep4() {
     revealStep5(false);
   } else {
     inp.classList.add('wrong');
-    hint.textContent = '→ ' + fmtUnits(exp) + ' units';
+    attemptCounts['s4-total'] = (attemptCounts['s4-total'] || 0) + 1;
+    hint.textContent = (attemptCounts['s4-total'] >= 2) ? STEP4_EXPLAIN : '';
     out.textContent = 'Not quite.';
     playHorn();
   }
@@ -1392,6 +1413,7 @@ function resetStep4() {
   const inp = document.getElementById('s4-total');
   inp.value = '';
   inp.classList.remove('correct', 'wrong');
+  attemptCounts['s4-total'] = 0;
   document.getElementById('hint-s4-total').textContent = '';
   document.getElementById('score4-out').textContent = '';
   document.getElementById('step4-insight').innerHTML = '';

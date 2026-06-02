@@ -249,11 +249,12 @@
   }
   .corr-hint {
     display: block;
-    font-size: 11px;
-    color: #5a9e3a;
-    font-weight: 600;
-    margin-top: 3px;
+    font-size: 11.5px;
+    color: #64748b;
+    font-weight: 500;
+    margin-top: 4px;
     min-height: 14px;
+    line-height: 1.4;
   }
 
   .reveal { display: none; animation: slideIn 0.4s ease-out; }
@@ -504,7 +505,7 @@
         </div>
       </div>
       <div class="qa-row">
-        <div class="qa-prompt"><strong>Total activity cost</strong> for BuildRight<small>sum of all five activities</small></div>
+        <div class="qa-prompt"><strong>Total activity cost</strong> for BuildRight</div>
         <div class="answer">
           <label>$ / year</label>
           <input type="text" id="s1-total" inputmode="decimal" placeholder="$">
@@ -549,7 +550,7 @@
 
     <div class="qa-list">
       <div class="qa-row">
-        <div class="qa-prompt"><strong>Gross profit on sales</strong><small>sales &minus; COGS</small></div>
+        <div class="qa-prompt"><strong>Gross profit on sales</strong></div>
         <div class="answer">
           <label>$</label>
           <input type="text" id="s2-gp" inputmode="decimal" placeholder="$">
@@ -557,7 +558,7 @@
         </div>
       </div>
       <div class="qa-row">
-        <div class="qa-prompt"><strong>Customer profitability</strong><small>gross profit &minus; customer activity cost</small></div>
+        <div class="qa-prompt"><strong>Customer profitability</strong></div>
         <div class="answer">
           <label>$</label>
           <input type="text" id="s2-profit" inputmode="decimal" placeholder="$">
@@ -565,7 +566,7 @@
         </div>
       </div>
       <div class="qa-row">
-        <div class="qa-prompt"><strong>Profitability ratio</strong><small>customer profitability &divide; customer sales</small></div>
+        <div class="qa-prompt"><strong>Profitability ratio</strong></div>
         <div class="answer">
           <label>%</label>
           <input type="text" id="s2-ratio" inputmode="decimal" placeholder="%">
@@ -626,7 +627,7 @@
 
     <div class="qa-list">
       <div class="qa-row">
-        <div class="qa-prompt"><strong>Total customer activity cost</strong><small>sum the five activity costs above</small></div>
+        <div class="qa-prompt"><strong>Total customer activity cost</strong></div>
         <div class="answer">
           <label>$ / year</label>
           <input type="text" id="s3-activity" inputmode="decimal" placeholder="$">
@@ -919,26 +920,31 @@ var SH_RATIO_NEW = SH_PROFIT_NEW / SH.sales;            // 0.06889
 
 /* ═══════════════════════════════════════════════════════════════
    GENERIC CHECKER
+   Per-input attempt counter — explanatory hint shown only on the
+   2nd (or later) wrong submission for the same input.
 ═══════════════════════════════════════════════════════════════ */
+var attemptCounts = {};
 function checkGroup(spec, scoreId, allCorrectFn) {
   var correct = 0, total = 0, blanks = 0;
   spec.forEach(function(f) {
     var inp  = document.getElementById(f.inputId);
     var hint = document.getElementById(f.hintId);
     inp.classList.remove('correct', 'wrong');
-    hint.textContent = '';
     total++;
-    if (inp.value.trim() === '') { blanks++; return; }
+    if (inp.value.trim() === '') { blanks++; hint.textContent = ''; return; }
     var parse = f.parse || parseNum;
     var val = parse(inp.value);
     var exp = f.expected;
     var tol = f.tol;
     if (!isNaN(val) && Math.abs(val - exp) <= tol) {
       inp.classList.add('correct');
+      hint.textContent = '';
+      attemptCounts[f.inputId] = 0;
       correct++;
     } else {
       inp.classList.add('wrong');
-      hint.textContent = '';
+      attemptCounts[f.inputId] = (attemptCounts[f.inputId] || 0) + 1;
+      hint.textContent = (attemptCounts[f.inputId] >= 2 && f.explain) ? f.explain : '';
     }
   });
   var out = document.getElementById(scoreId);
@@ -958,6 +964,7 @@ function resetGroup(spec, scoreId, extraResetFn) {
     inp.value = '';
     inp.classList.remove('correct', 'wrong');
     hint.textContent = '';
+    attemptCounts[f.inputId] = 0;
   });
   document.getElementById(scoreId).textContent = '';
   if (extraResetFn) extraResetFn();
@@ -967,9 +974,12 @@ function resetGroup(spec, scoreId, extraResetFn) {
    STEP 1
 ═══════════════════════════════════════════════════════════════ */
 var STEP1_SPEC = [
-  { inputId: 's1-visits', hintId: 'hint-s1-visits', expected: BR_VISITS,   tol: 0.5, fmt: function(v){ return fmtMoney(v,0); } },
-  { inputId: 's1-orders', hintId: 'hint-s1-orders', expected: BR_ORDERS,   tol: 0.5, fmt: function(v){ return fmtMoney(v,0); } },
-  { inputId: 's1-total',  hintId: 'hint-s1-total',  expected: BR_ACTIVITY, tol: 0.5, fmt: function(v){ return fmtMoney(v,0); } }
+  { inputId: 's1-visits', hintId: 'hint-s1-visits', expected: BR_VISITS,   tol: 0.5, fmt: function(v){ return fmtMoney(v,0); },
+    explain: 'Activity cost = driver activity × activity rate. Multiply BuildRight’s sales rep visit count by the per-visit rate.' },
+  { inputId: 's1-orders', hintId: 'hint-s1-orders', expected: BR_ORDERS,   tol: 0.5, fmt: function(v){ return fmtMoney(v,0); },
+    explain: 'Same mechanic as the visits line — BuildRight’s order count times the per-order rate.' },
+  { inputId: 's1-total',  hintId: 'hint-s1-total',  expected: BR_ACTIVITY, tol: 0.5, fmt: function(v){ return fmtMoney(v,0); },
+    explain: 'Add the five activity-line costs together (the two you just computed plus the three already filled in).' }
 ];
 function checkStep1() {
   var fb = document.getElementById('step1-insight'); fb.innerHTML = '';
@@ -984,9 +994,12 @@ function resetStep1() { resetGroup(STEP1_SPEC, 'score1-out', function(){ documen
    STEP 2
 ═══════════════════════════════════════════════════════════════ */
 var STEP2_SPEC = [
-  { inputId: 's2-gp',     hintId: 'hint-s2-gp',     expected: BR_GP,     tol: 5,     fmt: function(v){ return fmtMoney(v,0); } },
-  { inputId: 's2-profit', hintId: 'hint-s2-profit', expected: BR_PROFIT, tol: 5,     fmt: function(v){ return fmtMoney(v,0); } },
-  { inputId: 's2-ratio',  hintId: 'hint-s2-ratio',  expected: BR_RATIO,  tol: 0.005, parse: parsePercent, fmt: fmtPct }
+  { inputId: 's2-gp',     hintId: 'hint-s2-gp',     expected: BR_GP,     tol: 5,     fmt: function(v){ return fmtMoney(v,0); },
+    explain: 'Gross profit is what’s left of customer sales after deducting cost of goods sold for that customer.' },
+  { inputId: 's2-profit', hintId: 'hint-s2-profit', expected: BR_PROFIT, tol: 5,     fmt: function(v){ return fmtMoney(v,0); },
+    explain: 'Customer profitability takes gross profit and strips out the customer-specific activity cost from Step 1.' },
+  { inputId: 's2-ratio',  hintId: 'hint-s2-ratio',  expected: BR_RATIO,  tol: 0.005, parse: parsePercent, fmt: fmtPct,
+    explain: 'The profitability ratio scales customer profit by customer sales — answers “how many cents of the sales dollar stay with us?”' }
 ];
 function checkStep2() {
   var fb = document.getElementById('step2-insight'); fb.innerHTML = '';
@@ -1001,9 +1014,12 @@ function resetStep2() { resetGroup(STEP2_SPEC, 'score2-out', function(){ documen
    STEP 3 — SmallHands
 ═══════════════════════════════════════════════════════════════ */
 var STEP3_SPEC = [
-  { inputId: 's3-activity', hintId: 'hint-s3-activity', expected: SH_ACTIVITY, tol: 5,     fmt: function(v){ return fmtMoney(v,0); } },
-  { inputId: 's3-profit',   hintId: 'hint-s3-profit',   expected: SH_PROFIT,   tol: 5,     fmt: function(v){ return fmtMoney(v,0); } },
-  { inputId: 's3-ratio',    hintId: 'hint-s3-ratio',    expected: SH_RATIO,    tol: 0.005, parse: parsePercent, fmt: fmtPct }
+  { inputId: 's3-activity', hintId: 'hint-s3-activity', expected: SH_ACTIVITY, tol: 5,     fmt: function(v){ return fmtMoney(v,0); },
+    explain: 'Total each of the five activity lines for SmallHands. SmallHands is order-heavy and high-touch — expect a much bigger total than BuildRight.' },
+  { inputId: 's3-profit',   hintId: 'hint-s3-profit',   expected: SH_PROFIT,   tol: 5,     fmt: function(v){ return fmtMoney(v,0); },
+    explain: 'Gross profit minus activity cost. SmallHands’ gross profit is thin, and its activity cost is heavy — it’s possible for the result to go negative.' },
+  { inputId: 's3-ratio',    hintId: 'hint-s3-ratio',    expected: SH_RATIO,    tol: 0.005, parse: parsePercent, fmt: fmtPct,
+    explain: 'Customer profit divided by customer sales. If profit came out negative, the ratio will too — include the minus sign.' }
 ];
 function checkStep3() {
   var fb = document.getElementById('step3-insight'); fb.innerHTML = '';
@@ -1043,9 +1059,12 @@ function pickIntuition(choice) {
 }
 
 var STEP4_SPEC = [
-  { inputId: 's4-terminate', hintId: 'hint-s4-terminate', expected: TERMINATE_GAIN,     tol: 5, fmt: function(v){ return fmtMoney(v,0); } },
-  { inputId: 's4-current',   hintId: 'hint-s4-current',   expected: PORTFOLIO_CURRENT,  tol: 5, fmt: function(v){ return fmtMoney(v,0); } },
-  { inputId: 's4-trim',      hintId: 'hint-s4-trim',      expected: PORTFOLIO_TRIMMED,  tol: 5, fmt: function(v){ return fmtMoney(v,0); } }
+  { inputId: 's4-terminate', hintId: 'hint-s4-terminate', expected: TERMINATE_GAIN,     tol: 5, fmt: function(v){ return fmtMoney(v,0); },
+    explain: 'Terminating drops a loss off the income statement. If SmallHands loses money, the gain from dropping it is the size of that loss (a positive number).' },
+  { inputId: 's4-current',   hintId: 'hint-s4-current',   expected: PORTFOLIO_CURRENT,  tol: 5, fmt: function(v){ return fmtMoney(v,0); },
+    explain: 'Sum each customer’s profit column — including SmallHands, which contributes a negative number.' },
+  { inputId: 's4-trim',      hintId: 'hint-s4-trim',      expected: PORTFOLIO_TRIMMED,  tol: 5, fmt: function(v){ return fmtMoney(v,0); },
+    explain: 'Add up the profits of only the two profitable customers (BuildRight and ABC). Compare it to the current portfolio to see the lift.' }
 ];
 function checkStep4() {
   var fb = document.getElementById('step4-insight'); fb.innerHTML = '';
@@ -1060,9 +1079,12 @@ function resetStep4() { resetGroup(STEP4_SPEC, 'score4-out', function(){ documen
    STEP 5 — Save SmallHands
 ═══════════════════════════════════════════════════════════════ */
 var STEP5_SPEC = [
-  { inputId: 's5-activity', hintId: 'hint-s5-activity', expected: SH_ACTIVITY_NEW, tol: 5,     fmt: function(v){ return fmtMoney(v,0); } },
-  { inputId: 's5-profit',   hintId: 'hint-s5-profit',   expected: SH_PROFIT_NEW,   tol: 5,     fmt: function(v){ return fmtMoney(v,0); } },
-  { inputId: 's5-ratio',    hintId: 'hint-s5-ratio',    expected: SH_RATIO_NEW,    tol: 0.005, parse: parsePercent, fmt: fmtPct }
+  { inputId: 's5-activity', hintId: 'hint-s5-activity', expected: SH_ACTIVITY_NEW, tol: 5,     fmt: function(v){ return fmtMoney(v,0); },
+    explain: 'Sum the five new activity-line costs from the proposed-driver table. Each line is already computed for you — just total them.' },
+  { inputId: 's5-profit',   hintId: 'hint-s5-profit',   expected: SH_PROFIT_NEW,   tol: 5,     fmt: function(v){ return fmtMoney(v,0); },
+    explain: 'Gross profit is unchanged (sales and COGS held constant). Subtract the new lower activity cost to get the revised profitability.' },
+  { inputId: 's5-ratio',    hintId: 'hint-s5-ratio',    expected: SH_RATIO_NEW,    tol: 0.005, parse: parsePercent, fmt: fmtPct,
+    explain: 'New profit divided by unchanged customer sales. Same ratio formula as Step 3, but with the consolidated-activity numbers.' }
 ];
 function checkStep5() {
   var fb = document.getElementById('step5-insight'); fb.innerHTML = '';

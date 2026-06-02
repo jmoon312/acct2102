@@ -236,11 +236,12 @@
   }
   .corr-hint {
     display: block;
-    font-size: 11px;
-    color: #5a9e3a;
-    font-weight: 600;
-    margin-top: 3px;
+    font-size: 11.5px;
+    color: #64748b;
+    font-weight: 500;
+    margin-top: 4px;
     min-height: 14px;
+    line-height: 1.4;
   }
 
   /* Three-rate sandbox cards (Step 2) */
@@ -812,7 +813,7 @@
 
     <div class="intuition-card" style="margin-top:14px;">
       <div class="intuition-label">Who eats the under-recovery?</div>
-      <div class="intuition-text">If the sales rep quotes on the theoretical rate and Peachtree runs at practical volume all year, where does the $4,000 gap show up?</div>
+      <div class="intuition-text">If the sales rep quotes on the theoretical rate and Peachtree runs at practical volume all year, where does the under-recovery show up?</div>
       <div class="intuition-btns">
         <button onclick="pickWho('customer')">The customer &mdash; they get re-billed.</button>
         <button onclick="pickWho('press')">The press &mdash; it absorbs the difference somehow.</button>
@@ -981,25 +982,30 @@ var B_Q3 = (CAP_PRAC - CAP_ACT) * (150000 / CAP_PRAC);  // 200,000 × $0.15 = $3
 
 /* ═══════════════════════════════════════════════════════════════
    GENERIC CHECKER
+   Per-input attempt counter — explanatory hint shown only on the
+   2nd (or later) wrong submission for the same input.
 ═══════════════════════════════════════════════════════════════ */
+var attemptCounts = {};
 function checkGroup(spec, scoreId, allCorrectFn) {
   var correct = 0, total = 0, blanks = 0;
   spec.forEach(function(f) {
     var inp  = document.getElementById(f.inputId);
     var hint = document.getElementById(f.hintId);
     inp.classList.remove('correct', 'wrong');
-    hint.textContent = '';
     total++;
-    if (inp.value.trim() === '') { blanks++; return; }
+    if (inp.value.trim() === '') { blanks++; hint.textContent = ''; return; }
     var val = parseNum(inp.value);
     var exp = f.expected;
     var tol = f.tol;
     if (!isNaN(val) && Math.abs(val - exp) <= tol) {
       inp.classList.add('correct');
+      hint.textContent = '';
+      attemptCounts[f.inputId] = 0;
       correct++;
     } else {
       inp.classList.add('wrong');
-      hint.textContent = '';
+      attemptCounts[f.inputId] = (attemptCounts[f.inputId] || 0) + 1;
+      hint.textContent = (attemptCounts[f.inputId] >= 2 && f.explain) ? f.explain : '';
     }
   });
   var out = document.getElementById(scoreId);
@@ -1019,6 +1025,7 @@ function resetGroup(spec, scoreId, extraResetFn) {
     inp.value = '';
     inp.classList.remove('correct', 'wrong');
     hint.textContent = '';
+    attemptCounts[f.inputId] = 0;
   });
   document.getElementById(scoreId).textContent = '';
   if (extraResetFn) extraResetFn();
@@ -1028,9 +1035,12 @@ function resetGroup(spec, scoreId, extraResetFn) {
    STEP 1
 ═══════════════════════════════════════════════════════════════ */
 var STEP1_SPEC = [
-  { inputId:'r-theo', hintId:'h-r-theo', expected:R_THEO, tol:0.003, fmt:fmtRate },
-  { inputId:'r-prac', hintId:'h-r-prac', expected:R_PRAC, tol:0.003, fmt:fmtRate },
-  { inputId:'r-act',  hintId:'h-r-act',  expected:R_ACT,  tol:0.003, fmt:fmtRate }
+  { inputId:'r-theo', hintId:'h-r-theo', expected:R_THEO, tol:0.003, fmt:fmtRate,
+    explain:'Rate per sheet = annual press cost &divide; capacity in sheets. The numerator is the same $120,000 for all three rows; only the denominator changes.' },
+  { inputId:'r-prac', hintId:'h-r-prac', expected:R_PRAC, tol:0.003, fmt:fmtRate,
+    explain:'Same formula &mdash; press cost &divide; capacity &mdash; but plug in the practical-capacity sheet count instead of theoretical.' },
+  { inputId:'r-act',  hintId:'h-r-act',  expected:R_ACT,  tol:0.003, fmt:fmtRate,
+    explain:'Same formula again, with the actual output as the denominator. Since actual is the smallest of the three sheet counts, this rate should be the largest.' }
 ];
 function checkStep1() {
   var fb = document.getElementById('step1-insight'); fb.innerHTML = '';
@@ -1108,9 +1118,12 @@ function pickDefend(choice) {
    STEP 3
 ═══════════════════════════════════════════════════════════════ */
 var STEP3_SPEC = [
-  { inputId:'idle-sheets',   hintId:'h-idle-sheets',   expected:IDLE_SHEETS, tol:50,   fmt:function(v){return fmtInt(v)+' sheets';} },
-  { inputId:'idle-cost',     hintId:'h-idle-cost',     expected:IDLE_COST,   tol:5,    fmt:function(v){return fmtMoney(v,0);} },
-  { inputId:'absorbed-cost', hintId:'h-absorbed-cost', expected:ABSORBED,    tol:5,    fmt:function(v){return fmtMoney(v,0);} }
+  { inputId:'idle-sheets',   hintId:'h-idle-sheets',   expected:IDLE_SHEETS, tol:50,   fmt:function(v){return fmtInt(v)+' sheets';},
+    explain:'Idle capacity is the slack between what the press was set up to deliver and what actually ran. Subtract actual output from practical capacity.' },
+  { inputId:'idle-cost',     hintId:'h-idle-cost',     expected:IDLE_COST,   tol:5,    fmt:function(v){return fmtMoney(v,0);},
+    explain:'Value the idle sheets at the practical rate (the rate Peachtree is using as its costing denominator). That tells you the dollar cost of unused capacity.' },
+  { inputId:'absorbed-cost', hintId:'h-absorbed-cost', expected:ABSORBED,    tol:5,    fmt:function(v){return fmtMoney(v,0);},
+    explain:'Absorbed cost is the part of the $120,000 that actually got applied to jobs &mdash; the sheets that ran multiplied by the practical rate. Idle cost plus absorbed cost should equal the full press cost.' }
 ];
 function checkStep3() {
   var fb = document.getElementById('step3-insight'); fb.innerHTML = '';
@@ -1125,10 +1138,14 @@ function resetStep3() { resetGroup(STEP3_SPEC, 'score3-out', function(){ documen
    STEP 4 — Customer quote trap
 ═══════════════════════════════════════════════════════════════ */
 var STEP4_SPEC = [
-  { inputId:'q-theo',  hintId:'h-q-theo',  expected:Q_THEO,  tol:5, fmt:function(v){return fmtMoney(v,0);} },
-  { inputId:'q-prac',  hintId:'h-q-prac',  expected:Q_PRAC,  tol:5, fmt:function(v){return fmtMoney(v,0);} },
-  { inputId:'q-act',   hintId:'h-q-act',   expected:Q_ACT,   tol:5, fmt:function(v){return fmtMoney(v,0);} },
-  { inputId:'q-under', hintId:'h-q-under', expected:Q_UNDER, tol:5, fmt:function(v){return fmtMoney(v,0);} }
+  { inputId:'q-theo',  hintId:'h-q-theo',  expected:Q_THEO,  tol:5, fmt:function(v){return fmtMoney(v,0);},
+    explain:'Quote = job size in sheets &times; the per-sheet rate. Use the theoretical rate you computed in Step 1.' },
+  { inputId:'q-prac',  hintId:'h-q-prac',  expected:Q_PRAC,  tol:5, fmt:function(v){return fmtMoney(v,0);},
+    explain:'Same job size, but priced at the practical rate instead. The bigger the rate, the bigger the quote.' },
+  { inputId:'q-act',   hintId:'h-q-act',   expected:Q_ACT,   tol:5, fmt:function(v){return fmtMoney(v,0);},
+    explain:'Same job size, now multiplied by the actual rate &mdash; the highest of the three rates, so this should be the largest quote.' },
+  { inputId:'q-under', hintId:'h-q-under', expected:Q_UNDER, tol:5, fmt:function(v){return fmtMoney(v,0);},
+    explain:'Under-recovery is the gap between what Peachtree quoted (using the theoretical rate) and what the job should have absorbed at the practical rate. Subtract the two quotes you just computed.' }
 ];
 
 var whoAnswered = false;
@@ -1168,9 +1185,12 @@ function resetStep4() { resetGroup(STEP4_SPEC, 'score4-out', function(){ documen
    STEP 5 — Build sandbox
 ═══════════════════════════════════════════════════════════════ */
 var STEP5_SPEC = [
-  { inputId:'b-q1', hintId:'h-b-q1', expected:B_Q1, tol:0.005, fmt:fmtRate },
-  { inputId:'b-q2', hintId:'h-b-q2', expected:B_Q2, tol:50,    fmt:function(v){return fmtMoney(v,0);} },
-  { inputId:'b-q3', hintId:'h-b-q3', expected:B_Q3, tol:50,    fmt:function(v){return fmtMoney(v,0);} }
+  { inputId:'b-q1', hintId:'h-b-q1', expected:B_Q1, tol:0.005, fmt:fmtRate,
+    explain:'Same rate formula as Step 1 (press cost &divide; capacity), but with the new, larger practical-capacity figure as the denominator.' },
+  { inputId:'b-q2', hintId:'h-b-q2', expected:B_Q2, tol:50,    fmt:function(v){return fmtMoney(v,0);},
+    explain:'Recompute idle sheets at the lower actual output, then value them at the baseline practical rate. Smaller actual output means more idle sheets, which means a bigger cost of excess.' },
+  { inputId:'b-q3', hintId:'h-b-q3', expected:B_Q3, tol:50,    fmt:function(v){return fmtMoney(v,0);},
+    explain:'Idle sheet count is unchanged from the baseline, but the practical rate is built from the new, higher press cost. Cost of excess = idle sheets &times; the new practical rate.' }
 ];
 function checkStep5() {
   var fb = document.getElementById('step5-insight'); fb.innerHTML = '';

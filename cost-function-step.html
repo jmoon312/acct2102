@@ -222,11 +222,12 @@
   }
   .corr-hint {
     display: block;
-    font-size: 11px;
-    color: #5a9e3a;
-    font-weight: 600;
-    margin-top: 3px;
+    font-size: 11.5px;
+    color: #64748b;
+    font-weight: 500;
+    margin-top: 4px;
     min-height: 14px;
+    line-height: 1.4;
   }
 
   /* Insight callout */
@@ -451,28 +452,54 @@ function playHorn() {
   });
 }
 
+/* ───────── Per-input attempt counter ─────────
+   Explanatory hint shown only on the 2nd (or later) wrong submission
+   for the same cell. Keyed by `${units}-${col}`. */
+var attemptCounts = {};
+
+// Column-level explain strings — describe the formula approach, no numbers.
+const COL_EXPLAIN = {
+  tc: function(units, inRange) {
+    return inRange
+      ? 'Total cost = fixed cost + (variable rate × units). Use the fixed and variable figures that apply inside the relevant range.'
+      : 'You are past the relevant range, so the cost function changes: an extra fixed-cost block kicks in and the variable rate jumps to the overtime rate. Use those new amounts for both pieces.';
+  },
+  ac: function(units, inRange) {
+    return 'Average cost per groom = total cost at this level ÷ units. Compute total cost first, then divide. Watch how average cost falls as fixed costs spread over more units.';
+  },
+  vc: function(units, inRange) {
+    return inRange
+      ? 'Marginal cost is the cost of producing one more unit. Inside the relevant range that is just the variable rate per groom — fixed cost does not change with one extra unit.'
+      : 'Marginal cost is the cost of one extra unit. Above the relevant range, the variable rate is no longer the standard rate — it is the overtime rate.';
+  }
+};
+
 /* ───────── Check / Reveal / Reset ───────── */
 function checkAnswers() {
   let correct = 0, total = 0, blanks = 0;
   document.querySelectorAll('#practice-body tr').forEach(row => {
     const units = parseInt(row.dataset.units);
     const exp = expectedFor(units);
+    const inRange = units <= RANGE_TOP;
     ['tc', 'ac', 'vc'].forEach(col => {
       const inp = row.querySelector(`input[data-col="${col}"]`);
       const hint = row.querySelector(`span.corr-hint[data-col="${col}"]`);
       const val = parseNum(inp.value);
+      const key = units + '-' + col;
       total++;
       inp.classList.remove('correct', 'wrong');
-      hint.textContent = '';
-      if (inp.value.trim() === '') { blanks++; return; }
+      if (inp.value.trim() === '') { blanks++; hint.textContent = ''; return; }
       // tolerance: $0.02 for AC (handles $11.88 vs $11.875), exact for others within $0.50
       const tol = col === 'ac' ? 0.02 : 0.5;
       if (!isNaN(val) && Math.abs(val - exp[col]) <= tol) {
         inp.classList.add('correct');
+        hint.textContent = '';
+        attemptCounts[key] = 0;
         correct++;
       } else {
         inp.classList.add('wrong');
-        hint.textContent = '';
+        attemptCounts[key] = (attemptCounts[key] || 0) + 1;
+        hint.textContent = (attemptCounts[key] >= 2 && COL_EXPLAIN[col]) ? COL_EXPLAIN[col](units, inRange) : '';
       }
     });
   });
@@ -486,6 +513,12 @@ function checkAnswers() {
 }
 
 function resetAll() {
+  document.querySelectorAll('#practice-body tr').forEach(row => {
+    const units = parseInt(row.dataset.units);
+    ['tc', 'ac', 'vc'].forEach(col => {
+      attemptCounts[units + '-' + col] = 0;
+    });
+  });
   document.querySelectorAll('#practice-body input').forEach(inp => {
     inp.value = '';
     inp.classList.remove('correct', 'wrong');

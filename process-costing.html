@@ -258,11 +258,12 @@
   }
   .corr-hint {
     display: block;
-    font-size: 11px;
-    color: #5a9e3a;
-    font-weight: 600;
-    margin-top: 3px;
+    font-size: 11.5px;
+    color: #64748b;
+    font-weight: 500;
+    margin-top: 4px;
     min-height: 14px;
+    line-height: 1.4;
   }
 
   /* ── Per-question stacked layout ── */
@@ -630,7 +631,7 @@
 
     <div class="qa-list">
       <div class="qa-row">
-        <div class="qa-prompt"><strong>Total units to account for</strong><small>Beginning WIP + units started</small></div>
+        <div class="qa-prompt"><strong>Total units to account for</strong></div>
         <div class="answer">
           <label>Units in</label>
           <input type="text" id="s1-in" inputmode="numeric" placeholder="lbs">
@@ -638,7 +639,7 @@
         </div>
       </div>
       <div class="qa-row">
-        <div class="qa-prompt"><strong>Verify: completed + ending WIP</strong><small>These should match</small></div>
+        <div class="qa-prompt"><strong>Verify by adding from the other side</strong><small>This figure should match Units in.</small></div>
         <div class="answer">
           <label>Units out</label>
           <input type="text" id="s1-out" inputmode="numeric" placeholder="lbs">
@@ -666,7 +667,7 @@
 
     <div class="qa-list">
       <div class="qa-row">
-        <div class="qa-prompt"><strong>Equivalent units — Materials</strong><small>Completed &amp; transferred + ending WIP equivalent units for materials</small></div>
+        <div class="qa-prompt"><strong>Equivalent units &mdash; Materials</strong></div>
         <div class="answer">
           <label>EU — Materials</label>
           <input type="text" id="s2-mat" inputmode="numeric" placeholder="EU">
@@ -674,7 +675,7 @@
         </div>
       </div>
       <div class="qa-row">
-        <div class="qa-prompt"><strong>Equivalent units — Conversion</strong><small>Completed &amp; transferred + ending WIP equivalent units for conversion</small></div>
+        <div class="qa-prompt"><strong>Equivalent units &mdash; Conversion</strong></div>
         <div class="answer">
           <label>EU — Conversion</label>
           <input type="text" id="s2-conv" inputmode="numeric" placeholder="EU">
@@ -940,25 +941,30 @@ function playHorn() {
 
 /* =================================================================
    GENERIC CHECKER
+   Per-input attempt counter — explanatory hint shown only on the
+   2nd (or later) wrong submission for the same input.
 ================================================================= */
+var attemptCounts = {};
 function checkGroup(spec, scoreId, allCorrectFn) {
   let correct = 0, total = 0, blanks = 0;
   spec.forEach(f => {
     const inp  = document.getElementById(f.inputId);
     const hint = document.getElementById(f.hintId);
     inp.classList.remove('correct', 'wrong');
-    hint.textContent = '';
     total++;
-    if (inp.value.trim() === '') { blanks++; return; }
+    if (inp.value.trim() === '') { blanks++; hint.textContent = ''; return; }
     const val = parseNum(inp.value);
     const exp = f.expected;
     const tol = f.tol;
     if (!isNaN(val) && Math.abs(val - exp) <= tol) {
       inp.classList.add('correct');
+      hint.textContent = '';
+      attemptCounts[f.inputId] = 0;
       correct++;
     } else {
       inp.classList.add('wrong');
-      hint.textContent = '';
+      attemptCounts[f.inputId] = (attemptCounts[f.inputId] || 0) + 1;
+      hint.textContent = (attemptCounts[f.inputId] >= 2 && f.explain) ? f.explain : '';
     }
   });
   const out = document.getElementById(scoreId);
@@ -984,6 +990,7 @@ function resetGroup(spec, scoreId, extraResetFn) {
     inp.value = '';
     inp.classList.remove('correct', 'wrong');
     hint.textContent = '';
+    attemptCounts[f.inputId] = 0;
   });
   document.getElementById(scoreId).textContent = '';
   if (extraResetFn) extraResetFn();
@@ -993,8 +1000,10 @@ function resetGroup(spec, scoreId, extraResetFn) {
    STEP 1 — Units to Account For
 ================================================================= */
 const STEP1_SPEC = [
-  { inputId: 's1-in',  hintId: 'hint-s1-in',  expected: TOTAL_UNITS_IN,  tol: 1, fmt: v => fmtUnits(v) + ' lbs' },
-  { inputId: 's1-out', hintId: 'hint-s1-out', expected: TOTAL_UNITS_OUT, tol: 1, fmt: v => fmtUnits(v) + ' lbs' }
+  { inputId: 's1-in',  hintId: 'hint-s1-in',  expected: TOTAL_UNITS_IN,  tol: 1, fmt: v => fmtUnits(v) + ' lbs',
+    explain: 'Add the two ways pounds entered the department this month: what was already sitting in beginning WIP plus what was started during the period.' },
+  { inputId: 's1-out', hintId: 'hint-s1-out', expected: TOTAL_UNITS_OUT, tol: 1, fmt: v => fmtUnits(v) + ' lbs',
+    explain: 'From the other side: every pound is either finished and gone (transferred out) or still being roasted (ending WIP). Add those two destinations.' }
 ];
 function checkStep1() {
   checkGroup(STEP1_SPEC, 'score1-out', () => {
@@ -1013,8 +1022,10 @@ function resetStep1() {
    STEP 2 — Equivalent Units
 ================================================================= */
 const STEP2_SPEC = [
-  { inputId: 's2-mat',  hintId: 'hint-s2-mat',  expected: EU_MAT,  tol: 1, fmt: v => fmtUnits(v) + ' EU' },
-  { inputId: 's2-conv', hintId: 'hint-s2-conv', expected: EU_CONV, tol: 1, fmt: v => fmtUnits(v) + ' EU' }
+  { inputId: 's2-mat',  hintId: 'hint-s2-mat',  expected: EU_MAT,  tol: 1, fmt: v => fmtUnits(v) + ' EU',
+    explain: 'EU = units completed + (ending WIP units × % complete for that cost). Materials are added at the start of roasting, so ask yourself how complete ending WIP is for materials specifically.' },
+  { inputId: 's2-conv', hintId: 'hint-s2-conv', expected: EU_CONV, tol: 1, fmt: v => fmtUnits(v) + ' EU',
+    explain: 'Same formula as materials, but use the conversion completion percentage for ending WIP. Conversion happens evenly through the process, so ending WIP is only partially done for conversion work.' }
 ];
 function checkStep2() {
   checkGroup(STEP2_SPEC, 'score2-out', () => {
@@ -1033,9 +1044,12 @@ function resetStep2() {
    STEP 3 — Cost per EU
 ================================================================= */
 const STEP3_SPEC = [
-  { inputId: 's3-mat',   hintId: 'hint-s3-mat',   expected: COST_PER_EU_MAT,   tol: 0.01, fmt: v => fmtMoney(v, 4) },
-  { inputId: 's3-conv',  hintId: 'hint-s3-conv',  expected: COST_PER_EU_CONV,  tol: 0.01, fmt: v => fmtMoney(v, 4) },
-  { inputId: 's3-total', hintId: 'hint-s3-total', expected: COST_PER_EU_TOTAL, tol: 0.02, fmt: v => fmtMoney(v, 2) }
+  { inputId: 's3-mat',   hintId: 'hint-s3-mat',   expected: COST_PER_EU_MAT,   tol: 0.01, fmt: v => fmtMoney(v, 4),
+    explain: 'Cost per EU = total materials cost (beginning + added) divided by materials equivalent units. The "weighted average" comes from blending the two cost layers in the numerator.' },
+  { inputId: 's3-conv',  hintId: 'hint-s3-conv',  expected: COST_PER_EU_CONV,  tol: 0.01, fmt: v => fmtMoney(v, 4),
+    explain: 'Same blending — total conversion cost (beginning + added) divided by conversion equivalent units. Notice conversion EU is smaller than materials EU; that pushes the per-unit cost up.' },
+  { inputId: 's3-total', hintId: 'hint-s3-total', expected: COST_PER_EU_TOTAL, tol: 0.02, fmt: v => fmtMoney(v, 2),
+    explain: 'Just add the two per-EU figures you just computed. This is what one fully-completed pound of coffee costs in this period.' }
 ];
 function checkStep3() {
   checkGroup(STEP3_SPEC, 'score3-out', () => {
@@ -1054,11 +1068,16 @@ function resetStep3() {
    STEP 4 — Assign Costs
 ================================================================= */
 const STEP4_SPEC = [
-  { inputId: 's4-trans',     hintId: 'hint-s4-trans',     expected: TRANS_TOTAL, tol: 100, fmt: v => fmtMoney(v, 2) },
-  { inputId: 's4-wip-mat',  hintId: 'hint-s4-wip-mat',  expected: WIP_MAT,     tol: 50,  fmt: v => fmtMoney(v, 2) },
-  { inputId: 's4-wip-conv', hintId: 'hint-s4-wip-conv', expected: WIP_CONV,    tol: 10,  fmt: v => fmtMoney(v, 2) },
-  { inputId: 's4-wip-total', hintId: 'hint-s4-wip-total', expected: WIP_TOTAL,  tol: 50,  fmt: v => fmtMoney(v, 2) },
-  { inputId: 's4-total',    hintId: 'hint-s4-total',    expected: GRAND_TOTAL, tol: 100, fmt: v => fmtMoney(v, 2) }
+  { inputId: 's4-trans',     hintId: 'hint-s4-trans',     expected: TRANS_TOTAL, tol: 100, fmt: v => fmtMoney(v, 2),
+    explain: 'Transferred-out units are fully complete for both materials and conversion. Multiply completed units by the total cost per equivalent unit.' },
+  { inputId: 's4-wip-mat',  hintId: 'hint-s4-wip-mat',  expected: WIP_MAT,     tol: 50,  fmt: v => fmtMoney(v, 2),
+    explain: 'Ending WIP × (materials completion %) × cost per EU for materials. Recall how complete ending WIP is for materials specifically.' },
+  { inputId: 's4-wip-conv', hintId: 'hint-s4-wip-conv', expected: WIP_CONV,    tol: 10,  fmt: v => fmtMoney(v, 2),
+    explain: 'Ending WIP × (conversion completion %) × cost per EU for conversion. Use the conversion percentage from the setup table, not the materials one.' },
+  { inputId: 's4-wip-total', hintId: 'hint-s4-wip-total', expected: WIP_TOTAL,  tol: 50,  fmt: v => fmtMoney(v, 2),
+    explain: 'Add the two ending WIP pieces you just computed (materials cost + conversion cost).' },
+  { inputId: 's4-total',    hintId: 'hint-s4-total',    expected: GRAND_TOTAL, tol: 100, fmt: v => fmtMoney(v, 2),
+    explain: 'Add the cost transferred to finished goods plus total ending WIP. Should reconcile to total costs to account for from the table above.' }
 ];
 function checkStep4() {
   checkGroup(STEP4_SPEC, 'score4-out', () => {
