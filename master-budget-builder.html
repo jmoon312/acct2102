@@ -401,79 +401,17 @@
     <div class="part-header">
       <span class="part-tag info">Company Information</span>
       <h2>Harbor Goods Co. &mdash; budgeting for March</h2>
-      <span class="subtitle">everything you need is here &mdash; and a few facts you won't</span>
     </div>
 
     <div class="setup-box">
       <p><strong>Harbor Goods Co.</strong> is a merchandiser that buys and resells one product &mdash; heavy-duty storage bins. The controller is assembling the company's <strong>master budget for the month of March</strong>: the operating schedules, the cash budget, and the budgeted income statement. Every fact she has is listed below. Pull the pieces you need for each step; not all of them belong in every schedule.</p>
     </div>
 
-    <div class="ref-grid">
-      <div class="ref-block full">
-        <h3>Product &amp; unit sales</h3>
-        <table class="cost-table" style="margin-top:4px;">
-          <thead>
-            <tr><th>Month</th><th>January</th><th>February</th><th>March</th><th>April</th><th>May</th></tr>
-          </thead>
-          <tbody>
-            <tr><td class="row-label">Unit sales</td><td>5,000</td><td>6,000</td><td>8,000</td><td>9,000</td><td>7,000</td></tr>
-          </tbody>
-        </table>
-        <ul style="margin-top:8px;">
-          <li>Selling price: <strong>$20 per unit</strong>. Purchase cost: <strong>$8 per unit</strong>.</li>
-          <li>For reference, the prior year's March generated <strong>$140,000</strong> in sales revenue.</li>
-        </ul>
-      </div>
+    <div class="ref-grid" id="ref-content"></div>
 
-      <div class="ref-block">
-        <h3>Collections</h3>
-        <ul>
-          <li><strong>30%</strong> of each month's sales are cash sales; the other <strong>70%</strong> are on credit.</li>
-          <li>Credit sales are collected <strong>20%</strong> in the month of sale, <strong>50%</strong> the following month, and <strong>25%</strong> two months after the sale.</li>
-          <li>The remaining <strong>5%</strong> of credit sales is never collected (written off as uncollectible).</li>
-        </ul>
-      </div>
-
-      <div class="ref-block">
-        <h3>Inventory &amp; purchases</h3>
-        <ul>
-          <li>Desired ending inventory each month = <strong>25% of next month's unit sales</strong>.</li>
-          <li>Inventory on hand <strong>March 1: 2,000 units</strong>.</li>
-          <li>Actual <strong>February</strong> merchandise purchases: <strong>$52,000</strong>.</li>
-          <li>Suppliers are paid <strong>40%</strong> in the month of purchase, <strong>60%</strong> the following month.</li>
-        </ul>
-      </div>
-
-      <div class="ref-block">
-        <h3>Selling expenses (monthly)</h3>
-        <ul>
-          <li>Sales commissions: <strong>5% of sales revenue</strong>.</li>
-          <li>Variable miscellaneous: <strong>2% of sales revenue</strong>.</li>
-          <li>Fixed salaries <strong>$6,000</strong>; advertising <strong>$3,000</strong>; depreciation <strong>$4,000</strong> (non-cash).</li>
-          <li>All selling expenses are paid in the month incurred.</li>
-        </ul>
-      </div>
-
-      <div class="ref-block">
-        <h3>General &amp; administrative (monthly)</h3>
-        <ul>
-          <li>Salaries <strong>$10,000</strong>; insurance <strong>$1,500</strong>; utilities <strong>$1,200</strong>; depreciation <strong>$2,000</strong> (non-cash); miscellaneous <strong>$800</strong>.</li>
-          <li>Cash G&amp;A is paid <strong>70%</strong> in the month incurred, <strong>30%</strong> the following month.</li>
-          <li><strong>February</strong> cash G&amp;A totaled <strong>$12,500</strong>.</li>
-        </ul>
-      </div>
-
-      <div class="ref-block">
-        <h3>Taxes &amp; financing</h3>
-        <ul>
-          <li>Income tax = <strong>30% of pretax income</strong>, paid the month after it is incurred.</li>
-          <li>Income taxes payable on <strong>March 1: $12,000</strong>.</li>
-          <li>Note payable <strong>$40,000</strong> at <strong>6%</strong> annual interest &mdash; <strong>$200</strong> of interest accrues each month.</li>
-          <li>Minimum required ending cash balance: <strong>$25,000</strong>. Cash on hand <strong>March 1: $22,000</strong>.</li>
-          <li>A <strong>$50,000</strong> equipment purchase (cash) is planned for March.</li>
-          <li>The company employs 18 people and has $22,000 of common stock outstanding.</li>
-        </ul>
-      </div>
+    <div class="footer">
+      <button class="check-btn" onclick="newScenario()">New scenario</button>
+      <span class="subtitle">Generates a new set of numbers and resets all steps so you can rework the full budget.</span>
     </div>
   </section>
 
@@ -482,7 +420,7 @@
     <div class="part-header">
       <span class="part-tag practice">Step 1</span>
       <h2>Sales budget</h2>
-      <span class="subtitle">the anchor every other schedule is built on</span>
+      <span class="subtitle">the first schedule in the budget</span>
     </div>
 
     <div class="setup-box">
@@ -541,11 +479,11 @@
     <div class="part-header">
       <span class="part-tag explore">Step 2</span>
       <h2>Purchases budget &mdash; March</h2>
-      <span class="subtitle">how much merchandise must Harbor Goods buy?</span>
+      <span class="subtitle">units to purchase and their cost</span>
     </div>
 
     <div class="setup-box">
-      <p>A merchandiser doesn't make its product &mdash; it buys it. To know how much to purchase in March, the controller has to cover March sales <em>and</em> leave the right amount of inventory on the shelf for the start of April, while accounting for what's already on hand March 1.</p>
+      <p>A merchandiser buys the product it resells rather than producing it. March purchases must cover March sales and leave the required ending inventory for the start of April, while accounting for the inventory already on hand March 1.</p>
     </div>
 
     <p class="prompt">Build the <strong>March purchases budget</strong>.</p>
@@ -592,11 +530,11 @@
     <div class="part-header">
       <span class="part-tag solve">Step 3</span>
       <h2>Cash collections &mdash; March</h2>
-      <span class="subtitle">when does the cash from a sale actually arrive?</span>
+      <span class="subtitle">cash received during March</span>
     </div>
 
     <div class="setup-box">
-      <p>A sale and the cash from that sale are two different events. Some of March's cash comes from March sales, but a lot of it arrives from January and February credit sales that are only now being collected. Trace every dollar that lands in March.</p>
+      <p>A sale and the collection of cash from that sale occur at different times. March collections include cash from March sales plus collections on credit sales made in January and February. Account for each source of cash received in March.</p>
     </div>
 
     <p class="prompt">Compute each piece of <strong>March cash collections</strong>, then the total.</p>
@@ -659,11 +597,11 @@
     <div class="part-header">
       <span class="part-tag solve">Step 4</span>
       <h2>Cash disbursements &mdash; March</h2>
-      <span class="subtitle">only the cash that actually leaves in March</span>
+      <span class="subtitle">cash paid during March</span>
     </div>
 
     <div class="setup-box">
-      <p>Now the money going out. Watch two things: payment timing (some of what Harbor Goods pays in March is for February's activity, and vice-versa), and the difference between an <em>expense</em> and a <em>cash payment</em> &mdash; non-cash items don't belong in a cash disbursements schedule.</p>
+      <p>Two things determine March disbursements: payment timing (some amounts paid in March relate to February's activity, and some of March's activity is paid later) and the distinction between an expense and a cash payment. Non-cash items are excluded from a cash disbursements schedule.</p>
     </div>
 
     <p class="prompt">Compute each <strong>March cash disbursement</strong> category, then the total operating disbursements.</p>
@@ -726,11 +664,11 @@
     <div class="part-header">
       <span class="part-tag build">Step 5</span>
       <h2>Complete cash budget &mdash; March</h2>
-      <span class="subtitle">pull collections, disbursements, and financing together</span>
+      <span class="subtitle">collections, disbursements, and financing</span>
     </div>
 
     <div class="setup-box">
-      <p>Time to assemble the cash budget. Start from the cash on hand, add what comes in, take out what goes out (including the planned equipment purchase), and then decide whether Harbor Goods needs to draw on its line of credit to stay above its required cushion.</p>
+      <p>Assemble the cash budget: begin with cash on hand, add collections, subtract disbursements and the planned equipment purchase, then determine whether Harbor Goods must borrow on its line of credit to maintain the required minimum cash balance.</p>
     </div>
 
     <p class="prompt">Complete the <strong>March cash budget</strong>.</p>
@@ -785,11 +723,11 @@
     <div class="part-header">
       <span class="part-tag capstone">Capstone</span>
       <h2>Budgeted income statement &mdash; March</h2>
-      <span class="subtitle">where cash and profit finally part ways</span>
+      <span class="subtitle">accrual results for March</span>
     </div>
 
     <div class="setup-box">
-      <p>The final piece. The income statement uses <em>accrual</em> figures, not cash &mdash; so depreciation is back in, uncollectible accounts show up as an expense, and timing of payments no longer matters. You already have March sales revenue from Step&nbsp;1, and the monthly interest accrual on the note is your interest expense.</p>
+      <p>The income statement uses <em>accrual</em> figures rather than cash: depreciation is included, uncollectible accounts are recorded as an expense, and payment timing does not matter. Use March sales revenue from Step&nbsp;1, and the monthly interest accrual on the note as interest expense.</p>
     </div>
 
     <p class="prompt">Build the <strong>budgeted income statement</strong> for March, line by line.</p>
@@ -948,68 +886,204 @@ function playHorn() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   BASE FACTS — Harbor Goods Co. (focal month: MARCH)
-   Expected answers are DERIVED by formula below, never hard-coded.
+   SCENARIO ENGINE — Harbor Goods Co. (focal month: MARCH)
+   A scenario object holds every base fact. computeFrom() derives all
+   expected answers by formula; nothing is hard-coded. The "New
+   scenario" button generates a fresh, validated random scenario.
 ═══════════════════════════════════════════════════════════════ */
-var PRICE = 20, UCOST = 8;
-var U_JAN = 5000, U_FEB = 6000, U_MAR = 8000, U_APR = 9000;
-var SALES_JAN = U_JAN * PRICE;   // 100,000
-var SALES_FEB = U_FEB * PRICE;   // 120,000
-var SALES_MAR = U_MAR * PRICE;   // 160,000
-var SALES_APR = U_APR * PRICE;   // 180,000
+var SC = null;     // current scenario (base facts)
+var EXP = {};      // derived expected answers for the current scenario
 
-var CASH_PCT = 0.30, CREDIT_PCT = 0.70;
-var L0 = 0.20, L1 = 0.50, L2 = 0.25;   // collection lags (5% uncollectible)
+// The default scenario is the reviewed Harbor Goods dataset, so the
+// first load is deterministic and matches the printed problem.
+var DEFAULT_SCENARIO = {
+  price:20, ucost:8,
+  uJan:5000, uFeb:6000, uMar:8000, uApr:9000, uMay:7000,
+  priorMar:140000, employees:18, commonStock:22000,
+  cashPct:0.30, l0:0.20, l1:0.50, l2:0.25, bad:0.05,
+  endInvPct:0.25, begInvMar:2000, febPurch:52000, payCur:0.40, payNext:0.60,
+  comm:0.05, vmisc:0.02, sellSal:6000, adv:3000, sellDep:4000,
+  gaSal:10000, ins:1500, util:1200, gaDep:2000, gaMisc:800,
+  gaCur:0.70, gaNext:0.30, febCashGA:12500,
+  taxRate:0.30, taxPayable:12000,
+  note:40000, rate:0.06, minCash:25000, begCash:22000, equip:50000
+};
 
-var END_INV_PCT = 0.25, BEG_INV_MAR = 2000, FEB_PURCH = 52000;
-var PAY_CUR = 0.40, PAY_NEXT = 0.60;
+// Derive every expected value from a scenario, purely by formula.
+function computeFrom(s) {
+  var creditPct = 1 - s.cashPct;
+  var SALES_JAN = s.uJan * s.price, SALES_FEB = s.uFeb * s.price;
+  var SALES_MAR = s.uMar * s.price, SALES_APR = s.uApr * s.price;
 
-var COMM = 0.05, VMISC = 0.02, SELL_SAL = 6000, ADV = 3000, SELL_DEP = 4000;
-var GA_SAL = 10000, INS = 1500, UTIL = 1200, GA_DEP = 2000, GA_MISC = 800;
-var GA_CUR = 0.70, GA_NEXT = 0.30, FEB_CASH_GA = 12500;
+  var DES_END  = s.endInvPct * s.uApr;
+  var PURCH_U  = s.uMar + DES_END - s.begInvMar;
+  var PURCH_C  = PURCH_U * s.ucost;
 
-var TAX_RATE = 0.30, TAX_PAYABLE_MAR1 = 12000;
-var INTEREST = 200, MIN_CASH = 25000, BEG_CASH = 22000, EQUIP = 50000;
-var BAD_PCT = 0.05;
+  var COL_CASH = s.cashPct * SALES_MAR;
+  var COL_MAR  = s.l0 * creditPct * SALES_MAR;
+  var COL_FEB  = s.l1 * creditPct * SALES_FEB;
+  var COL_JAN  = s.l2 * creditPct * SALES_JAN;
+  var COL_TOT  = COL_CASH + COL_MAR + COL_FEB + COL_JAN;
 
-/* ---- Step 2: purchases budget ---- */
-var DES_END   = END_INV_PCT * U_APR;              // 2,250 units
-var PURCH_U   = U_MAR + DES_END - BEG_INV_MAR;    // 8,250 units
-var PURCH_C   = PURCH_U * UCOST;                  // $66,000
+  var PAY_PURCH   = s.payCur * PURCH_C + s.payNext * s.febPurch;
+  var CASH_SELL   = s.comm * SALES_MAR + s.vmisc * SALES_MAR + s.sellSal + s.adv;
+  var MAR_CASH_GA = s.gaSal + s.ins + s.util + s.gaMisc;          // no depreciation
+  var PAY_GA      = s.gaCur * MAR_CASH_GA + s.gaNext * s.febCashGA;
+  var PAY_TAX     = s.taxPayable;
+  var DISB_TOT    = PAY_PURCH + CASH_SELL + PAY_GA + PAY_TAX;
 
-/* ---- Step 3: collections (March) ---- */
-var COL_CASH  = CASH_PCT * SALES_MAR;             // 48,000
-var COL_MAR   = L0 * CREDIT_PCT * SALES_MAR;      // 22,400
-var COL_FEB   = L1 * CREDIT_PCT * SALES_FEB;      // 42,000
-var COL_JAN   = L2 * CREDIT_PCT * SALES_JAN;      // 17,500
-var COL_TOT   = COL_CASH + COL_MAR + COL_FEB + COL_JAN; // 129,900
+  var CASH_AVAIL  = s.begCash + COL_TOT;
+  var EXCESS      = CASH_AVAIL - DISB_TOT;
+  var BEFORE_FIN  = EXCESS - s.equip;
+  var BORROW      = s.minCash - BEFORE_FIN;
+  var END_CASH    = BEFORE_FIN + BORROW;
 
-/* ---- Step 4: disbursements (March) ---- */
-var PAY_PURCH = PAY_CUR * PURCH_C + PAY_NEXT * FEB_PURCH;       // 57,600
-var CASH_SELL = COMM * SALES_MAR + VMISC * SALES_MAR + SELL_SAL + ADV; // 20,200
-var MAR_CASH_GA = GA_SAL + INS + UTIL + GA_MISC;               // 13,500 (no depr)
-var PAY_GA    = GA_CUR * MAR_CASH_GA + GA_NEXT * FEB_CASH_GA;  // 13,200
-var PAY_TAX   = TAX_PAYABLE_MAR1;                              // 12,000
-var DISB_TOT  = PAY_PURCH + CASH_SELL + PAY_GA + PAY_TAX;      // 103,000
+  var INTEREST = s.note * s.rate / 12;
+  var COGS     = s.uMar * s.ucost;
+  var GROSS    = SALES_MAR - COGS;
+  var BAD      = s.bad * creditPct * SALES_MAR;
+  var SELL_EXP = s.comm * SALES_MAR + s.vmisc * SALES_MAR + s.sellSal + s.adv + s.sellDep;
+  var GA_EXP   = s.gaSal + s.ins + s.util + s.gaDep + s.gaMisc;
+  var OPEX     = BAD + SELL_EXP + GA_EXP;
+  var OP_INC   = GROSS - OPEX;
+  var PRETAX   = OP_INC - INTEREST;
+  var TAX      = s.taxRate * PRETAX;
+  var NET_INC  = PRETAX - TAX;
 
-/* ---- Step 5: cash budget ---- */
-var CASH_AVAIL  = BEG_CASH + COL_TOT;             // 151,900
-var EXCESS      = CASH_AVAIL - DISB_TOT;          // 48,900
-var BEFORE_FIN  = EXCESS - EQUIP;                 // -1,100
-var BORROW      = MIN_CASH - BEFORE_FIN;          // 26,100
-var END_CASH    = BEFORE_FIN + BORROW;            // 25,000
+  return {
+    SALES_JAN:SALES_JAN, SALES_FEB:SALES_FEB, SALES_MAR:SALES_MAR, SALES_APR:SALES_APR,
+    U_MAR:s.uMar, DES_END:DES_END, PURCH_U:PURCH_U, PURCH_C:PURCH_C,
+    COL_CASH:COL_CASH, COL_MAR:COL_MAR, COL_FEB:COL_FEB, COL_JAN:COL_JAN, COL_TOT:COL_TOT,
+    PAY_PURCH:PAY_PURCH, CASH_SELL:CASH_SELL, MAR_CASH_GA:MAR_CASH_GA, PAY_GA:PAY_GA,
+    PAY_TAX:PAY_TAX, DISB_TOT:DISB_TOT,
+    CASH_AVAIL:CASH_AVAIL, EXCESS:EXCESS, BEFORE_FIN:BEFORE_FIN, BORROW:BORROW,
+    END_CASH:END_CASH, MIN_CASH:s.minCash, EQUIP:s.equip,
+    INTEREST:INTEREST, COGS:COGS, GROSS:GROSS, BAD:BAD, SELL_EXP:SELL_EXP, GA_EXP:GA_EXP,
+    OPEX:OPEX, OP_INC:OP_INC, PRETAX:PRETAX, TAX:TAX, NET_INC:NET_INC
+  };
+}
 
-/* ---- Step 6: budgeted income statement ---- */
-var COGS    = U_MAR * UCOST;                      // 64,000
-var GROSS   = SALES_MAR - COGS;                   // 96,000
-var BAD     = BAD_PCT * CREDIT_PCT * SALES_MAR;   // 5,600
-var SELL_EXP = COMM * SALES_MAR + VMISC * SALES_MAR + SELL_SAL + ADV + SELL_DEP; // 24,200
-var GA_EXP  = GA_SAL + INS + UTIL + GA_DEP + GA_MISC; // 15,500
-var OPEX    = BAD + SELL_EXP + GA_EXP;            // 45,300
-var OP_INC  = GROSS - OPEX;                       // 50,700
-var PRETAX  = OP_INC - INTEREST;                  // 50,500
-var TAX     = TAX_RATE * PRETAX;                  // 15,150
-var NET_INC = PRETAX - TAX;                       // 35,350
+// Generate a fresh random scenario, validated so it lands in the same
+// pedagogical shape: profitable, and short enough on cash after the
+// equipment purchase that the company must borrow a meaningful amount.
+function genScenario() {
+  function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
+  function rstep(min, max, step) {
+    var n = Math.floor(Math.random() * ((max - min) / step + 1));
+    return min + n * step;
+  }
+  for (var k = 0; k < 400; k++) {
+    var price = pick([18, 20, 22, 25, 30]);
+    var ucost = pick([6, 8, 10, 12, 15].filter(function(c){ return c <= price - 6; }));
+    if (ucost === undefined) continue;
+    var col = pick([
+      { cashPct:0.30, l0:0.20, l1:0.50, l2:0.25, bad:0.05 },
+      { cashPct:0.25, l0:0.25, l1:0.50, l2:0.20, bad:0.05 },
+      { cashPct:0.40, l0:0.30, l1:0.45, l2:0.20, bad:0.05 },
+      { cashPct:0.20, l0:0.10, l1:0.60, l2:0.25, bad:0.05 },
+      { cashPct:0.35, l0:0.20, l1:0.55, l2:0.20, bad:0.05 }
+    ]);
+    var pp = pick([{ payCur:0.40, payNext:0.60 }, { payCur:0.50, payNext:0.50 }, { payCur:0.30, payNext:0.70 }]);
+    var gp = pick([{ gaCur:0.70, gaNext:0.30 }, { gaCur:0.60, gaNext:0.40 }, { gaCur:0.80, gaNext:0.20 }]);
+    var s = {
+      price:price, ucost:ucost,
+      uJan:rstep(4,9,1)*1000, uFeb:rstep(4,10,1)*1000, uMar:rstep(6,11,1)*1000,
+      uApr:rstep(6,12,1)*1000, uMay:rstep(4,10,1)*1000,
+      priorMar:rstep(10,22,1)*10000, employees:rstep(8,40,1), commonStock:rstep(20,80,5)*1000,
+      cashPct:col.cashPct, l0:col.l0, l1:col.l1, l2:col.l2, bad:col.bad,
+      endInvPct:pick([0.20,0.25,0.30]), begInvMar:rstep(1000,3000,500), febPurch:rstep(40,75,1)*1000,
+      payCur:pp.payCur, payNext:pp.payNext,
+      comm:pick([0.04,0.05,0.06]), vmisc:pick([0.01,0.02,0.03]),
+      sellSal:pick([5000,6000,7000,8000]), adv:pick([2000,3000,4000]), sellDep:pick([3000,4000,5000]),
+      gaSal:pick([8000,10000,12000]), ins:pick([1000,1500,2000]), util:pick([1000,1200,1500]),
+      gaDep:pick([1500,2000,2500]), gaMisc:pick([500,800,1000]),
+      gaCur:gp.gaCur, gaNext:gp.gaNext, febCashGA:rstep(8000,16000,500),
+      taxRate:pick([0.21,0.25,0.30,0.35]), taxPayable:rstep(6,18,1)*1000,
+      note:rstep(3,7,1)*10000, rate:0.06, minCash:pick([20000,25000,30000]),
+      begCash:rstep(16000,28000,1000), equip:pick([40000,50000,60000,70000])
+    };
+    var t = computeFrom(s);
+    if (t.PURCH_U > 0 && t.DISB_TOT > 0 && t.PRETAX > 0 && t.NET_INC > 0 &&
+        t.BEFORE_FIN < s.minCash && t.BORROW >= 5000 && t.BORROW <= 90000) {
+      return s;
+    }
+  }
+  return DEFAULT_SCENARIO;
+}
+
+// Render the Company Information panel from the current scenario.
+function renderPanel() {
+  var s = SC;
+  function m(v) { return fmtMoney(v, 0); }
+  function u(v) { return fmtUnits(v); }
+  function pc(v) { return (Math.round(v * 1000) / 10) + '%'; }
+  var html =
+    '<div class="ref-block full">' +
+      '<h3>Product &amp; unit sales</h3>' +
+      '<table class="cost-table" style="margin-top:4px;"><thead>' +
+        '<tr><th>Month</th><th>January</th><th>February</th><th>March</th><th>April</th><th>May</th></tr>' +
+      '</thead><tbody>' +
+        '<tr><td class="row-label">Unit sales</td><td>' + u(s.uJan) + '</td><td>' + u(s.uFeb) +
+        '</td><td>' + u(s.uMar) + '</td><td>' + u(s.uApr) + '</td><td>' + u(s.uMay) + '</td></tr>' +
+      '</tbody></table>' +
+      '<ul style="margin-top:8px;">' +
+        '<li>Selling price: <strong>' + m(s.price) + ' per unit</strong>. Purchase cost: <strong>' + m(s.ucost) + ' per unit</strong>.</li>' +
+        '<li>For reference, the prior year’s March generated <strong>' + m(s.priorMar) + '</strong> in sales revenue.</li>' +
+      '</ul></div>' +
+    '<div class="ref-block"><h3>Collections</h3><ul>' +
+      '<li><strong>' + pc(s.cashPct) + '</strong> of each month’s sales are cash sales; the other <strong>' + pc(1 - s.cashPct) + '</strong> are on credit.</li>' +
+      '<li>Credit sales are collected <strong>' + pc(s.l0) + '</strong> in the month of sale, <strong>' + pc(s.l1) + '</strong> the following month, and <strong>' + pc(s.l2) + '</strong> two months after the sale.</li>' +
+      '<li>The remaining <strong>' + pc(s.bad) + '</strong> of credit sales is never collected (written off as uncollectible).</li>' +
+    '</ul></div>' +
+    '<div class="ref-block"><h3>Inventory &amp; purchases</h3><ul>' +
+      '<li>Desired ending inventory each month = <strong>' + pc(s.endInvPct) + ' of next month’s unit sales</strong>.</li>' +
+      '<li>Inventory on hand <strong>March 1: ' + u(s.begInvMar) + ' units</strong>.</li>' +
+      '<li>Actual <strong>February</strong> merchandise purchases: <strong>' + m(s.febPurch) + '</strong>.</li>' +
+      '<li>Suppliers are paid <strong>' + pc(s.payCur) + '</strong> in the month of purchase, <strong>' + pc(s.payNext) + '</strong> the following month.</li>' +
+    '</ul></div>' +
+    '<div class="ref-block"><h3>Selling expenses (monthly)</h3><ul>' +
+      '<li>Sales commissions: <strong>' + pc(s.comm) + ' of sales revenue</strong>.</li>' +
+      '<li>Variable miscellaneous: <strong>' + pc(s.vmisc) + ' of sales revenue</strong>.</li>' +
+      '<li>Fixed salaries <strong>' + m(s.sellSal) + '</strong>; advertising <strong>' + m(s.adv) + '</strong>; depreciation <strong>' + m(s.sellDep) + '</strong> (non-cash).</li>' +
+      '<li>All selling expenses are paid in the month incurred.</li>' +
+    '</ul></div>' +
+    '<div class="ref-block"><h3>General &amp; administrative (monthly)</h3><ul>' +
+      '<li>Salaries <strong>' + m(s.gaSal) + '</strong>; insurance <strong>' + m(s.ins) + '</strong>; utilities <strong>' + m(s.util) + '</strong>; depreciation <strong>' + m(s.gaDep) + '</strong> (non-cash); miscellaneous <strong>' + m(s.gaMisc) + '</strong>.</li>' +
+      '<li>Cash G&amp;A is paid <strong>' + pc(s.gaCur) + '</strong> in the month incurred, <strong>' + pc(s.gaNext) + '</strong> the following month.</li>' +
+      '<li><strong>February</strong> cash G&amp;A totaled <strong>' + m(s.febCashGA) + '</strong>.</li>' +
+    '</ul></div>' +
+    '<div class="ref-block"><h3>Taxes &amp; financing</h3><ul>' +
+      '<li>Income tax = <strong>' + pc(s.taxRate) + ' of pretax income</strong>, paid the month after it is incurred.</li>' +
+      '<li>Income taxes payable on <strong>March 1: ' + m(s.taxPayable) + '</strong>.</li>' +
+      '<li>Note payable <strong>' + m(s.note) + '</strong> at <strong>' + pc(s.rate) + '</strong> annual interest &mdash; <strong>' + m(s.note * s.rate / 12) + '</strong> of interest accrues each month.</li>' +
+      '<li>Minimum required ending cash balance: <strong>' + m(s.minCash) + '</strong>. Cash on hand <strong>March 1: ' + m(s.begCash) + '</strong>.</li>' +
+      '<li>A <strong>' + m(s.equip) + '</strong> equipment purchase (cash) is planned for March.</li>' +
+      '<li>The company employs ' + u(s.employees) + ' people and has ' + m(s.commonStock) + ' of common stock outstanding.</li>' +
+    '</ul></div>';
+  document.getElementById('ref-content').innerHTML = html;
+}
+
+// Apply a scenario: derive answers, rebuild specs, redraw the panel.
+function applyScenario(s) {
+  SC = s;
+  EXP = computeFrom(s);
+  buildSpecs();
+  renderPanel();
+}
+
+// Generate a new scenario and restart the activity from Step 1.
+function newScenario() {
+  applyScenario(genScenario());
+  resetStep1(); resetStep2(); resetStep3(); resetStep4(); resetStep5(); resetStep6();
+  for (var n = 2; n <= 6; n++) {
+    var el = document.getElementById('step' + n);
+    el.classList.remove('show');
+    var btn = document.getElementById('reveal-step' + n + '-btn');
+    if (btn) btn.style.display = '';
+  }
+  revealedSteps.clear();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
 
 /* ═══════════════════════════════════════════════════════════════
    GENERIC CHECKER
@@ -1059,141 +1133,132 @@ function resetGroup(spec, scoreId, extraResetFn) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   STEP 1 — Sales budget
+   STEP SPECS — rebuilt from EXP each time a scenario is applied.
+   Explain hints describe the approach only; they never reveal the
+   number or the literal computation.
 ═══════════════════════════════════════════════════════════════ */
-var SALES_HINT = 'Sales revenue for a month = that month’s unit sales × the selling price per unit.';
-var S1 = [
-  { inputId:'s1-jan', hintId:'h-s1-jan', expected:SALES_JAN, tol:0.5, explain:SALES_HINT },
-  { inputId:'s1-feb', hintId:'h-s1-feb', expected:SALES_FEB, tol:0.5, explain:SALES_HINT },
-  { inputId:'s1-mar', hintId:'h-s1-mar', expected:SALES_MAR, tol:0.5, explain:SALES_HINT },
-  { inputId:'s1-apr', hintId:'h-s1-apr', expected:SALES_APR, tol:0.5, explain:SALES_HINT }
-];
+var S1, S2, S3, S4, S5, S6;
+function buildSpecs() {
+  var SALES_HINT = 'Sales revenue for a month = that month’s unit sales × the selling price per unit.';
+  S1 = [
+    { inputId:'s1-jan', hintId:'h-s1-jan', expected:EXP.SALES_JAN, tol:0.5, explain:SALES_HINT },
+    { inputId:'s1-feb', hintId:'h-s1-feb', expected:EXP.SALES_FEB, tol:0.5, explain:SALES_HINT },
+    { inputId:'s1-mar', hintId:'h-s1-mar', expected:EXP.SALES_MAR, tol:0.5, explain:SALES_HINT },
+    { inputId:'s1-apr', hintId:'h-s1-apr', expected:EXP.SALES_APR, tol:0.5, explain:SALES_HINT }
+  ];
+  S2 = [
+    { inputId:'s2-end',   hintId:'h-s2-end',   expected:EXP.DES_END, tol:1,
+      explain:'Desired ending inventory is a percentage of the *next* month’s unit sales, not this month’s.' },
+    { inputId:'s2-units', hintId:'h-s2-units', expected:EXP.PURCH_U, tol:1,
+      explain:'Units to buy = units sold this month + desired ending inventory − beginning inventory already on hand.' },
+    { inputId:'s2-cost',  hintId:'h-s2-cost',  expected:EXP.PURCH_C, tol:0.5,
+      explain:'Translate the units you need to purchase into dollars using the per-unit purchase cost.' }
+  ];
+  S3 = [
+    { inputId:'s3-cash', hintId:'h-s3-cash', expected:EXP.COL_CASH, tol:0.5,
+      explain:'Only the cash-sales portion of this month’s sales is collected on the spot.' },
+    { inputId:'s3-cmar', hintId:'h-s3-cmar', expected:EXP.COL_MAR, tol:0.5,
+      explain:'Take this month’s credit sales, then apply the fraction collected in the month of sale.' },
+    { inputId:'s3-cfeb', hintId:'h-s3-cfeb', expected:EXP.COL_FEB, tol:0.5,
+      explain:'Apply the second-month collection fraction to the *prior* month’s credit sales.' },
+    { inputId:'s3-cjan', hintId:'h-s3-cjan', expected:EXP.COL_JAN, tol:0.5,
+      explain:'Apply the third collection fraction to the credit sales from two months earlier.' },
+    { inputId:'s3-tot',  hintId:'h-s3-tot',  expected:EXP.COL_TOT, tol:1,
+      explain:'Add the cash collections to all three credit-collection pieces.' }
+  ];
+  S4 = [
+    { inputId:'s4-purch', hintId:'h-s4-purch', expected:EXP.PAY_PURCH, tol:0.5,
+      explain:'Combine the portion of this month’s purchases paid now with the portion of last month’s purchases paid this month.' },
+    { inputId:'s4-sell',  hintId:'h-s4-sell',  expected:EXP.CASH_SELL, tol:0.5,
+      explain:'Add the sales-driven items (commissions, variable misc.) to the fixed selling items — but leave out any non-cash item.' },
+    { inputId:'s4-ga',    hintId:'h-s4-ga',    expected:EXP.PAY_GA, tol:0.5,
+      explain:'Blend the portion of this month’s cash G&A paid now with the portion of last month’s cash G&A paid this month. Exclude the non-cash item.' },
+    { inputId:'s4-tax',   hintId:'h-s4-tax',   expected:EXP.PAY_TAX, tol:0.5,
+      explain:'Taxes are paid the month after they’re incurred — so this month you pay whatever was payable at the start of the month.' },
+    { inputId:'s4-tot',   hintId:'h-s4-tot',   expected:EXP.DISB_TOT, tol:1,
+      explain:'Sum all four cash-outflow categories.' }
+  ];
+  S5 = [
+    { inputId:'s5-avail',  hintId:'h-s5-avail',  expected:EXP.CASH_AVAIL, tol:1,
+      explain:'Add the month’s beginning cash balance to total collections.' },
+    { inputId:'s5-excess', hintId:'h-s5-excess', expected:EXP.EXCESS, tol:1,
+      explain:'Subtract total operating disbursements from cash available.' },
+    { inputId:'s5-borrow', hintId:'h-s5-borrow', expected:EXP.BORROW, tol:1,
+      explain:'After the equipment outlay the balance dips below the required minimum. Borrow just enough to bring it back up to that floor.' },
+    { inputId:'s5-end',    hintId:'h-s5-end',    expected:EXP.END_CASH, tol:1,
+      explain:'Once you’ve borrowed exactly enough to reach the minimum, the ending balance equals that required floor.' }
+  ];
+  S6 = [
+    { inputId:'s6-cogs',   hintId:'h-s6-cogs',   expected:EXP.COGS, tol:0.5,
+      explain:'Cost of goods sold = units actually sold × the purchase cost per unit — not the units you purchased.' },
+    { inputId:'s6-gross',  hintId:'h-s6-gross',  expected:EXP.GROSS, tol:0.5,
+      explain:'Gross profit = sales revenue − cost of goods sold.' },
+    { inputId:'s6-bad',    hintId:'h-s6-bad',    expected:EXP.BAD, tol:0.5,
+      explain:'The uncollectible percentage applies only to credit sales, not to total sales.' },
+    { inputId:'s6-sell',   hintId:'h-s6-sell',   expected:EXP.SELL_EXP, tol:0.5,
+      explain:'Include every selling item — variable and fixed — and this time depreciation counts, because it’s an expense even though no cash moves.' },
+    { inputId:'s6-ga',     hintId:'h-s6-ga',     expected:EXP.GA_EXP, tol:0.5,
+      explain:'Total all G&A items, including the non-cash depreciation, regardless of when they’re paid.' },
+    { inputId:'s6-opinc',  hintId:'h-s6-opinc',  expected:EXP.OP_INC, tol:1,
+      explain:'Operating income = gross profit − all operating expenses (bad debt, selling, and G&A).' },
+    { inputId:'s6-pretax', hintId:'h-s6-pretax', expected:EXP.PRETAX, tol:1,
+      explain:'Pretax income = operating income − the monthly interest on the note.' },
+    { inputId:'s6-tax',    hintId:'h-s6-tax',    expected:EXP.TAX, tol:0.5,
+      explain:'Apply the income-tax rate to pretax income.' },
+    { inputId:'s6-ni',     hintId:'h-s6-ni',     expected:EXP.NET_INC, tol:1,
+      explain:'Net income = pretax income − income tax expense.' }
+  ];
+}
+
 function checkStep1() {
   var fb = document.getElementById('step1-insight'); fb.innerHTML = '';
   checkGroup(S1, 'score1-out', function() {
     revealStep2(false);
-    fb.innerHTML = '<div class="insight success"><strong>March sales come in at $160,000</strong> &mdash; the budget’s anchor. Every schedule that follows (collections, purchases, the income statement) traces back to these four sales figures. May’s units and last year’s March revenue were there to test whether you’d grab only what you need.</div>';
+    fb.innerHTML = '<div class="insight success">March sales are <strong>' + fmtMoney(EXP.SALES_MAR, 0) + '</strong>. Every schedule that follows &mdash; collections, purchases, the income statement &mdash; is built on these sales figures. The May units and the prior-year March revenue are not used in this budget.</div>';
   });
 }
 function resetStep1() { resetGroup(S1, 'score1-out', function(){ document.getElementById('step1-insight').innerHTML=''; }); }
 
-/* ═══════════════════════════════════════════════════════════════
-   STEP 2 — Purchases budget
-═══════════════════════════════════════════════════════════════ */
-var S2 = [
-  { inputId:'s2-end',   hintId:'h-s2-end',   expected:DES_END, tol:1,
-    explain:'Desired ending inventory is a percentage of the *next* month’s unit sales, not this month’s.' },
-  { inputId:'s2-units', hintId:'h-s2-units', expected:PURCH_U, tol:1,
-    explain:'Units to buy = units sold this month + desired ending inventory − beginning inventory already on hand.' },
-  { inputId:'s2-cost',  hintId:'h-s2-cost',  expected:PURCH_C, tol:0.5,
-    explain:'Translate the units you need to purchase into dollars using the per-unit purchase cost.' }
-];
 function checkStep2() {
   var fb = document.getElementById('step2-insight'); fb.innerHTML = '';
   checkGroup(S2, 'score2-out', function() {
     revealStep3(false);
-    fb.innerHTML = '<div class="insight success"><strong>Harbor Goods must buy 8,250 units &mdash; $66,000 of merchandise.</strong> Notice that’s <em>more</em> than the 8,000 units it sells in March: the 25%-of-next-month rule means it’s also stocking up for April’s higher volume. Beginning inventory pushes the other way, trimming what needs to be bought.</div>';
+    fb.innerHTML = '<div class="insight success">Purchases come to <strong>' + fmtUnits(EXP.PURCH_U) + ' units (' + fmtMoney(EXP.PURCH_C, 0) + ')</strong>. This differs from the ' + fmtUnits(EXP.U_MAR) + ' units sold because desired ending inventory builds stock for next month, while beginning inventory reduces the amount that must be purchased.</div>';
   });
 }
 function resetStep2() { resetGroup(S2, 'score2-out', function(){ document.getElementById('step2-insight').innerHTML=''; }); }
 
-/* ═══════════════════════════════════════════════════════════════
-   STEP 3 — Collections schedule
-═══════════════════════════════════════════════════════════════ */
-var S3 = [
-  { inputId:'s3-cash', hintId:'h-s3-cash', expected:COL_CASH, tol:0.5,
-    explain:'Only the cash-sales portion of this month’s sales is collected on the spot.' },
-  { inputId:'s3-cmar', hintId:'h-s3-cmar', expected:COL_MAR, tol:0.5,
-    explain:'Take this month’s credit sales, then apply the fraction collected in the month of sale.' },
-  { inputId:'s3-cfeb', hintId:'h-s3-cfeb', expected:COL_FEB, tol:0.5,
-    explain:'Apply the second-month collection fraction to the *prior* month’s credit sales.' },
-  { inputId:'s3-cjan', hintId:'h-s3-cjan', expected:COL_JAN, tol:0.5,
-    explain:'Apply the third collection fraction to the credit sales from two months earlier.' },
-  { inputId:'s3-tot',  hintId:'h-s3-tot',  expected:COL_TOT, tol:1,
-    explain:'Add the cash collections to all three credit-collection pieces.' }
-];
 function checkStep3() {
   var fb = document.getElementById('step3-insight'); fb.innerHTML = '';
   checkGroup(S3, 'score3-out', function() {
     revealStep4(false);
-    fb.innerHTML = '<div class="insight success"><strong>March collections total $129,900.</strong> Only $48,000 arrives as cash sales; the other $81,900 trickles in from three different months of credit sales. That lag &mdash; plus the 5% that never shows up at all &mdash; is exactly why a profitable month can still leave a company short on cash.</div>';
+    fb.innerHTML = '<div class="insight success">March collections total <strong>' + fmtMoney(EXP.COL_TOT, 0) + '</strong>. Cash sales provide ' + fmtMoney(EXP.COL_CASH, 0) + '; the rest comes from credit sales of the current and prior two months. Because of the collection lag and the uncollectible portion, a profitable month can still be short on cash.</div>';
   });
 }
 function resetStep3() { resetGroup(S3, 'score3-out', function(){ document.getElementById('step3-insight').innerHTML=''; }); }
 
-/* ═══════════════════════════════════════════════════════════════
-   STEP 4 — Cash disbursements
-═══════════════════════════════════════════════════════════════ */
-var S4 = [
-  { inputId:'s4-purch', hintId:'h-s4-purch', expected:PAY_PURCH, tol:0.5,
-    explain:'Combine the portion of this month’s purchases paid now with the portion of last month’s purchases paid this month.' },
-  { inputId:'s4-sell',  hintId:'h-s4-sell',  expected:CASH_SELL, tol:0.5,
-    explain:'Add the sales-driven items (commissions, variable misc.) to the fixed selling items — but leave out any non-cash item.' },
-  { inputId:'s4-ga',    hintId:'h-s4-ga',    expected:PAY_GA, tol:0.5,
-    explain:'Blend the portion of this month’s cash G&A paid now with the portion of last month’s cash G&A paid this month. Exclude the non-cash item.' },
-  { inputId:'s4-tax',   hintId:'h-s4-tax',   expected:PAY_TAX, tol:0.5,
-    explain:'Taxes are paid the month after they’re incurred — so this month you pay whatever was payable at the start of the month.' },
-  { inputId:'s4-tot',   hintId:'h-s4-tot',   expected:DISB_TOT, tol:1,
-    explain:'Sum all four cash-outflow categories.' }
-];
 function checkStep4() {
   var fb = document.getElementById('step4-insight'); fb.innerHTML = '';
   checkGroup(S4, 'score4-out', function() {
     revealStep5(false);
-    fb.innerHTML = '<div class="insight success"><strong>Operating disbursements run $103,000 for March.</strong> Notice what’s <em>not</em> here: depreciation (non-cash) and the equipment purchase (an investing outflow, handled separately in the cash budget). A cash disbursements schedule tracks cash leaving the door — not expenses on the income statement.</div>';
+    fb.innerHTML = '<div class="insight success">Operating disbursements total <strong>' + fmtMoney(EXP.DISB_TOT, 0) + '</strong>. Depreciation (non-cash) and the equipment purchase are excluded: a cash disbursements schedule reports cash paid, not expenses on the income statement.</div>';
   });
 }
 function resetStep4() { resetGroup(S4, 'score4-out', function(){ document.getElementById('step4-insight').innerHTML=''; }); }
 
-/* ═══════════════════════════════════════════════════════════════
-   STEP 5 — Complete cash budget
-═══════════════════════════════════════════════════════════════ */
-var S5 = [
-  { inputId:'s5-avail',  hintId:'h-s5-avail',  expected:CASH_AVAIL, tol:1,
-    explain:'Add the month’s beginning cash balance to total collections.' },
-  { inputId:'s5-excess', hintId:'h-s5-excess', expected:EXCESS, tol:1,
-    explain:'Subtract total operating disbursements from cash available.' },
-  { inputId:'s5-borrow', hintId:'h-s5-borrow', expected:BORROW, tol:1,
-    explain:'After the equipment outlay the balance dips below the required minimum. Borrow just enough to bring it back up to that floor.' },
-  { inputId:'s5-end',    hintId:'h-s5-end',    expected:END_CASH, tol:1,
-    explain:'Once you’ve borrowed exactly enough to reach the minimum, the ending balance equals that required floor.' }
-];
 function checkStep5() {
   var fb = document.getElementById('step5-insight'); fb.innerHTML = '';
   checkGroup(S5, 'score5-out', function() {
     revealStep6(false);
-    fb.innerHTML = '<div class="insight success"><strong>Even with $129,900 flowing in, the $50,000 equipment purchase pushes Harbor Goods $1,100 below its $25,000 floor</strong> &mdash; so it must borrow $26,100 to land exactly at the minimum. The month is profitable, but the <em>timing</em> of cash in versus cash out forces a draw on the line of credit. That gap is the whole reason cash budgets exist.</div>';
+    fb.innerHTML = '<div class="insight success">After the ' + fmtMoney(EXP.EQUIP, 0) + ' equipment purchase, the balance falls below the required minimum, so the company borrows <strong>' + fmtMoney(EXP.BORROW, 0) + '</strong> to reach the ' + fmtMoney(EXP.MIN_CASH, 0) + ' floor. The month is profitable, but the timing of cash receipts and payments requires short-term financing.</div>';
   });
 }
 function resetStep5() { resetGroup(S5, 'score5-out', function(){ document.getElementById('step5-insight').innerHTML=''; }); }
 
-/* ═══════════════════════════════════════════════════════════════
-   STEP 6 — Budgeted income statement (capstone)
-═══════════════════════════════════════════════════════════════ */
-var S6 = [
-  { inputId:'s6-cogs',   hintId:'h-s6-cogs',   expected:COGS, tol:0.5,
-    explain:'Cost of goods sold = units actually sold × the purchase cost per unit — not the units you purchased.' },
-  { inputId:'s6-gross',  hintId:'h-s6-gross',  expected:GROSS, tol:0.5,
-    explain:'Gross profit = sales revenue − cost of goods sold.' },
-  { inputId:'s6-bad',    hintId:'h-s6-bad',    expected:BAD, tol:0.5,
-    explain:'The uncollectible percentage applies only to credit sales, not to total sales.' },
-  { inputId:'s6-sell',   hintId:'h-s6-sell',   expected:SELL_EXP, tol:0.5,
-    explain:'Include every selling item — variable and fixed — and this time depreciation counts, because it’s an expense even though no cash moves.' },
-  { inputId:'s6-ga',     hintId:'h-s6-ga',     expected:GA_EXP, tol:0.5,
-    explain:'Total all G&A items, including the non-cash depreciation, regardless of when they’re paid.' },
-  { inputId:'s6-opinc',  hintId:'h-s6-opinc',  expected:OP_INC, tol:1,
-    explain:'Operating income = gross profit − all operating expenses (bad debt, selling, and G&A).' },
-  { inputId:'s6-pretax', hintId:'h-s6-pretax', expected:PRETAX, tol:1,
-    explain:'Pretax income = operating income − the monthly interest on the note.' },
-  { inputId:'s6-tax',    hintId:'h-s6-tax',    expected:TAX, tol:0.5,
-    explain:'Apply the income-tax rate to pretax income.' },
-  { inputId:'s6-ni',     hintId:'h-s6-ni',     expected:NET_INC, tol:1,
-    explain:'Net income = pretax income − income tax expense.' }
-];
 function checkStep6() {
   var fb = document.getElementById('step6-insight'); fb.innerHTML = '';
   checkGroup(S6, 'score6-out', function() {
-    fb.innerHTML = '<div class="insight success"><strong>Net income of $35,350 &mdash; in a month that still needed $26,100 of borrowing.</strong> That contrast is the punchline of the whole master budget: profit and cash are not the same thing. Accrual income adds back depreciation and recognizes bad-debt expense, and ignores payment timing entirely. The one piece left to build is the <em>budgeted balance sheet</em>, which ties together the ending cash, receivables, inventory, payables, the new equipment, and the loan into a single statement.</div>';
+    fb.innerHTML = '<div class="insight success">Net income is <strong>' + fmtMoney(EXP.NET_INC, 0) + '</strong>, in a month that required ' + fmtMoney(EXP.BORROW, 0) + ' of borrowing. Net income and cash flow differ because accrual income includes depreciation and bad-debt expense and ignores payment timing. The remaining schedule in a master budget is the budgeted balance sheet, which combines the ending cash, receivables, inventory, payables, the new equipment, and the loan.</div>';
   });
 }
 function resetStep6() { resetGroup(S6, 'score6-out', function(){ document.getElementById('step6-insight').innerHTML=''; }); }
@@ -1234,6 +1299,15 @@ function showQR() {
 function hideQR(ev) {
   if (ev && ev.target.id !== 'qr-overlay' && ev.target.className !== 'qr-close') return;
   document.getElementById('qr-overlay').classList.remove('show');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   INIT — load the default scenario on first paint
+═══════════════════════════════════════════════════════════════ */
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', function(){ applyScenario(DEFAULT_SCENARIO); });
+} else {
+  applyScenario(DEFAULT_SCENARIO);
 }
 </script>
 
