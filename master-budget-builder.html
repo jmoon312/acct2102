@@ -337,6 +337,8 @@
     transition: background .15s;
   }
   .check-btn:hover { background: #243660; }
+  .check-btn:disabled { background: #cbd5e1; cursor: not-allowed; }
+  .check-btn:disabled:hover { background: #cbd5e1; }
   .reset-btn {
     font-size: 13px; color: #64748b;
     background: none; border: none;
@@ -410,8 +412,8 @@
     <div class="ref-grid" id="ref-content"></div>
 
     <div class="footer">
-      <button class="check-btn" onclick="newScenario()">New scenario</button>
-      <span class="subtitle">Generates a new set of numbers and resets all steps so you can rework the full budget.</span>
+      <button class="check-btn" id="new-scenario-btn" onclick="newScenario()" disabled title="Unlocks after you complete the budget once.">New scenario</button>
+      <span class="subtitle">Unlocks after you complete the budget once, then generates a new set of numbers to rework.</span>
     </div>
   </section>
 
@@ -1258,6 +1260,8 @@ function resetStep5() { resetGroup(S5, 'score5-out', function(){ document.getEle
 function checkStep6() {
   var fb = document.getElementById('step6-insight'); fb.innerHTML = '';
   checkGroup(S6, 'score6-out', function() {
+    var nb = document.getElementById('new-scenario-btn');
+    if (nb) { nb.disabled = false; nb.removeAttribute('title'); }
     fb.innerHTML = '<div class="insight success">Net income is <strong>' + fmtMoney(EXP.NET_INC, 0) + '</strong>, in a month that required ' + fmtMoney(EXP.BORROW, 0) + ' of borrowing. Net income and cash flow differ because accrual income includes depreciation and bad-debt expense and ignores payment timing. The remaining schedule in a master budget is the budgeted balance sheet, which combines the ending cash, receivables, inventory, payables, the new equipment, and the loan.</div>';
   });
 }
