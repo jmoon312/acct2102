@@ -337,6 +337,8 @@
     transition: background .15s;
   }
   .check-btn:hover { background: #243660; }
+  .check-btn:disabled { background: #cbd5e1; cursor: not-allowed; }
+  .check-btn:disabled:hover { background: #cbd5e1; }
   .reset-btn {
     font-size: 13px; color: #64748b;
     background: none; border: none;
@@ -407,51 +409,11 @@
       <p><strong>Summit Pack Co.</strong> manufactures one product, a trail backpack. The controller is preparing the company's <strong>master budget for May</strong>: the production budget, the direct materials and direct labor budgets, manufacturing overhead, and the unit cost that feeds cost of goods sold. Every fact she has is listed below. Pull the pieces you need for each step; not all of them belong in every schedule.</p>
     </div>
 
-    <div class="ref-grid">
-      <div class="ref-block full">
-        <h3>Sales &amp; product</h3>
-        <table class="cost-table" style="margin-top:4px;">
-          <thead>
-            <tr><th>Month</th><th>March</th><th>April</th><th>May</th><th>June</th><th>July</th></tr>
-          </thead>
-          <tbody>
-            <tr><td class="row-label">Unit sales</td><td>4,000</td><td>5,000</td><td>6,000</td><td>7,000</td><td>5,000</td></tr>
-          </tbody>
-        </table>
-        <ul style="margin-top:8px;">
-          <li>Selling price: <strong>$60 per backpack</strong>.</li>
-          <li>Desired ending finished goods each month = <strong>20% of next month's unit sales</strong>. Finished goods on hand <strong>May 1: 1,200 units</strong>.</li>
-          <li>Budgeted <strong>June production: 6,600 units</strong>.</li>
-        </ul>
-      </div>
+    <div class="ref-grid" id="ref-content"></div>
 
-      <div class="ref-block">
-        <h3>Direct materials (per backpack)</h3>
-        <ul>
-          <li><strong>Ripstop fabric:</strong> 3 yards per unit at <strong>$4 per yard</strong>.</li>
-          <li><strong>Webbing &amp; hardware:</strong> 2 units per unit at <strong>$5 each</strong>.</li>
-          <li>Desired ending raw materials each month = <strong>25% of next month's production needs</strong>.</li>
-          <li>On hand <strong>May 1: 4,650 yards</strong> of fabric and <strong>3,100 units</strong> of hardware.</li>
-        </ul>
-      </div>
-
-      <div class="ref-block">
-        <h3>Direct labor &amp; overhead</h3>
-        <ul>
-          <li>Direct labor: <strong>0.5 hours per unit</strong> at <strong>$20 per hour</strong>.</li>
-          <li>Variable manufacturing overhead: <strong>$8 per direct labor hour</strong>.</li>
-          <li>Fixed manufacturing overhead: <strong>$31,000 per month</strong> (includes $6,000 depreciation).</li>
-        </ul>
-      </div>
-
-      <div class="ref-block">
-        <h3>Other</h3>
-        <ul>
-          <li>Prior-year May sales were 5,500 units.</li>
-          <li>The company employs 45 production workers.</li>
-          <li>A duffel-bag line was evaluated last year and discontinued.</li>
-        </ul>
-      </div>
+    <div class="footer">
+      <button class="check-btn" id="new-scenario-btn" onclick="newScenario()" disabled title="Unlocks after you complete the budget once.">New scenario</button>
+      <span class="subtitle">Unlocks after you complete the budget once, then generates a new set of numbers to rework.</span>
     </div>
   </section>
 
@@ -867,52 +829,161 @@ function playHorn() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   BASE FACTS — Summit Pack Co. (focal month: MAY)
-   Expected answers are DERIVED by formula below, never hard-coded.
+   SCENARIO ENGINE — Summit Pack Co. (focal month: MAY)
+   A scenario object holds every base fact. computeFrom() derives all
+   expected answers by formula; nothing is hard-coded. The "New
+   scenario" button generates a fresh, validated random scenario.
+   Beginning inventories follow the stated policy (steady state), and
+   June production is derived and shown as a given so the materials
+   step needs no recursion.
 ═══════════════════════════════════════════════════════════════ */
-var PRICE = 60;
-var S_APR = 5000, S_MAY = 6000, S_JUN = 7000, S_JUL = 5000;
-var SALES_APR = S_APR * PRICE;   // 300,000
-var SALES_MAY = S_MAY * PRICE;   // 360,000
-var SALES_JUN = S_JUN * PRICE;   // 420,000
+var SC = null;     // current scenario (base facts)
+var EXP = {};      // derived expected answers for the current scenario
 
-var FG_PCT = 0.20, BEG_FG = 1200;
-var PROD_JUN = 6600;             // given, so the materials step needs no recursion
+// The default scenario is the reviewed Summit Pack dataset, so the
+// first load is deterministic and matches the printed problem.
+var DEFAULT_SCENARIO = {
+  price:60,
+  sMar:4000, sApr:5000, sMay:6000, sJun:7000, sJul:5000,
+  fgPct:0.20,
+  aUse:3, aPrice:4, bUse:2, bPrice:5, rmPct:0.25,
+  dlhPer:0.5, wage:20, varRate:8, fixedPerDLH:10,
+  priorYr:5500, employees:45
+};
 
-var A_USE = 3, A_PRICE = 4;      // ripstop fabric: yards, $/yard
-var B_USE = 2, B_PRICE = 5;      // hardware: units, $/unit
-var RM_PCT = 0.25, BEG_RM_A = 4650, BEG_RM_B = 3100;
+// Derive every expected value from a scenario, purely by formula.
+function computeFrom(s) {
+  var SALES_APR = s.sApr * s.price, SALES_MAY = s.sMay * s.price, SALES_JUN = s.sJun * s.price;
 
-var DLH_PER = 0.5, WAGE = 20, VAR_RATE = 8, FIXED_MOH = 31000;
+  var BEG_FG = s.fgPct * s.sMay;             // steady-state beginning FG
+  var END_FG = s.fgPct * s.sJun;
+  var PROD   = s.sMay + END_FG - BEG_FG;
+  var END_FG_JUN = s.fgPct * s.sJul;
+  var PROD_JUN   = s.sJun + END_FG_JUN - END_FG;   // begFG June = endFG May
 
-/* ---- Step 2: production budget ---- */
-var END_FG = FG_PCT * S_JUN;                 // 1,400
-var PROD   = S_MAY + END_FG - BEG_FG;        // 6,200
+  var A_NEED = PROD * s.aUse, A_END = s.rmPct * PROD_JUN * s.aUse, BEG_RM_A = s.rmPct * PROD * s.aUse;
+  var A_PQTY = A_NEED + A_END - BEG_RM_A, A_COST = A_PQTY * s.aPrice;
+  var B_NEED = PROD * s.bUse, B_END = s.rmPct * PROD_JUN * s.bUse, BEG_RM_B = s.rmPct * PROD * s.bUse;
+  var B_PQTY = B_NEED + B_END - BEG_RM_B, B_COST = B_PQTY * s.bPrice;
 
-/* ---- Step 3: direct materials ---- */
-var A_NEED = PROD * A_USE;                    // 18,600 yd
-var A_END  = RM_PCT * (PROD_JUN * A_USE);    // 4,950 yd
-var A_PQTY = A_NEED + A_END - BEG_RM_A;       // 18,900 yd
-var A_COST = A_PQTY * A_PRICE;                // $75,600
-var B_NEED = PROD * B_USE;                    // 12,400 units
-var B_END  = RM_PCT * (PROD_JUN * B_USE);    // 3,300 units
-var B_PQTY = B_NEED + B_END - BEG_RM_B;       // 12,600 units
-var B_COST = B_PQTY * B_PRICE;                // $63,000
+  var DLH = PROD * s.dlhPer, DL_COST = DLH * s.wage;
 
-/* ---- Step 4: direct labor ---- */
-var DLH    = PROD * DLH_PER;                  // 3,100 hr
-var DL_COST = DLH * WAGE;                     // $62,000
+  var VAR_MOH = DLH * s.varRate, FIXED_MOH = s.fixedPerDLH * DLH;
+  var TOT_MOH = VAR_MOH + FIXED_MOH, OH_RATE = TOT_MOH / DLH;   // = varRate + fixedPerDLH
 
-/* ---- Step 5: manufacturing overhead ---- */
-var VAR_MOH = DLH * VAR_RATE;                 // $24,800
-var TOT_MOH = VAR_MOH + FIXED_MOH;            // $55,800
-var OH_RATE = TOT_MOH / DLH;                  // $18 / DLH
+  var MAT_A_UNIT = s.aUse * s.aPrice, MAT_B_UNIT = s.bUse * s.bPrice, DL_UNIT = s.dlhPer * s.wage;
+  var MOH_UNIT = OH_RATE * s.dlhPer;
+  var CPU = MAT_A_UNIT + MAT_B_UNIT + DL_UNIT + MOH_UNIT;
+  var COGS = s.sMay * CPU, ENDFG_VAL = END_FG * CPU;
 
-/* ---- Step 6: unit cost, COGS, ending FG ---- */
-var MOH_UNIT = OH_RATE * DLH_PER;             // $9
-var CPU = A_USE * A_PRICE + B_USE * B_PRICE + DLH_PER * WAGE + MOH_UNIT; // $41
-var COGS = S_MAY * CPU;                       // $246,000
-var ENDFG_VAL = END_FG * CPU;                 // $57,400
+  return {
+    SALES_APR:SALES_APR, SALES_MAY:SALES_MAY, SALES_JUN:SALES_JUN, S_MAY:s.sMay,
+    BEG_FG:BEG_FG, END_FG:END_FG, PROD:PROD, PROD_JUN:PROD_JUN,
+    A_NEED:A_NEED, A_END:A_END, BEG_RM_A:BEG_RM_A, A_PQTY:A_PQTY, A_COST:A_COST,
+    B_NEED:B_NEED, B_END:B_END, BEG_RM_B:BEG_RM_B, B_PQTY:B_PQTY, B_COST:B_COST,
+    DLH:DLH, DL_COST:DL_COST, WAGE:s.wage,
+    VAR_MOH:VAR_MOH, FIXED_MOH:FIXED_MOH, TOT_MOH:TOT_MOH, OH_RATE:OH_RATE,
+    MAT_A_UNIT:MAT_A_UNIT, MAT_B_UNIT:MAT_B_UNIT, DL_UNIT:DL_UNIT,
+    MOH_UNIT:MOH_UNIT, CPU:CPU, COGS:COGS, ENDFG_VAL:ENDFG_VAL
+  };
+}
+
+// True when a value is a whole number (keeps every figure clean).
+function whole(v) { return Math.abs(v - Math.round(v)) < 1e-9; }
+
+// Generate a fresh random scenario, validated so every figure stays a
+// clean whole number (with whole-dollar unit costs and overhead rate).
+function genScenario() {
+  function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
+  function rstep(min, max, step) {
+    var n = Math.floor(Math.random() * ((max - min) / step + 1));
+    return min + n * step;
+  }
+  for (var k = 0; k < 1500; k++) {
+    var s = {
+      price: rstep(40, 80, 5),
+      sMar: rstep(3,9,1)*1000, sApr: rstep(3,9,1)*1000, sMay: rstep(4,9,1)*1000,
+      sJun: rstep(4,10,1)*1000, sJul: rstep(3,9,1)*1000,
+      fgPct: pick([0.10, 0.20, 0.25]),
+      aUse: pick([2,3,4]), aPrice: pick([3,4,5,6]),
+      bUse: pick([1,2,3]), bPrice: pick([4,5,6,8]),
+      rmPct: pick([0.20, 0.25, 0.50]),
+      dlhPer: pick([0.5, 1]), wage: pick([16,18,20,22,24]),
+      varRate: pick([4,6,8]), fixedPerDLH: pick([8,10,12]),
+      priorYr: rstep(3,9,1)*1000, employees: rstep(20,60,1)
+    };
+    var t = computeFrom(s);
+    if (t.PROD > 0 && t.PROD_JUN > 0 && t.A_PQTY > 0 && t.B_PQTY > 0 &&
+        whole(t.DLH) && whole(t.END_FG) && whole(t.BEG_FG) &&
+        whole(t.A_END) && whole(t.BEG_RM_A) && whole(t.B_END) && whole(t.BEG_RM_B) &&
+        whole(t.MOH_UNIT) && whole(t.CPU) && whole(t.DL_UNIT)) {
+      return s;
+    }
+  }
+  return DEFAULT_SCENARIO;
+}
+
+// Render the Company Information panel from the current scenario.
+function renderPanel() {
+  var s = SC, e = EXP;
+  function m(v) { return fmtMoney(v, 0); }
+  function u(v) { return fmtUnits(v); }
+  function pc(v) { return (Math.round(v * 1000) / 10) + '%'; }
+  function hrs(v) { return (Math.round(v * 100) / 100) + ''; }
+  var html =
+    '<div class="ref-block full">' +
+      '<h3>Sales &amp; product</h3>' +
+      '<table class="cost-table" style="margin-top:4px;"><thead>' +
+        '<tr><th>Month</th><th>March</th><th>April</th><th>May</th><th>June</th><th>July</th></tr>' +
+      '</thead><tbody>' +
+        '<tr><td class="row-label">Unit sales</td><td>' + u(s.sMar) + '</td><td>' + u(s.sApr) +
+        '</td><td>' + u(s.sMay) + '</td><td>' + u(s.sJun) + '</td><td>' + u(s.sJul) + '</td></tr>' +
+      '</tbody></table>' +
+      '<ul style="margin-top:8px;">' +
+        '<li>Selling price: <strong>' + m(s.price) + ' per backpack</strong>.</li>' +
+        '<li>Desired ending finished goods each month = <strong>' + pc(s.fgPct) + ' of next month’s unit sales</strong>. Finished goods on hand <strong>May 1: ' + u(e.BEG_FG) + ' units</strong>.</li>' +
+        '<li>Budgeted <strong>June production: ' + u(e.PROD_JUN) + ' units</strong>.</li>' +
+      '</ul></div>' +
+    '<div class="ref-block"><h3>Direct materials (per backpack)</h3><ul>' +
+      '<li><strong>Ripstop fabric:</strong> ' + u(s.aUse) + ' yards per unit at <strong>' + m(s.aPrice) + ' per yard</strong>.</li>' +
+      '<li><strong>Webbing &amp; hardware:</strong> ' + u(s.bUse) + ' units per unit at <strong>' + m(s.bPrice) + ' each</strong>.</li>' +
+      '<li>Desired ending raw materials each month = <strong>' + pc(s.rmPct) + ' of next month’s production needs</strong>.</li>' +
+      '<li>On hand <strong>May 1: ' + u(e.BEG_RM_A) + ' yards</strong> of fabric and <strong>' + u(e.BEG_RM_B) + ' units</strong> of hardware.</li>' +
+    '</ul></div>' +
+    '<div class="ref-block"><h3>Direct labor &amp; overhead</h3><ul>' +
+      '<li>Direct labor: <strong>' + hrs(s.dlhPer) + ' hours per unit</strong> at <strong>' + m(s.wage) + ' per hour</strong>.</li>' +
+      '<li>Variable manufacturing overhead: <strong>' + m(s.varRate) + ' per direct labor hour</strong>.</li>' +
+      '<li>Fixed manufacturing overhead: <strong>' + m(e.FIXED_MOH) + ' per month</strong>.</li>' +
+    '</ul></div>' +
+    '<div class="ref-block"><h3>Other</h3><ul>' +
+      '<li>Prior-year May sales were ' + u(s.priorYr) + ' units.</li>' +
+      '<li>The company employs ' + u(s.employees) + ' production workers.</li>' +
+      '<li>A duffel-bag line was evaluated last year and discontinued.</li>' +
+    '</ul></div>';
+  document.getElementById('ref-content').innerHTML = html;
+}
+
+// Apply a scenario: derive answers, rebuild specs, redraw the panel.
+function applyScenario(s) {
+  SC = s;
+  EXP = computeFrom(s);
+  buildSpecs();
+  renderPanel();
+}
+
+// Generate a new scenario and restart the activity from Step 1.
+function newScenario() {
+  applyScenario(genScenario());
+  resetStep1(); resetStep2(); resetStep3(); resetStep4(); resetStep5(); resetStep6();
+  for (var n = 2; n <= 6; n++) {
+    var el = document.getElementById('step' + n);
+    el.classList.remove('show');
+    var btn = document.getElementById('reveal-step' + n + '-btn');
+    if (btn) btn.style.display = '';
+  }
+  revealedSteps.clear();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
 
 /* ═══════════════════════════════════════════════════════════════
    GENERIC CHECKER
@@ -962,126 +1033,120 @@ function resetGroup(spec, scoreId, extraResetFn) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   STEP 1 — Sales budget
+   STEP SPECS — rebuilt from EXP each time a scenario is applied.
+   Explain hints describe the approach only; they never reveal the
+   number or the literal computation.
 ═══════════════════════════════════════════════════════════════ */
-var SALES_HINT = 'Sales revenue for a month = that month’s unit sales × the selling price per unit.';
-var S1 = [
-  { inputId:'m1-apr', hintId:'h-m1-apr', expected:SALES_APR, tol:0.5, explain:SALES_HINT },
-  { inputId:'m1-may', hintId:'h-m1-may', expected:SALES_MAY, tol:0.5, explain:SALES_HINT },
-  { inputId:'m1-jun', hintId:'h-m1-jun', expected:SALES_JUN, tol:0.5, explain:SALES_HINT }
-];
+var S1, S2, S3, S4, S5, S6;
+function buildSpecs() {
+  var SALES_HINT = 'Sales revenue for a month = that month’s unit sales × the selling price per unit.';
+  S1 = [
+    { inputId:'m1-apr', hintId:'h-m1-apr', expected:EXP.SALES_APR, tol:0.5, explain:SALES_HINT },
+    { inputId:'m1-may', hintId:'h-m1-may', expected:EXP.SALES_MAY, tol:0.5, explain:SALES_HINT },
+    { inputId:'m1-jun', hintId:'h-m1-jun', expected:EXP.SALES_JUN, tol:0.5, explain:SALES_HINT }
+  ];
+  S2 = [
+    { inputId:'m2-endfg', hintId:'h-m2-endfg', expected:EXP.END_FG, tol:1,
+      explain:'Desired ending finished goods is a percentage of next month’s unit sales.' },
+    { inputId:'m2-prod',  hintId:'h-m2-prod',  expected:EXP.PROD, tol:1,
+      explain:'Units to produce = unit sales + desired ending finished goods − beginning finished goods on hand.' }
+  ];
+  S3 = [
+    { inputId:'m3-aneed', hintId:'h-m3-aneed', expected:EXP.A_NEED, tol:1,
+      explain:'Materials needed for production = units produced × the amount of this material used per unit.' },
+    { inputId:'m3-aend',  hintId:'h-m3-aend',  expected:EXP.A_END, tol:1,
+      explain:'Desired ending raw materials is a percentage of next month’s production requirement for this material.' },
+    { inputId:'m3-apqty', hintId:'h-m3-apqty', expected:EXP.A_PQTY, tol:1,
+      explain:'Purchases = materials needed for production + desired ending raw materials − beginning raw materials on hand.' },
+    { inputId:'m3-acost', hintId:'h-m3-acost', expected:EXP.A_COST, tol:0.5,
+      explain:'Convert the quantity purchased into dollars using this material’s price.' },
+    { inputId:'m3-bneed', hintId:'h-m3-bneed', expected:EXP.B_NEED, tol:1,
+      explain:'Materials needed for production = units produced × the amount of this material used per unit.' },
+    { inputId:'m3-bend',  hintId:'h-m3-bend',  expected:EXP.B_END, tol:1,
+      explain:'Desired ending raw materials is a percentage of next month’s production requirement for this material.' },
+    { inputId:'m3-bpqty', hintId:'h-m3-bpqty', expected:EXP.B_PQTY, tol:1,
+      explain:'Purchases = materials needed for production + desired ending raw materials − beginning raw materials on hand.' },
+    { inputId:'m3-bcost', hintId:'h-m3-bcost', expected:EXP.B_COST, tol:0.5,
+      explain:'Convert the quantity purchased into dollars using this material’s price.' }
+  ];
+  S4 = [
+    { inputId:'m4-dlh',    hintId:'h-m4-dlh',    expected:EXP.DLH, tol:1,
+      explain:'Direct labor hours = units produced × the labor hours required per unit.' },
+    { inputId:'m4-dlcost', hintId:'h-m4-dlcost', expected:EXP.DL_COST, tol:0.5,
+      explain:'Direct labor cost = total labor hours × the wage rate per hour.' }
+  ];
+  S5 = [
+    { inputId:'m5-var',  hintId:'h-m5-var',  expected:EXP.VAR_MOH, tol:0.5,
+      explain:'Variable overhead = direct labor hours × the variable overhead rate per hour.' },
+    { inputId:'m5-tot',  hintId:'h-m5-tot',  expected:EXP.TOT_MOH, tol:0.5,
+      explain:'Total overhead = variable overhead + fixed overhead.' },
+    { inputId:'m5-rate', hintId:'h-m5-rate', expected:EXP.OH_RATE, tol:0.05,
+      explain:'The predetermined rate spreads total budgeted overhead across total budgeted direct labor hours.' }
+  ];
+  S6 = [
+    { inputId:'m6-mohunit', hintId:'h-m6-mohunit', expected:EXP.MOH_UNIT, tol:0.05,
+      explain:'Apply the predetermined overhead rate to the labor hours each unit requires.' },
+    { inputId:'m6-cpu',     hintId:'h-m6-cpu',     expected:EXP.CPU, tol:0.05,
+      explain:'Add the per-unit cost of each material, direct labor, and applied overhead.' },
+    { inputId:'m6-cogs',    hintId:'h-m6-cogs',    expected:EXP.COGS, tol:0.5,
+      explain:'Cost of goods sold = units sold × manufacturing cost per unit.' },
+    { inputId:'m6-endfg',   hintId:'h-m6-endfg',   expected:EXP.ENDFG_VAL, tol:0.5,
+      explain:'Ending finished goods value = units in ending inventory × manufacturing cost per unit.' }
+  ];
+}
+
 function checkStep1() {
   var fb = document.getElementById('step1-insight'); fb.innerHTML = '';
   checkGroup(S1, 'score1-out', function() {
     revealStep2(false);
-    fb.innerHTML = '<div class="insight success">May sales revenue is <strong>' + fmtMoney(SALES_MAY, 0) + '</strong>. The sales forecast drives every budget that follows: production, materials, labor, and overhead.</div>';
+    fb.innerHTML = '<div class="insight success">May sales revenue is <strong>' + fmtMoney(EXP.SALES_MAY, 0) + '</strong>. The sales forecast drives every budget that follows: production, materials, labor, and overhead.</div>';
   });
 }
 function resetStep1() { resetGroup(S1, 'score1-out', function(){ document.getElementById('step1-insight').innerHTML=''; }); }
 
-/* ═══════════════════════════════════════════════════════════════
-   STEP 2 — Production budget
-═══════════════════════════════════════════════════════════════ */
-var S2 = [
-  { inputId:'m2-endfg', hintId:'h-m2-endfg', expected:END_FG, tol:1,
-    explain:'Desired ending finished goods is a percentage of next month’s unit sales.' },
-  { inputId:'m2-prod',  hintId:'h-m2-prod',  expected:PROD, tol:1,
-    explain:'Units to produce = unit sales + desired ending finished goods − beginning finished goods on hand.' }
-];
 function checkStep2() {
   var fb = document.getElementById('step2-insight'); fb.innerHTML = '';
   checkGroup(S2, 'score2-out', function() {
     revealStep3(false);
-    fb.innerHTML = '<div class="insight success">Budgeted production is <strong>' + fmtUnits(PROD) + ' units</strong> — more than the ' + fmtUnits(S_MAY) + ' sold, because the company builds finished-goods inventory for June. Beginning inventory reduces the amount that must be produced.</div>';
+    var more = EXP.PROD > EXP.S_MAY ? 'more' : 'fewer';
+    fb.innerHTML = '<div class="insight success">Budgeted production is <strong>' + fmtUnits(EXP.PROD) + ' units</strong> — ' + more + ' than the ' + fmtUnits(EXP.S_MAY) + ' sold, because desired ending finished goods and beginning inventory shift production away from units sold.</div>';
   });
 }
 function resetStep2() { resetGroup(S2, 'score2-out', function(){ document.getElementById('step2-insight').innerHTML=''; }); }
 
-/* ═══════════════════════════════════════════════════════════════
-   STEP 3 — Direct materials budget
-═══════════════════════════════════════════════════════════════ */
-var S3 = [
-  { inputId:'m3-aneed', hintId:'h-m3-aneed', expected:A_NEED, tol:1,
-    explain:'Materials needed for production = units produced × the amount of this material used per unit.' },
-  { inputId:'m3-aend',  hintId:'h-m3-aend',  expected:A_END, tol:1,
-    explain:'Desired ending raw materials is a percentage of next month’s production requirement for this material.' },
-  { inputId:'m3-apqty', hintId:'h-m3-apqty', expected:A_PQTY, tol:1,
-    explain:'Purchases = materials needed for production + desired ending raw materials − beginning raw materials on hand.' },
-  { inputId:'m3-acost', hintId:'h-m3-acost', expected:A_COST, tol:0.5,
-    explain:'Convert the quantity purchased into dollars using this material’s price.' },
-  { inputId:'m3-bneed', hintId:'h-m3-bneed', expected:B_NEED, tol:1,
-    explain:'Materials needed for production = units produced × the amount of this material used per unit.' },
-  { inputId:'m3-bend',  hintId:'h-m3-bend',  expected:B_END, tol:1,
-    explain:'Desired ending raw materials is a percentage of next month’s production requirement for this material.' },
-  { inputId:'m3-bpqty', hintId:'h-m3-bpqty', expected:B_PQTY, tol:1,
-    explain:'Purchases = materials needed for production + desired ending raw materials − beginning raw materials on hand.' },
-  { inputId:'m3-bcost', hintId:'h-m3-bcost', expected:B_COST, tol:0.5,
-    explain:'Convert the quantity purchased into dollars using this material’s price.' }
-];
 function checkStep3() {
   var fb = document.getElementById('step3-insight'); fb.innerHTML = '';
   checkGroup(S3, 'score3-out', function() {
     revealStep4(false);
-    fb.innerHTML = '<div class="insight success">Materials purchases total <strong>' + fmtMoney(A_COST + B_COST, 0) + '</strong> (' + fmtUnits(A_PQTY) + ' yards of fabric and ' + fmtUnits(B_PQTY) + ' units of hardware). Purchases exceed production needs because each material also stocks ending inventory for next month.</div>';
+    fb.innerHTML = '<div class="insight success">Materials purchases total <strong>' + fmtMoney(EXP.A_COST + EXP.B_COST, 0) + '</strong> (' + fmtUnits(EXP.A_PQTY) + ' yards of fabric and ' + fmtUnits(EXP.B_PQTY) + ' units of hardware). Purchases differ from production needs because each material also adjusts its raw-materials inventory.</div>';
   });
 }
 function resetStep3() { resetGroup(S3, 'score3-out', function(){ document.getElementById('step3-insight').innerHTML=''; }); }
 
-/* ═══════════════════════════════════════════════════════════════
-   STEP 4 — Direct labor budget
-═══════════════════════════════════════════════════════════════ */
-var S4 = [
-  { inputId:'m4-dlh',    hintId:'h-m4-dlh',    expected:DLH, tol:1,
-    explain:'Direct labor hours = units produced × the labor hours required per unit.' },
-  { inputId:'m4-dlcost', hintId:'h-m4-dlcost', expected:DL_COST, tol:0.5,
-    explain:'Direct labor cost = total labor hours × the wage rate per hour.' }
-];
 function checkStep4() {
   var fb = document.getElementById('step4-insight'); fb.innerHTML = '';
   checkGroup(S4, 'score4-out', function() {
     revealStep5(false);
-    fb.innerHTML = '<div class="insight success">Direct labor costs <strong>' + fmtMoney(DL_COST, 0) + '</strong> for May — ' + fmtUnits(DLH) + ' hours at ' + fmtMoney(WAGE, 0) + ' per hour. Labor hours are driven by units produced, not units sold.</div>';
+    fb.innerHTML = '<div class="insight success">Direct labor costs <strong>' + fmtMoney(EXP.DL_COST, 0) + '</strong> for May — ' + fmtUnits(EXP.DLH) + ' hours at ' + fmtMoney(EXP.WAGE, 0) + ' per hour. Labor hours are driven by units produced, not units sold.</div>';
   });
 }
 function resetStep4() { resetGroup(S4, 'score4-out', function(){ document.getElementById('step4-insight').innerHTML=''; }); }
 
-/* ═══════════════════════════════════════════════════════════════
-   STEP 5 — Manufacturing overhead budget
-═══════════════════════════════════════════════════════════════ */
-var S5 = [
-  { inputId:'m5-var',  hintId:'h-m5-var',  expected:VAR_MOH, tol:0.5,
-    explain:'Variable overhead = direct labor hours × the variable overhead rate per hour.' },
-  { inputId:'m5-tot',  hintId:'h-m5-tot',  expected:TOT_MOH, tol:0.5,
-    explain:'Total overhead = variable overhead + fixed overhead.' },
-  { inputId:'m5-rate', hintId:'h-m5-rate', expected:OH_RATE, tol:0.05,
-    explain:'The predetermined rate spreads total budgeted overhead across total budgeted direct labor hours.' }
-];
 function checkStep5() {
   var fb = document.getElementById('step5-insight'); fb.innerHTML = '';
   checkGroup(S5, 'score5-out', function() {
     revealStep6(false);
-    fb.innerHTML = '<div class="insight success">Total manufacturing overhead is <strong>' + fmtMoney(TOT_MOH, 0) + '</strong>: ' + fmtMoney(VAR_MOH, 0) + ' variable plus ' + fmtMoney(FIXED_MOH, 0) + ' fixed. Dividing by direct labor hours gives a predetermined rate of <strong>' + fmtMoney(OH_RATE, 0) + ' per hour</strong>, used to apply overhead to each unit.</div>';
+    fb.innerHTML = '<div class="insight success">Total manufacturing overhead is <strong>' + fmtMoney(EXP.TOT_MOH, 0) + '</strong>: ' + fmtMoney(EXP.VAR_MOH, 0) + ' variable plus ' + fmtMoney(EXP.FIXED_MOH, 0) + ' fixed. Dividing by direct labor hours gives a predetermined rate of <strong>' + fmtMoney(EXP.OH_RATE, 0) + ' per hour</strong>, used to apply overhead to each unit.</div>';
   });
 }
 function resetStep5() { resetGroup(S5, 'score5-out', function(){ document.getElementById('step5-insight').innerHTML=''; }); }
 
-/* ═══════════════════════════════════════════════════════════════
-   STEP 6 — Unit cost & cost of goods sold (capstone)
-═══════════════════════════════════════════════════════════════ */
-var S6 = [
-  { inputId:'m6-mohunit', hintId:'h-m6-mohunit', expected:MOH_UNIT, tol:0.05,
-    explain:'Apply the predetermined overhead rate to the labor hours each unit requires.' },
-  { inputId:'m6-cpu',     hintId:'h-m6-cpu',     expected:CPU, tol:0.05,
-    explain:'Add the per-unit cost of each material, direct labor, and applied overhead.' },
-  { inputId:'m6-cogs',    hintId:'h-m6-cogs',    expected:COGS, tol:0.5,
-    explain:'Cost of goods sold = units sold × manufacturing cost per unit.' },
-  { inputId:'m6-endfg',   hintId:'h-m6-endfg',   expected:ENDFG_VAL, tol:0.5,
-    explain:'Ending finished goods value = units in ending inventory × manufacturing cost per unit.' }
-];
 function checkStep6() {
   var fb = document.getElementById('step6-insight'); fb.innerHTML = '';
   checkGroup(S6, 'score6-out', function() {
-    fb.innerHTML = '<div class="insight success">Each backpack costs <strong>' + fmtMoney(CPU, 0) + '</strong> to manufacture (' + fmtMoney(A_USE * A_PRICE, 0) + ' fabric + ' + fmtMoney(B_USE * B_PRICE, 0) + ' hardware + ' + fmtMoney(DLH_PER * WAGE, 0) + ' labor + ' + fmtMoney(MOH_UNIT, 0) + ' overhead). At ' + fmtUnits(S_MAY) + ' units sold, budgeted cost of goods sold is <strong>' + fmtMoney(COGS, 0) + '</strong>, and the ' + fmtUnits(END_FG) + ' units in ending finished goods are valued at ' + fmtMoney(ENDFG_VAL, 0) + '. These figures feed the budgeted income statement and balance sheet.</div>';
+    var nb = document.getElementById('new-scenario-btn');
+    if (nb) { nb.disabled = false; nb.removeAttribute('title'); }
+    fb.innerHTML = '<div class="insight success">Each backpack costs <strong>' + fmtMoney(EXP.CPU, 0) + '</strong> to manufacture (' + fmtMoney(EXP.MAT_A_UNIT, 0) + ' fabric + ' + fmtMoney(EXP.MAT_B_UNIT, 0) + ' hardware + ' + fmtMoney(EXP.DL_UNIT, 0) + ' labor + ' + fmtMoney(EXP.MOH_UNIT, 0) + ' overhead). At ' + fmtUnits(EXP.S_MAY) + ' units sold, budgeted cost of goods sold is <strong>' + fmtMoney(EXP.COGS, 0) + '</strong>, and the ' + fmtUnits(EXP.END_FG) + ' units in ending finished goods are valued at ' + fmtMoney(EXP.ENDFG_VAL, 0) + '. These figures feed the budgeted income statement and balance sheet.</div>';
   });
 }
 function resetStep6() { resetGroup(S6, 'score6-out', function(){ document.getElementById('step6-insight').innerHTML=''; }); }
@@ -1122,6 +1187,15 @@ function showQR() {
 function hideQR(ev) {
   if (ev && ev.target.id !== 'qr-overlay' && ev.target.className !== 'qr-close') return;
   document.getElementById('qr-overlay').classList.remove('show');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   INIT — load the default scenario on first paint
+═══════════════════════════════════════════════════════════════ */
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', function(){ applyScenario(DEFAULT_SCENARIO); });
+} else {
+  applyScenario(DEFAULT_SCENARIO);
 }
 </script>
 
