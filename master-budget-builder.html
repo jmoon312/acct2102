@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Master Budget Builder &mdash; Harbor Goods Co.</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    background: #f4f0e8;
+    color: #1a2744;
+    min-height: 100vh;
+  }
+
+  header {
+    background: #1a2744;
+    color: #fff;
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .header-left h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+  .header-left p  { font-size: 13px; color: #a0aec0; margin-top: 2px; }
+
+  .qr-btn {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    transition: background .15s;
+  }
+  .qr-btn:hover { background: rgba(255,255,255,0.18); }
+
+  .qr-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .qr-overlay.show { display: flex; }
+  .qr-modal {
+    background: #fff;
+    border-radius: 14px;
+    padding: 32px;
+    text-align: center;
+    max-width: 300px;
+    width: 90%;
+  }
+  .qr-modal h2 { font-size: 16px; font-weight: 600; color: #1a2744; margin-bottom: 6px; }
+  .qr-modal p  { font-size: 12px; color: #64748b; margin-bottom: 18px; line-height: 1.5; }
+  #qr-code { display: flex; justify-content: center; margin-bottom: 16px; }
+  #qr-url  { font-size: 11px; color: #94a3b8; word-break: break-all; margin-bottom: 18px; }
+  .qr-close {
+    background: #1a2744; color: #fff;
+    border: none; border-radius: 8px;
+    padding: 8px 24px; font-size: 13px;
+    cursor: pointer; font-family: inherit;
+  }
+
+  main {
+    max-width: 920px;
+    margin: 28px auto;
+    padding: 0 20px 48px;
+  }
+
+  .part {
+    background: #fff;
+    border: 1px solid #dde3ef;
+    border-radius: 12px;
+    padding: 22px 24px 24px;
+    margin-bottom: 22px;
+  }
+
+  .part-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .part-tag {
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    background: #1a2744;
+    padding: 3px 10px;
+    border-radius: 99px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+  .part-tag.practice { background: #D85A30; }
+  .part-tag.explore  { background: #3b7dd8; }
+  .part-tag.solve    { background: #7a5cb6; }
+  .part-tag.build    { background: #5a9e3a; }
+  .part-tag.capstone { background: #1a2744; }
+  .part-tag.info     { background: #b8860b; }
+  .part-header h2 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -.01em;
+  }
+  .part-header .subtitle {
+    font-size: 13px;
+    color: #64748b;
+  }
+
+  /* Company Information reference panel */
+  .ref-panel { border-color: #cbb89a; background: #fffdf8; }
+  .ref-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  .ref-block {
+    background: #f8f6f0;
+    border: 1px solid #e6dfd0;
+    border-radius: 9px;
+    padding: 12px 14px;
+  }
+  .ref-block h3 {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: #8a6d2f;
+    margin-bottom: 8px;
+  }
+  .ref-block ul { list-style: none; }
+  .ref-block li {
+    font-size: 13px;
+    color: #334155;
+    line-height: 1.5;
+    padding-left: 14px;
+    position: relative;
+    margin-bottom: 4px;
+  }
+  .ref-block li::before {
+    content: "\2022";
+    position: absolute;
+    left: 0;
+    color: #1a2744;
+  }
+  .ref-block li strong { color: #1a2744; }
+  .ref-block.full { grid-column: 1 / -1; }
+
+  .setup-box {
+    background: #f8f6f0;
+    border: 1px solid #e6dfd0;
+    border-radius: 9px;
+    padding: 14px 16px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: #334155;
+    margin-bottom: 16px;
+  }
+  .setup-box strong { color: #1a2744; }
+  .setup-box p + p { margin-top: 6px; }
+
+  .prompt {
+    font-size: 14px;
+    color: #1a2744;
+    margin-bottom: 12px;
+    line-height: 1.55;
+  }
+  .prompt strong { font-weight: 700; }
+
+  .cost-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-top: 10px;
+    font-variant-numeric: tabular-nums;
+  }
+  .cost-table thead th {
+    background: #fde9c8;
+    color: #1a2744;
+    font-size: 12.5px;
+    font-weight: 700;
+    text-align: center;
+    padding: 9px 8px;
+    border-bottom: 2px solid #f0c674;
+  }
+  .cost-table thead th:first-child {
+    border-top-left-radius: 8px;
+    text-align: left;
+    padding-left: 14px;
+  }
+  .cost-table thead th:last-child { border-top-right-radius: 8px; }
+  .cost-table tbody td {
+    background: #fff;
+    padding: 8px 8px;
+    text-align: right;
+    border-bottom: 1px solid #f0e9d6;
+    font-size: 13px;
+  }
+  .cost-table tbody td.row-label {
+    text-align: left;
+    padding-left: 14px;
+    font-weight: 600;
+    color: #1a2744;
+  }
+  .cost-table tbody tr.subtotal td {
+    background: #f8f6f0;
+    font-weight: 700;
+    color: #1a2744;
+    border-top: 1px solid #e6dfd0;
+  }
+
+  .qa-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 4px; }
+  .qa-row {
+    display: grid;
+    grid-template-columns: 1fr 200px;
+    gap: 14px;
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #e1eaf3;
+    border-radius: 9px;
+    padding: 13px 16px;
+  }
+  .qa-row.total-row { background: #f0f5fa; border-color: #c7dcf5; }
+  .qa-row .qa-prompt {
+    font-size: 13.5px;
+    color: #1a2744;
+    line-height: 1.5;
+  }
+  .qa-row .qa-prompt strong { font-weight: 700; }
+  .qa-row .qa-prompt small {
+    display: block;
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 3px;
+  }
+  .qa-row .answer { display: flex; flex-direction: column; }
+  .qa-row .answer label {
+    font-size: 10.5px;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 4px;
+  }
+  .qa-row .answer input,
+  .qa-row .answer select {
+    padding: 8px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .qa-row .answer input:focus,
+  .qa-row .answer select:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .qa-row .answer input.correct,
+  .qa-row .answer select.correct {
+    border-color: #5a9e3a;
+    background: #f0f9e8;
+    color: #2d6a1f;
+  }
+  .qa-row .answer input.wrong,
+  .qa-row .answer select.wrong {
+    border-color: #c94040;
+    background: #fff1f1;
+    color: #9b2020;
+  }
+  .corr-hint {
+    display: block;
+    font-size: 11.5px;
+    color: #64748b;
+    font-weight: 500;
+    margin-top: 4px;
+    min-height: 14px;
+    line-height: 1.4;
+  }
+
+  .reveal { display: none; animation: slideIn 0.4s ease-out; }
+  .reveal.show { display: block; }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .insight {
+    margin-top: 8px;
+    background: #eff6ff;
+    border: 1px solid #c7dcf5;
+    border-left: 4px solid #3b7dd8;
+    border-radius: 0 8px 8px 0;
+    padding: 11px 14px;
+    font-size: 13px;
+    line-height: 1.55;
+    color: #1a2744;
+  }
+  .insight strong { color: #1e40af; }
+  .insight.success {
+    background: #f0f9e8;
+    border-color: #c4e0a3;
+    border-left-color: #5a9e3a;
+  }
+  .insight.success strong { color: #2d6a1f; }
+
+  .footer {
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .check-btn {
+    background: #1a2744; color: #fff;
+    border: none; border-radius: 9px;
+    padding: 10px 24px; font-size: 14px;
+    cursor: pointer; font-family: inherit;
+    font-weight: 500;
+    transition: background .15s;
+  }
+  .check-btn:hover { background: #243660; }
+  .reset-btn {
+    font-size: 13px; color: #64748b;
+    background: none; border: none;
+    cursor: pointer; text-decoration: underline;
+    font-family: inherit;
+  }
+  .reveal-link {
+    margin-left: auto;
+    font-size: 12.5px;
+    color: #64748b;
+    background: none; border: none;
+    cursor: pointer; text-decoration: underline;
+    font-family: inherit;
+  }
+  .reveal-link:hover { color: #1a2744; }
+  .score-out {
+    font-size: 14px; font-weight: 600;
+    color: #1a2744;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 6px 14px;
+  }
+  .score-out:empty { display: none; }
+
+  @media (max-width: 700px) {
+    header { padding: 14px 16px; }
+    main { padding: 0 12px 40px; }
+    .part { padding: 18px 14px 18px; }
+    .ref-grid { grid-template-columns: 1fr; }
+    .cost-table thead th, .cost-table tbody td { font-size: 11.5px; padding: 6px 6px; }
+    .qa-row { grid-template-columns: 1fr; gap: 8px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>Master Budget Builder &mdash; Harbor Goods Co.</h1>
+  </div>
+  <button class="qr-btn" onclick="showQR()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="2" height="2"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="19" width="3" height="2"/><rect x="19" y="19" width="2" height="2"/></svg>
+    Share with students
+  </button>
+</header>
+
+<div class="qr-overlay" id="qr-overlay" onclick="hideQR(event)">
+  <div class="qr-modal">
+    <h2>Scan to open on your device</h2>
+    <p>Students can scan this QR code or type the URL to open the activity on their phone or laptop.</p>
+    <div id="qr-code"></div>
+    <div id="qr-url"></div>
+    <button class="qr-close" onclick="hideQR()">Close</button>
+  </div>
+</div>
+
+<main>
+
+  <!-- ───────── COMPANY INFORMATION reference panel ───────── -->
+  <section class="part ref-panel">
+    <div class="part-header">
+      <span class="part-tag info">Company Information</span>
+      <h2>Harbor Goods Co. &mdash; budgeting for March</h2>
+      <span class="subtitle">everything you need is here &mdash; and a few facts you won't</span>
+    </div>
+
+    <div class="setup-box">
+      <p><strong>Harbor Goods Co.</strong> is a merchandiser that buys and resells one product &mdash; heavy-duty storage bins. The controller is assembling the company's <strong>master budget for the month of March</strong>: the operating schedules, the cash budget, and the budgeted income statement. Every fact she has is listed below. Pull the pieces you need for each step; not all of them belong in every schedule.</p>
+    </div>
+
+    <div class="ref-grid">
+      <div class="ref-block full">
+        <h3>Product &amp; unit sales</h3>
+        <table class="cost-table" style="margin-top:4px;">
+          <thead>
+            <tr><th>Month</th><th>January</th><th>February</th><th>March</th><th>April</th><th>May</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="row-label">Unit sales</td><td>5,000</td><td>6,000</td><td>8,000</td><td>9,000</td><td>7,000</td></tr>
+          </tbody>
+        </table>
+        <ul style="margin-top:8px;">
+          <li>Selling price: <strong>$20 per unit</strong>. Purchase cost: <strong>$8 per unit</strong>.</li>
+          <li>For reference, the prior year's March generated <strong>$140,000</strong> in sales revenue.</li>
+        </ul>
+      </div>
+
+      <div class="ref-block">
+        <h3>Collections</h3>
+        <ul>
+          <li><strong>30%</strong> of each month's sales are cash sales; the other <strong>70%</strong> are on credit.</li>
+          <li>Credit sales are collected <strong>20%</strong> in the month of sale, <strong>50%</strong> the following month, and <strong>25%</strong> two months after the sale.</li>
+          <li>The remaining <strong>5%</strong> of credit sales is never collected (written off as uncollectible).</li>
+        </ul>
+      </div>
+
+      <div class="ref-block">
+        <h3>Inventory &amp; purchases</h3>
+        <ul>
+          <li>Desired ending inventory each month = <strong>25% of next month's unit sales</strong>.</li>
+          <li>Inventory on hand <strong>March 1: 2,000 units</strong>.</li>
+          <li>Actual <strong>February</strong> merchandise purchases: <strong>$52,000</strong>.</li>
+          <li>Suppliers are paid <strong>40%</strong> in the month of purchase, <strong>60%</strong> the following month.</li>
+        </ul>
+      </div>
+
+      <div class="ref-block">
+        <h3>Selling expenses (monthly)</h3>
+        <ul>
+          <li>Sales commissions: <strong>5% of sales revenue</strong>.</li>
+          <li>Variable miscellaneous: <strong>2% of sales revenue</strong>.</li>
+          <li>Fixed salaries <strong>$6,000</strong>; advertising <strong>$3,000</strong>; depreciation <strong>$4,000</strong> (non-cash).</li>
+          <li>All selling expenses are paid in the month incurred.</li>
+        </ul>
+      </div>
+
+      <div class="ref-block">
+        <h3>General &amp; administrative (monthly)</h3>
+        <ul>
+          <li>Salaries <strong>$10,000</strong>; insurance <strong>$1,500</strong>; utilities <strong>$1,200</strong>; depreciation <strong>$2,000</strong> (non-cash); miscellaneous <strong>$800</strong>.</li>
+          <li>Cash G&amp;A is paid <strong>70%</strong> in the month incurred, <strong>30%</strong> the following month.</li>
+          <li><strong>February</strong> cash G&amp;A totaled <strong>$12,500</strong>.</li>
+        </ul>
+      </div>
+
+      <div class="ref-block">
+        <h3>Taxes &amp; financing</h3>
+        <ul>
+          <li>Income tax = <strong>30% of pretax income</strong>, paid the month after it is incurred.</li>
+          <li>Income taxes payable on <strong>March 1: $12,000</strong>.</li>
+          <li>Note payable <strong>$40,000</strong> at <strong>6%</strong> annual interest &mdash; <strong>$200</strong> of interest accrues each month.</li>
+          <li>Minimum required ending cash balance: <strong>$25,000</strong>. Cash on hand <strong>March 1: $22,000</strong>.</li>
+          <li>A <strong>$50,000</strong> equipment purchase (cash) is planned for March.</li>
+          <li>The company employs 18 people and has $22,000 of common stock outstanding.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───────── STEP 1 — Sales budget ───────── -->
+  <section class="part">
+    <div class="part-header">
+      <span class="part-tag practice">Step 1</span>
+      <h2>Sales budget</h2>
+      <span class="subtitle">the anchor every other schedule is built on</span>
+    </div>
+
+    <div class="setup-box">
+      <p>The master budget always starts with sales &mdash; everything downstream (purchases, collections, the income statement) depends on it. Build out the budgeted sales revenue for the months the controller will need.</p>
+    </div>
+
+    <p class="prompt">Compute the <strong>budgeted sales revenue</strong> for each month.</p>
+
+    <div class="qa-list">
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>January</strong> sales revenue</div>
+        <div class="answer">
+          <label>$</label>
+          <input type="text" id="s1-jan" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-s1-jan"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>February</strong> sales revenue</div>
+        <div class="answer">
+          <label>$</label>
+          <input type="text" id="s1-feb" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-s1-feb"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>March</strong> sales revenue</div>
+        <div class="answer">
+          <label>$</label>
+          <input type="text" id="s1-mar" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-s1-mar"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>April</strong> sales revenue</div>
+        <div class="answer">
+          <label>$</label>
+          <input type="text" id="s1-apr" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-s1-apr"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep1()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep1()">Reset</button>
+      <span id="score1-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep2(true)" id="reveal-step2-btn">Skip ahead &rarr;</button>
+    </div>
+
+    <div id="step1-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 2 — Purchases budget ───────── -->
+  <section class="part reveal" id="step2">
+    <div class="part-header">
+      <span class="part-tag explore">Step 2</span>
+      <h2>Purchases budget &mdash; March</h2>
+      <span class="subtitle">how much merchandise must Harbor Goods buy?</span>
+    </div>
+
+    <div class="setup-box">
+      <p>A merchandiser doesn't make its product &mdash; it buys it. To know how much to purchase in March, the controller has to cover March sales <em>and</em> leave the right amount of inventory on the shelf for the start of April, while accounting for what's already on hand March 1.</p>
+    </div>
+
+    <p class="prompt">Build the <strong>March purchases budget</strong>.</p>
+
+    <div class="qa-list">
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Desired ending inventory</strong>, March 31 <small>in units</small></div>
+        <div class="answer">
+          <label>units</label>
+          <input type="text" id="s2-end" inputmode="decimal" placeholder="units">
+          <span class="corr-hint" id="h-s2-end"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Units to purchase</strong> in March</div>
+        <div class="answer">
+          <label>units</label>
+          <input type="text" id="s2-units" inputmode="decimal" placeholder="units">
+          <span class="corr-hint" id="h-s2-units"></span>
+        </div>
+      </div>
+      <div class="qa-row total-row">
+        <div class="qa-prompt"><strong>Cost of March purchases</strong></div>
+        <div class="answer">
+          <label>$</label>
+          <input type="text" id="s2-cost" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-s2-cost"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep2()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep2()">Reset</button>
+      <span id="score2-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep3(true)" id="reveal-step3-btn">Skip ahead &rarr;</button>
+    </div>
+
+    <div id="step2-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 3 — Collections schedule ───────── -->
+  <section class="part reveal" id="step3">
+    <div class="part-header">
+      <span class="part-tag solve">Step 3</span>
+      <h2>Cash collections &mdash; March</h2>
+      <span class="subtitle">when does the cash from a sale actually arrive?</span>
+    </div>
+
+    <div class="setup-box">
+      <p>A sale and the cash from that sale are two different events. Some of March's cash comes from March sales, but a lot of it arrives from January and February credit sales that are only now being collected. Trace every dollar that lands in March.</p>
+    </div>
+
+    <p class="prompt">Compute each piece of <strong>March cash collections</strong>, then the total.</p>
+
+    <div class="qa-list">
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Cash sales</strong> collected in March</div>
+        <div class="answer">
+          <label>$</label>
+          <input type="text" id="s3-cash" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-s3-cash"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt">Collected in March from <strong>March credit sales</strong></div>
+        <div class="answer">
+          <label>$</label>
+          <input type="text" id="s3-cmar" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-s3-cmar"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt">Collected in March from <strong>February credit sales</strong></div>
+        <div class="answer">
+          <label>$</label>
+          <input type="text" id="s3-cfeb" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-s3-cfeb"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt">Collected in March from <strong>January credit sales</strong></div>
+        <div class="answer">
+          <label>$</label>
+          <input type="text" id="s3-cjan" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-s3-cjan"></span>
+        </div>
+      </div>
+      <div class="qa-row total-row">
+        <div class="qa-prompt"><strong>Total cash collections</strong>, March</div>
+        <div class="answer">
+          <label>$</label>
+          <input type="text" id="s3-tot" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-s3-tot"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep3()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep3()">Reset</button>
+      <span id="score3-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep4(true)" id="reveal-step4-btn">Skip ahead &rarr;</button>
+    </div>
+
+    <div id="step3-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 4 — Cash disbursements ───────── -->
+  <section class="part reveal" id="step4">
+    <div class="part-header">
+      <span class="part-tag solve">Step 4</span>
+      <h2>Cash disbursements &mdash; March</h2>
+      <span class="subtitle">only the cash that actually leaves in March</span>
+    </div>
+
+    <div class="setup-box">
+      <p>Now the money going out. Watch two things: payment timing (some of what Harbor Goods pays in March is for February's activity, and vice-versa), and the difference between an <em>expense</em> and a <em>cash payment</em> &mdash; non-cash items don't belong in a cash disbursements schedule.</p>
+    </div>
+
+    <p class="prompt">Compute each <strong>March cash disbursement</strong> category, then the total operating disbursements.</p>
+
+    <div class="qa-list">
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Payments for merchandise purchases</strong></div>
+        <div class="answer">
+          <label>$</label>
+          <input type="text" id="s4-purch" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-s4-purch"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Cash selling expenses</strong> paid</div>
+        <div class="answer">
+          <label>$</label>
+          <input type="text" id="s4-sell" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-s4-sell"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Cash G&amp;A expenses</strong> paid</div>
+        <div class="answer">
+          <label>$</label>
+          <input type="text" id="s4-ga" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-s4-ga"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Income taxes</strong> paid</div>
+        <div class="answer">
+          <label>$</label>
+          <input type="text" id="s4-tax" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-s4-tax"></span>
+        </div>
+      </div>
+      <div class="qa-row total-row">
+        <div class="qa-prompt"><strong>Total operating disbursements</strong></div>
+        <div class="answer">
+          <label>$</label>
+          <input type="text" id="s4-tot" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-s4-tot"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep4()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep4()">Reset</button>
+      <span id="score4-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep5(true)" id="reveal-step5-btn">Skip ahead &rarr;</button>
+    </div>
+
+    <div id="step4-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 5 — Complete cash budget ───────── -->
+  <section class="part reveal" id="step5">
+    <div class="part-header">
+      <span class="part-tag build">Step 5</span>
+      <h2>Complete cash budget &mdash; March</h2>
+      <span class="subtitle">pull collections, disbursements, and financing together</span>
+    </div>
+
+    <div class="setup-box">
+      <p>Time to assemble the cash budget. Start from the cash on hand, add what comes in, take out what goes out (including the planned equipment purchase), and then decide whether Harbor Goods needs to draw on its line of credit to stay above its required cushion.</p>
+    </div>
+
+    <p class="prompt">Complete the <strong>March cash budget</strong>.</p>
+
+    <div class="qa-list">
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Cash available</strong> <small>beginning cash plus collections</small></div>
+        <div class="answer">
+          <label>$</label>
+          <input type="text" id="s5-avail" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-s5-avail"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Excess of cash available over operating disbursements</strong></div>
+        <div class="answer">
+          <label>$</label>
+          <input type="text" id="s5-excess" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-s5-excess"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Amount to borrow</strong> <small>after the equipment purchase, to reach the required minimum cash balance</small></div>
+        <div class="answer">
+          <label>$</label>
+          <input type="text" id="s5-borrow" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-s5-borrow"></span>
+        </div>
+      </div>
+      <div class="qa-row total-row">
+        <div class="qa-prompt"><strong>Budgeted ending cash balance</strong>, March 31</div>
+        <div class="answer">
+          <label>$</label>
+          <input type="text" id="s5-end" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-s5-end"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep5()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep5()">Reset</button>
+      <span id="score5-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep6(true)" id="reveal-step6-btn">Skip ahead &rarr;</button>
+    </div>
+
+    <div id="step5-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 6 — Budgeted income statement ───────── -->
+  <section class="part reveal" id="step6">
+    <div class="part-header">
+      <span class="part-tag capstone">Capstone</span>
+      <h2>Budgeted income statement &mdash; March</h2>
+      <span class="subtitle">where cash and profit finally part ways</span>
+    </div>
+
+    <div class="setup-box">
+      <p>The final piece. The income statement uses <em>accrual</em> figures, not cash &mdash; so depreciation is back in, uncollectible accounts show up as an expense, and timing of payments no longer matters. You already have March sales revenue from Step&nbsp;1, and the monthly interest accrual on the note is your interest expense.</p>
+    </div>
+
+    <p class="prompt">Build the <strong>budgeted income statement</strong> for March, line by line.</p>
+
+    <div class="qa-list">
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Cost of goods sold</strong></div>
+        <div class="answer">
+          <label>$</label>
+          <input type="text" id="s6-cogs" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-s6-cogs"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Gross profit</strong></div>
+        <div class="answer">
+          <label>$</label>
+          <input type="text" id="s6-gross" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-s6-gross"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Bad debt (uncollectible accounts) expense</strong></div>
+        <div class="answer">
+          <label>$</label>
+          <input type="text" id="s6-bad" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-s6-bad"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Total selling expense</strong></div>
+        <div class="answer">
+          <label>$</label>
+          <input type="text" id="s6-sell" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-s6-sell"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Total general &amp; administrative expense</strong></div>
+        <div class="answer">
+          <label>$</label>
+          <input type="text" id="s6-ga" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-s6-ga"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Operating income</strong></div>
+        <div class="answer">
+          <label>$</label>
+          <input type="text" id="s6-opinc" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-s6-opinc"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Pretax income</strong> <small>after the monthly interest on the note</small></div>
+        <div class="answer">
+          <label>$</label>
+          <input type="text" id="s6-pretax" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-s6-pretax"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Income tax expense</strong></div>
+        <div class="answer">
+          <label>$</label>
+          <input type="text" id="s6-tax" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-s6-tax"></span>
+        </div>
+      </div>
+      <div class="qa-row total-row">
+        <div class="qa-prompt"><strong>Net income</strong></div>
+        <div class="answer">
+          <label>$</label>
+          <input type="text" id="s6-ni" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-s6-ni"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep6()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep6()">Reset</button>
+      <span id="score6-out" class="score-out"></span>
+    </div>
+
+    <div id="step6-insight"></div>
+  </section>
+
+</main>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════════════════ */
+function parseNum(s) {
+  if (typeof s !== 'string') return NaN;
+  return parseFloat(s.replace(/[\$,\s%]/g, ''));
+}
+function fmtMoney(v, decimals) {
+  var d = (decimals === undefined) ? 0 : decimals;
+  var rounded = Math.round(v * 100) / 100;
+  var sign = rounded < 0 ? '-$' : '$';
+  return sign + Math.abs(rounded).toLocaleString('en-US', {
+    minimumFractionDigits: d,
+    maximumFractionDigits: d
+  });
+}
+function fmtUnits(v) {
+  return Math.round(v).toLocaleString('en-US');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   AUDIO
+═══════════════════════════════════════════════════════════════ */
+var audioCtx = null;
+function getAudio() {
+  if (!audioCtx) {
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (AC) audioCtx = new AC();
+  }
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+function playBell() {
+  var ctx = getAudio(); if (!ctx) return;
+  var now = ctx.currentTime;
+  [523.25, 659.25, 783.99].forEach(function(f) {
+    var osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = 'sine'; osc.frequency.value = f;
+    osc.connect(g).connect(ctx.destination);
+    g.gain.setValueAtTime(0, now);
+    g.gain.linearRampToValueAtTime(0.15, now + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 1.6);
+    osc.start(now); osc.stop(now + 1.7);
+  });
+}
+function playHorn() {
+  var ctx = getAudio(); if (!ctx) return;
+  var now = ctx.currentTime;
+  var notes = [
+    { f: 466.16, t: 0.00, d: 0.18 },
+    { f: 440.00, t: 0.20, d: 0.18 },
+    { f: 415.30, t: 0.40, d: 0.55 }
+  ];
+  notes.forEach(function(n) {
+    var osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(n.f, now + n.t);
+    if (n.d > 0.3) osc.frequency.exponentialRampToValueAtTime(n.f * 0.88, now + n.t + n.d);
+    osc.connect(g).connect(ctx.destination);
+    g.gain.setValueAtTime(0, now + n.t);
+    g.gain.linearRampToValueAtTime(0.12, now + n.t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, now + n.t + n.d);
+    osc.start(now + n.t); osc.stop(now + n.t + n.d + 0.05);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   BASE FACTS — Harbor Goods Co. (focal month: MARCH)
+   Expected answers are DERIVED by formula below, never hard-coded.
+═══════════════════════════════════════════════════════════════ */
+var PRICE = 20, UCOST = 8;
+var U_JAN = 5000, U_FEB = 6000, U_MAR = 8000, U_APR = 9000;
+var SALES_JAN = U_JAN * PRICE;   // 100,000
+var SALES_FEB = U_FEB * PRICE;   // 120,000
+var SALES_MAR = U_MAR * PRICE;   // 160,000
+var SALES_APR = U_APR * PRICE;   // 180,000
+
+var CASH_PCT = 0.30, CREDIT_PCT = 0.70;
+var L0 = 0.20, L1 = 0.50, L2 = 0.25;   // collection lags (5% uncollectible)
+
+var END_INV_PCT = 0.25, BEG_INV_MAR = 2000, FEB_PURCH = 52000;
+var PAY_CUR = 0.40, PAY_NEXT = 0.60;
+
+var COMM = 0.05, VMISC = 0.02, SELL_SAL = 6000, ADV = 3000, SELL_DEP = 4000;
+var GA_SAL = 10000, INS = 1500, UTIL = 1200, GA_DEP = 2000, GA_MISC = 800;
+var GA_CUR = 0.70, GA_NEXT = 0.30, FEB_CASH_GA = 12500;
+
+var TAX_RATE = 0.30, TAX_PAYABLE_MAR1 = 12000;
+var INTEREST = 200, MIN_CASH = 25000, BEG_CASH = 22000, EQUIP = 50000;
+var BAD_PCT = 0.05;
+
+/* ---- Step 2: purchases budget ---- */
+var DES_END   = END_INV_PCT * U_APR;              // 2,250 units
+var PURCH_U   = U_MAR + DES_END - BEG_INV_MAR;    // 8,250 units
+var PURCH_C   = PURCH_U * UCOST;                  // $66,000
+
+/* ---- Step 3: collections (March) ---- */
+var COL_CASH  = CASH_PCT * SALES_MAR;             // 48,000
+var COL_MAR   = L0 * CREDIT_PCT * SALES_MAR;      // 22,400
+var COL_FEB   = L1 * CREDIT_PCT * SALES_FEB;      // 42,000
+var COL_JAN   = L2 * CREDIT_PCT * SALES_JAN;      // 17,500
+var COL_TOT   = COL_CASH + COL_MAR + COL_FEB + COL_JAN; // 129,900
+
+/* ---- Step 4: disbursements (March) ---- */
+var PAY_PURCH = PAY_CUR * PURCH_C + PAY_NEXT * FEB_PURCH;       // 57,600
+var CASH_SELL = COMM * SALES_MAR + VMISC * SALES_MAR + SELL_SAL + ADV; // 20,200
+var MAR_CASH_GA = GA_SAL + INS + UTIL + GA_MISC;               // 13,500 (no depr)
+var PAY_GA    = GA_CUR * MAR_CASH_GA + GA_NEXT * FEB_CASH_GA;  // 13,200
+var PAY_TAX   = TAX_PAYABLE_MAR1;                              // 12,000
+var DISB_TOT  = PAY_PURCH + CASH_SELL + PAY_GA + PAY_TAX;      // 103,000
+
+/* ---- Step 5: cash budget ---- */
+var CASH_AVAIL  = BEG_CASH + COL_TOT;             // 151,900
+var EXCESS      = CASH_AVAIL - DISB_TOT;          // 48,900
+var BEFORE_FIN  = EXCESS - EQUIP;                 // -1,100
+var BORROW      = MIN_CASH - BEFORE_FIN;          // 26,100
+var END_CASH    = BEFORE_FIN + BORROW;            // 25,000
+
+/* ---- Step 6: budgeted income statement ---- */
+var COGS    = U_MAR * UCOST;                      // 64,000
+var GROSS   = SALES_MAR - COGS;                   // 96,000
+var BAD     = BAD_PCT * CREDIT_PCT * SALES_MAR;   // 5,600
+var SELL_EXP = COMM * SALES_MAR + VMISC * SALES_MAR + SELL_SAL + ADV + SELL_DEP; // 24,200
+var GA_EXP  = GA_SAL + INS + UTIL + GA_DEP + GA_MISC; // 15,500
+var OPEX    = BAD + SELL_EXP + GA_EXP;            // 45,300
+var OP_INC  = GROSS - OPEX;                       // 50,700
+var PRETAX  = OP_INC - INTEREST;                  // 50,500
+var TAX     = TAX_RATE * PRETAX;                  // 15,150
+var NET_INC = PRETAX - TAX;                       // 35,350
+
+/* ═══════════════════════════════════════════════════════════════
+   GENERIC CHECKER
+   Per-input attempt counter — explanatory hint shown only on the
+   2nd (or later) wrong submission for the same input. Hints explain
+   the approach; they never reveal the number or the literal compute.
+═══════════════════════════════════════════════════════════════ */
+var attemptCounts = {};
+function checkGroup(spec, scoreId, allCorrectFn) {
+  var correct = 0, total = 0, blanks = 0;
+  spec.forEach(function(f) {
+    var inp  = document.getElementById(f.inputId);
+    var hint = document.getElementById(f.hintId);
+    inp.classList.remove('correct', 'wrong');
+    total++;
+    if (inp.value.trim() === '') { blanks++; hint.textContent = ''; return; }
+    var val = parseNum(inp.value);
+    if (!isNaN(val) && Math.abs(val - f.expected) <= f.tol) {
+      inp.classList.add('correct');
+      hint.textContent = '';
+      attemptCounts[f.inputId] = 0;
+      correct++;
+    } else {
+      inp.classList.add('wrong');
+      attemptCounts[f.inputId] = (attemptCounts[f.inputId] || 0) + 1;
+      hint.textContent = (attemptCounts[f.inputId] >= 2 && f.explain) ? f.explain : '';
+    }
+  });
+  var out = document.getElementById(scoreId);
+  if (blanks === total) { out.textContent = 'Fill in some answers first.'; return false; }
+  out.textContent = correct + ' / ' + total + ' correct' + (blanks ? ' (' + blanks + ' blank)' : '');
+  if (correct === total) { playBell(); if (allCorrectFn) allCorrectFn(); return true; }
+  playHorn();
+  return false;
+}
+function resetGroup(spec, scoreId, extraResetFn) {
+  spec.forEach(function(f) {
+    var inp = document.getElementById(f.inputId);
+    var hint = document.getElementById(f.hintId);
+    inp.value = '';
+    inp.classList.remove('correct', 'wrong');
+    hint.textContent = '';
+    attemptCounts[f.inputId] = 0;
+  });
+  document.getElementById(scoreId).textContent = '';
+  if (extraResetFn) extraResetFn();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 1 — Sales budget
+═══════════════════════════════════════════════════════════════ */
+var SALES_HINT = 'Sales revenue for a month = that month’s unit sales × the selling price per unit.';
+var S1 = [
+  { inputId:'s1-jan', hintId:'h-s1-jan', expected:SALES_JAN, tol:0.5, explain:SALES_HINT },
+  { inputId:'s1-feb', hintId:'h-s1-feb', expected:SALES_FEB, tol:0.5, explain:SALES_HINT },
+  { inputId:'s1-mar', hintId:'h-s1-mar', expected:SALES_MAR, tol:0.5, explain:SALES_HINT },
+  { inputId:'s1-apr', hintId:'h-s1-apr', expected:SALES_APR, tol:0.5, explain:SALES_HINT }
+];
+function checkStep1() {
+  var fb = document.getElementById('step1-insight'); fb.innerHTML = '';
+  checkGroup(S1, 'score1-out', function() {
+    revealStep2(false);
+    fb.innerHTML = '<div class="insight success"><strong>March sales come in at $160,000</strong> &mdash; the budget’s anchor. Every schedule that follows (collections, purchases, the income statement) traces back to these four sales figures. May’s units and last year’s March revenue were there to test whether you’d grab only what you need.</div>';
+  });
+}
+function resetStep1() { resetGroup(S1, 'score1-out', function(){ document.getElementById('step1-insight').innerHTML=''; }); }
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 2 — Purchases budget
+═══════════════════════════════════════════════════════════════ */
+var S2 = [
+  { inputId:'s2-end',   hintId:'h-s2-end',   expected:DES_END, tol:1,
+    explain:'Desired ending inventory is a percentage of the *next* month’s unit sales, not this month’s.' },
+  { inputId:'s2-units', hintId:'h-s2-units', expected:PURCH_U, tol:1,
+    explain:'Units to buy = units sold this month + desired ending inventory − beginning inventory already on hand.' },
+  { inputId:'s2-cost',  hintId:'h-s2-cost',  expected:PURCH_C, tol:0.5,
+    explain:'Translate the units you need to purchase into dollars using the per-unit purchase cost.' }
+];
+function checkStep2() {
+  var fb = document.getElementById('step2-insight'); fb.innerHTML = '';
+  checkGroup(S2, 'score2-out', function() {
+    revealStep3(false);
+    fb.innerHTML = '<div class="insight success"><strong>Harbor Goods must buy 8,250 units &mdash; $66,000 of merchandise.</strong> Notice that’s <em>more</em> than the 8,000 units it sells in March: the 25%-of-next-month rule means it’s also stocking up for April’s higher volume. Beginning inventory pushes the other way, trimming what needs to be bought.</div>';
+  });
+}
+function resetStep2() { resetGroup(S2, 'score2-out', function(){ document.getElementById('step2-insight').innerHTML=''; }); }
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 3 — Collections schedule
+═══════════════════════════════════════════════════════════════ */
+var S3 = [
+  { inputId:'s3-cash', hintId:'h-s3-cash', expected:COL_CASH, tol:0.5,
+    explain:'Only the cash-sales portion of this month’s sales is collected on the spot.' },
+  { inputId:'s3-cmar', hintId:'h-s3-cmar', expected:COL_MAR, tol:0.5,
+    explain:'Take this month’s credit sales, then apply the fraction collected in the month of sale.' },
+  { inputId:'s3-cfeb', hintId:'h-s3-cfeb', expected:COL_FEB, tol:0.5,
+    explain:'Apply the second-month collection fraction to the *prior* month’s credit sales.' },
+  { inputId:'s3-cjan', hintId:'h-s3-cjan', expected:COL_JAN, tol:0.5,
+    explain:'Apply the third collection fraction to the credit sales from two months earlier.' },
+  { inputId:'s3-tot',  hintId:'h-s3-tot',  expected:COL_TOT, tol:1,
+    explain:'Add the cash collections to all three credit-collection pieces.' }
+];
+function checkStep3() {
+  var fb = document.getElementById('step3-insight'); fb.innerHTML = '';
+  checkGroup(S3, 'score3-out', function() {
+    revealStep4(false);
+    fb.innerHTML = '<div class="insight success"><strong>March collections total $129,900.</strong> Only $48,000 arrives as cash sales; the other $81,900 trickles in from three different months of credit sales. That lag &mdash; plus the 5% that never shows up at all &mdash; is exactly why a profitable month can still leave a company short on cash.</div>';
+  });
+}
+function resetStep3() { resetGroup(S3, 'score3-out', function(){ document.getElementById('step3-insight').innerHTML=''; }); }
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 4 — Cash disbursements
+═══════════════════════════════════════════════════════════════ */
+var S4 = [
+  { inputId:'s4-purch', hintId:'h-s4-purch', expected:PAY_PURCH, tol:0.5,
+    explain:'Combine the portion of this month’s purchases paid now with the portion of last month’s purchases paid this month.' },
+  { inputId:'s4-sell',  hintId:'h-s4-sell',  expected:CASH_SELL, tol:0.5,
+    explain:'Add the sales-driven items (commissions, variable misc.) to the fixed selling items — but leave out any non-cash item.' },
+  { inputId:'s4-ga',    hintId:'h-s4-ga',    expected:PAY_GA, tol:0.5,
+    explain:'Blend the portion of this month’s cash G&A paid now with the portion of last month’s cash G&A paid this month. Exclude the non-cash item.' },
+  { inputId:'s4-tax',   hintId:'h-s4-tax',   expected:PAY_TAX, tol:0.5,
+    explain:'Taxes are paid the month after they’re incurred — so this month you pay whatever was payable at the start of the month.' },
+  { inputId:'s4-tot',   hintId:'h-s4-tot',   expected:DISB_TOT, tol:1,
+    explain:'Sum all four cash-outflow categories.' }
+];
+function checkStep4() {
+  var fb = document.getElementById('step4-insight'); fb.innerHTML = '';
+  checkGroup(S4, 'score4-out', function() {
+    revealStep5(false);
+    fb.innerHTML = '<div class="insight success"><strong>Operating disbursements run $103,000 for March.</strong> Notice what’s <em>not</em> here: depreciation (non-cash) and the equipment purchase (an investing outflow, handled separately in the cash budget). A cash disbursements schedule tracks cash leaving the door — not expenses on the income statement.</div>';
+  });
+}
+function resetStep4() { resetGroup(S4, 'score4-out', function(){ document.getElementById('step4-insight').innerHTML=''; }); }
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 5 — Complete cash budget
+═══════════════════════════════════════════════════════════════ */
+var S5 = [
+  { inputId:'s5-avail',  hintId:'h-s5-avail',  expected:CASH_AVAIL, tol:1,
+    explain:'Add the month’s beginning cash balance to total collections.' },
+  { inputId:'s5-excess', hintId:'h-s5-excess', expected:EXCESS, tol:1,
+    explain:'Subtract total operating disbursements from cash available.' },
+  { inputId:'s5-borrow', hintId:'h-s5-borrow', expected:BORROW, tol:1,
+    explain:'After the equipment outlay the balance dips below the required minimum. Borrow just enough to bring it back up to that floor.' },
+  { inputId:'s5-end',    hintId:'h-s5-end',    expected:END_CASH, tol:1,
+    explain:'Once you’ve borrowed exactly enough to reach the minimum, the ending balance equals that required floor.' }
+];
+function checkStep5() {
+  var fb = document.getElementById('step5-insight'); fb.innerHTML = '';
+  checkGroup(S5, 'score5-out', function() {
+    revealStep6(false);
+    fb.innerHTML = '<div class="insight success"><strong>Even with $129,900 flowing in, the $50,000 equipment purchase pushes Harbor Goods $1,100 below its $25,000 floor</strong> &mdash; so it must borrow $26,100 to land exactly at the minimum. The month is profitable, but the <em>timing</em> of cash in versus cash out forces a draw on the line of credit. That gap is the whole reason cash budgets exist.</div>';
+  });
+}
+function resetStep5() { resetGroup(S5, 'score5-out', function(){ document.getElementById('step5-insight').innerHTML=''; }); }
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 6 — Budgeted income statement (capstone)
+═══════════════════════════════════════════════════════════════ */
+var S6 = [
+  { inputId:'s6-cogs',   hintId:'h-s6-cogs',   expected:COGS, tol:0.5,
+    explain:'Cost of goods sold = units actually sold × the purchase cost per unit — not the units you purchased.' },
+  { inputId:'s6-gross',  hintId:'h-s6-gross',  expected:GROSS, tol:0.5,
+    explain:'Gross profit = sales revenue − cost of goods sold.' },
+  { inputId:'s6-bad',    hintId:'h-s6-bad',    expected:BAD, tol:0.5,
+    explain:'The uncollectible percentage applies only to credit sales, not to total sales.' },
+  { inputId:'s6-sell',   hintId:'h-s6-sell',   expected:SELL_EXP, tol:0.5,
+    explain:'Include every selling item — variable and fixed — and this time depreciation counts, because it’s an expense even though no cash moves.' },
+  { inputId:'s6-ga',     hintId:'h-s6-ga',     expected:GA_EXP, tol:0.5,
+    explain:'Total all G&A items, including the non-cash depreciation, regardless of when they’re paid.' },
+  { inputId:'s6-opinc',  hintId:'h-s6-opinc',  expected:OP_INC, tol:1,
+    explain:'Operating income = gross profit − all operating expenses (bad debt, selling, and G&A).' },
+  { inputId:'s6-pretax', hintId:'h-s6-pretax', expected:PRETAX, tol:1,
+    explain:'Pretax income = operating income − the monthly interest on the note.' },
+  { inputId:'s6-tax',    hintId:'h-s6-tax',    expected:TAX, tol:0.5,
+    explain:'Apply the income-tax rate to pretax income.' },
+  { inputId:'s6-ni',     hintId:'h-s6-ni',     expected:NET_INC, tol:1,
+    explain:'Net income = pretax income − income tax expense.' }
+];
+function checkStep6() {
+  var fb = document.getElementById('step6-insight'); fb.innerHTML = '';
+  checkGroup(S6, 'score6-out', function() {
+    fb.innerHTML = '<div class="insight success"><strong>Net income of $35,350 &mdash; in a month that still needed $26,100 of borrowing.</strong> That contrast is the punchline of the whole master budget: profit and cash are not the same thing. Accrual income adds back depreciation and recognizes bad-debt expense, and ignores payment timing entirely. The one piece left to build is the <em>budgeted balance sheet</em>, which ties together the ending cash, receivables, inventory, payables, the new equipment, and the loan into a single statement.</div>';
+  });
+}
+function resetStep6() { resetGroup(S6, 'score6-out', function(){ document.getElementById('step6-insight').innerHTML=''; }); }
+
+/* ═══════════════════════════════════════════════════════════════
+   REVEAL STEPS
+═══════════════════════════════════════════════════════════════ */
+var revealedSteps = new Set();
+function revealStep(stepNum, scroll) {
+  var el = document.getElementById('step' + stepNum);
+  if (!revealedSteps.has(stepNum)) {
+    el.classList.add('show');
+    revealedSteps.add(stepNum);
+    var btn = document.getElementById('reveal-step' + stepNum + '-btn');
+    if (btn) btn.style.display = 'none';
+  }
+  if (scroll) setTimeout(function() { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 60);
+}
+function revealStep2(scroll) { revealStep(2, scroll); }
+function revealStep3(scroll) { revealStep(3, scroll); }
+function revealStep4(scroll) { revealStep(4, scroll); }
+function revealStep5(scroll) { revealStep(5, scroll); }
+function revealStep6(scroll) { revealStep(6, scroll); }
+
+/* ═══════════════════════════════════════════════════════════════
+   QR / SHARE
+═══════════════════════════════════════════════════════════════ */
+function showQR() {
+  var url = location.href;
+  document.getElementById('qr-url').textContent = url;
+  var qrEl = document.getElementById('qr-code');
+  qrEl.innerHTML = '';
+  if (window.QRCode) {
+    new QRCode(qrEl, { text: url, width: 180, height: 180, colorDark: '#1a2744', colorLight: '#ffffff' });
+  }
+  document.getElementById('qr-overlay').classList.add('show');
+}
+function hideQR(ev) {
+  if (ev && ev.target.id !== 'qr-overlay' && ev.target.className !== 'qr-close') return;
+  document.getElementById('qr-overlay').classList.remove('show');
+}
+</script>
+
+</body>
+</html>
