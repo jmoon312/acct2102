@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manufacturing Budget Builder &mdash; Summit Pack Co.</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    background: #f4f0e8;
+    color: #1a2744;
+    min-height: 100vh;
+  }
+
+  header {
+    background: #1a2744;
+    color: #fff;
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .header-left h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+  .header-left p  { font-size: 13px; color: #a0aec0; margin-top: 2px; }
+
+  .qr-btn {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    transition: background .15s;
+  }
+  .qr-btn:hover { background: rgba(255,255,255,0.18); }
+
+  .qr-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .qr-overlay.show { display: flex; }
+  .qr-modal {
+    background: #fff;
+    border-radius: 14px;
+    padding: 32px;
+    text-align: center;
+    max-width: 300px;
+    width: 90%;
+  }
+  .qr-modal h2 { font-size: 16px; font-weight: 600; color: #1a2744; margin-bottom: 6px; }
+  .qr-modal p  { font-size: 12px; color: #64748b; margin-bottom: 18px; line-height: 1.5; }
+  #qr-code { display: flex; justify-content: center; margin-bottom: 16px; }
+  #qr-url  { font-size: 11px; color: #94a3b8; word-break: break-all; margin-bottom: 18px; }
+  .qr-close {
+    background: #1a2744; color: #fff;
+    border: none; border-radius: 8px;
+    padding: 8px 24px; font-size: 13px;
+    cursor: pointer; font-family: inherit;
+  }
+
+  main {
+    max-width: 920px;
+    margin: 28px auto;
+    padding: 0 20px 48px;
+  }
+
+  .part {
+    background: #fff;
+    border: 1px solid #dde3ef;
+    border-radius: 12px;
+    padding: 22px 24px 24px;
+    margin-bottom: 22px;
+  }
+
+  .part-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .part-tag {
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    background: #1a2744;
+    padding: 3px 10px;
+    border-radius: 99px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+  .part-tag.practice { background: #D85A30; }
+  .part-tag.explore  { background: #3b7dd8; }
+  .part-tag.solve    { background: #7a5cb6; }
+  .part-tag.build    { background: #5a9e3a; }
+  .part-tag.capstone { background: #1a2744; }
+  .part-tag.info     { background: #b8860b; }
+  .part-header h2 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -.01em;
+  }
+  .part-header .subtitle {
+    font-size: 13px;
+    color: #64748b;
+  }
+
+  /* Company Information reference panel */
+  .ref-panel { border-color: #cbb89a; background: #fffdf8; }
+  .ref-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  .ref-block {
+    background: #f8f6f0;
+    border: 1px solid #e6dfd0;
+    border-radius: 9px;
+    padding: 12px 14px;
+  }
+  .ref-block h3 {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: #8a6d2f;
+    margin-bottom: 8px;
+  }
+  .ref-block ul { list-style: none; }
+  .ref-block li {
+    font-size: 13px;
+    color: #334155;
+    line-height: 1.5;
+    padding-left: 14px;
+    position: relative;
+    margin-bottom: 4px;
+  }
+  .ref-block li::before {
+    content: "\2022";
+    position: absolute;
+    left: 0;
+    color: #1a2744;
+  }
+  .ref-block li strong { color: #1a2744; }
+  .ref-block.full { grid-column: 1 / -1; }
+
+  .setup-box {
+    background: #f8f6f0;
+    border: 1px solid #e6dfd0;
+    border-radius: 9px;
+    padding: 14px 16px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: #334155;
+    margin-bottom: 16px;
+  }
+  .setup-box strong { color: #1a2744; }
+  .setup-box p + p { margin-top: 6px; }
+
+  .prompt {
+    font-size: 14px;
+    color: #1a2744;
+    margin-bottom: 12px;
+    line-height: 1.55;
+  }
+  .prompt strong { font-weight: 700; }
+
+  .cost-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-top: 10px;
+    font-variant-numeric: tabular-nums;
+  }
+  .cost-table thead th {
+    background: #fde9c8;
+    color: #1a2744;
+    font-size: 12.5px;
+    font-weight: 700;
+    text-align: center;
+    padding: 9px 8px;
+    border-bottom: 2px solid #f0c674;
+  }
+  .cost-table thead th:first-child {
+    border-top-left-radius: 8px;
+    text-align: left;
+    padding-left: 14px;
+  }
+  .cost-table thead th:last-child { border-top-right-radius: 8px; }
+  .cost-table tbody td {
+    background: #fff;
+    padding: 8px 8px;
+    text-align: right;
+    border-bottom: 1px solid #f0e9d6;
+    font-size: 13px;
+  }
+  .cost-table tbody td.row-label {
+    text-align: left;
+    padding-left: 14px;
+    font-weight: 600;
+    color: #1a2744;
+  }
+
+  .group-label {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: #7a5cb6;
+    margin: 14px 0 6px;
+  }
+  .group-label:first-of-type { margin-top: 0; }
+
+  .qa-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 4px; }
+  .qa-row {
+    display: grid;
+    grid-template-columns: 1fr 200px;
+    gap: 14px;
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #e1eaf3;
+    border-radius: 9px;
+    padding: 13px 16px;
+  }
+  .qa-row.total-row { background: #f0f5fa; border-color: #c7dcf5; }
+  .qa-row .qa-prompt {
+    font-size: 13.5px;
+    color: #1a2744;
+    line-height: 1.5;
+  }
+  .qa-row .qa-prompt strong { font-weight: 700; }
+  .qa-row .qa-prompt small {
+    display: block;
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 3px;
+  }
+  .qa-row .answer { display: flex; flex-direction: column; }
+  .qa-row .answer label {
+    font-size: 10.5px;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 4px;
+  }
+  .qa-row .answer input {
+    padding: 8px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .qa-row .answer input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .qa-row .answer input.correct {
+    border-color: #5a9e3a;
+    background: #f0f9e8;
+    color: #2d6a1f;
+  }
+  .qa-row .answer input.wrong {
+    border-color: #c94040;
+    background: #fff1f1;
+    color: #9b2020;
+  }
+  .corr-hint {
+    display: block;
+    font-size: 11.5px;
+    color: #64748b;
+    font-weight: 500;
+    margin-top: 4px;
+    min-height: 14px;
+    line-height: 1.4;
+  }
+
+  .reveal { display: none; animation: slideIn 0.4s ease-out; }
+  .reveal.show { display: block; }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .insight {
+    margin-top: 8px;
+    background: #eff6ff;
+    border: 1px solid #c7dcf5;
+    border-left: 4px solid #3b7dd8;
+    border-radius: 0 8px 8px 0;
+    padding: 11px 14px;
+    font-size: 13px;
+    line-height: 1.55;
+    color: #1a2744;
+  }
+  .insight strong { color: #1e40af; }
+  .insight.success {
+    background: #f0f9e8;
+    border-color: #c4e0a3;
+    border-left-color: #5a9e3a;
+  }
+  .insight.success strong { color: #2d6a1f; }
+
+  .footer {
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .check-btn {
+    background: #1a2744; color: #fff;
+    border: none; border-radius: 9px;
+    padding: 10px 24px; font-size: 14px;
+    cursor: pointer; font-family: inherit;
+    font-weight: 500;
+    transition: background .15s;
+  }
+  .check-btn:hover { background: #243660; }
+  .reset-btn {
+    font-size: 13px; color: #64748b;
+    background: none; border: none;
+    cursor: pointer; text-decoration: underline;
+    font-family: inherit;
+  }
+  .reveal-link {
+    margin-left: auto;
+    font-size: 12.5px;
+    color: #64748b;
+    background: none; border: none;
+    cursor: pointer; text-decoration: underline;
+    font-family: inherit;
+  }
+  .reveal-link:hover { color: #1a2744; }
+  .score-out {
+    font-size: 14px; font-weight: 600;
+    color: #1a2744;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 6px 14px;
+  }
+  .score-out:empty { display: none; }
+
+  @media (max-width: 700px) {
+    header { padding: 14px 16px; }
+    main { padding: 0 12px 40px; }
+    .part { padding: 18px 14px 18px; }
+    .ref-grid { grid-template-columns: 1fr; }
+    .cost-table thead th, .cost-table tbody td { font-size: 11.5px; padding: 6px 6px; }
+    .qa-row { grid-template-columns: 1fr; gap: 8px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>Manufacturing Budget Builder &mdash; Summit Pack Co.</h1>
+  </div>
+  <button class="qr-btn" onclick="showQR()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="2" height="2"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="19" width="3" height="2"/><rect x="19" y="19" width="2" height="2"/></svg>
+    Share with students
+  </button>
+</header>
+
+<div class="qr-overlay" id="qr-overlay" onclick="hideQR(event)">
+  <div class="qr-modal">
+    <h2>Scan to open on your device</h2>
+    <p>Students can scan this QR code or type the URL to open the activity on their phone or laptop.</p>
+    <div id="qr-code"></div>
+    <div id="qr-url"></div>
+    <button class="qr-close" onclick="hideQR()">Close</button>
+  </div>
+</div>
+
+<main>
+
+  <!-- ───────── COMPANY INFORMATION reference panel ───────── -->
+  <section class="part ref-panel">
+    <div class="part-header">
+      <span class="part-tag info">Company Information</span>
+      <h2>Summit Pack Co. &mdash; budgeting for May</h2>
+    </div>
+
+    <div class="setup-box">
+      <p><strong>Summit Pack Co.</strong> manufactures one product, a trail backpack. The controller is preparing the company's <strong>master budget for May</strong>: the production budget, the direct materials and direct labor budgets, manufacturing overhead, and the unit cost that feeds cost of goods sold. Every fact she has is listed below. Pull the pieces you need for each step; not all of them belong in every schedule.</p>
+    </div>
+
+    <div class="ref-grid">
+      <div class="ref-block full">
+        <h3>Sales &amp; product</h3>
+        <table class="cost-table" style="margin-top:4px;">
+          <thead>
+            <tr><th>Month</th><th>March</th><th>April</th><th>May</th><th>June</th><th>July</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="row-label">Unit sales</td><td>4,000</td><td>5,000</td><td>6,000</td><td>7,000</td><td>5,000</td></tr>
+          </tbody>
+        </table>
+        <ul style="margin-top:8px;">
+          <li>Selling price: <strong>$60 per backpack</strong>.</li>
+          <li>Desired ending finished goods each month = <strong>20% of next month's unit sales</strong>. Finished goods on hand <strong>May 1: 1,200 units</strong>.</li>
+          <li>Budgeted <strong>June production: 6,600 units</strong>.</li>
+        </ul>
+      </div>
+
+      <div class="ref-block">
+        <h3>Direct materials (per backpack)</h3>
+        <ul>
+          <li><strong>Ripstop fabric:</strong> 3 yards per unit at <strong>$4 per yard</strong>.</li>
+          <li><strong>Webbing &amp; hardware:</strong> 2 units per unit at <strong>$5 each</strong>.</li>
+          <li>Desired ending raw materials each month = <strong>25% of next month's production needs</strong>.</li>
+          <li>On hand <strong>May 1: 4,650 yards</strong> of fabric and <strong>3,100 units</strong> of hardware.</li>
+        </ul>
+      </div>
+
+      <div class="ref-block">
+        <h3>Direct labor &amp; overhead</h3>
+        <ul>
+          <li>Direct labor: <strong>0.5 hours per unit</strong> at <strong>$20 per hour</strong>.</li>
+          <li>Variable manufacturing overhead: <strong>$8 per direct labor hour</strong>.</li>
+          <li>Fixed manufacturing overhead: <strong>$31,000 per month</strong> (includes $6,000 depreciation).</li>
+        </ul>
+      </div>
+
+      <div class="ref-block">
+        <h3>Other</h3>
+        <ul>
+          <li>Prior-year May sales were 5,500 units.</li>
+          <li>The company employs 45 production workers.</li>
+          <li>A duffel-bag line was evaluated last year and discontinued.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───────── STEP 1 — Sales budget ───────── -->
+  <section class="part">
+    <div class="part-header">
+      <span class="part-tag practice">Step 1</span>
+      <h2>Sales budget</h2>
+      <span class="subtitle">the sales forecast</span>
+    </div>
+
+    <div class="setup-box">
+      <p>The master budget begins with the sales forecast. Everything downstream &mdash; how much to produce, what materials and labor are needed, how much overhead is incurred &mdash; depends on it. Compute the budgeted sales revenue for the forward months.</p>
+    </div>
+
+    <p class="prompt">Compute the <strong>budgeted sales revenue</strong> for each month.</p>
+
+    <div class="qa-list">
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>April</strong> sales revenue</div>
+        <div class="answer">
+          <label>$</label>
+          <input type="text" id="m1-apr" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-m1-apr"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>May</strong> sales revenue</div>
+        <div class="answer">
+          <label>$</label>
+          <input type="text" id="m1-may" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-m1-may"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>June</strong> sales revenue</div>
+        <div class="answer">
+          <label>$</label>
+          <input type="text" id="m1-jun" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-m1-jun"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep1()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep1()">Reset</button>
+      <span id="score1-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep2(true)" id="reveal-step2-btn">Skip ahead &rarr;</button>
+    </div>
+
+    <div id="step1-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 2 — Production budget ───────── -->
+  <section class="part reveal" id="step2">
+    <div class="part-header">
+      <span class="part-tag explore">Step 2</span>
+      <h2>Production budget &mdash; May</h2>
+      <span class="subtitle">units to produce</span>
+    </div>
+
+    <div class="setup-box">
+      <p>A manufacturer must produce enough to cover May sales and to leave the desired finished-goods inventory for the start of June, while accounting for the units already on hand May 1.</p>
+    </div>
+
+    <p class="prompt">Build the <strong>May production budget</strong>.</p>
+
+    <div class="qa-list">
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Desired ending finished goods</strong>, May 31 <small>in units</small></div>
+        <div class="answer">
+          <label>units</label>
+          <input type="text" id="m2-endfg" inputmode="decimal" placeholder="units">
+          <span class="corr-hint" id="h-m2-endfg"></span>
+        </div>
+      </div>
+      <div class="qa-row total-row">
+        <div class="qa-prompt"><strong>Units to produce</strong> in May</div>
+        <div class="answer">
+          <label>units</label>
+          <input type="text" id="m2-prod" inputmode="decimal" placeholder="units">
+          <span class="corr-hint" id="h-m2-prod"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep2()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep2()">Reset</button>
+      <span id="score2-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep3(true)" id="reveal-step3-btn">Skip ahead &rarr;</button>
+    </div>
+
+    <div id="step2-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 3 — Direct materials budget ───────── -->
+  <section class="part reveal" id="step3">
+    <div class="part-header">
+      <span class="part-tag solve">Step 3</span>
+      <h2>Direct materials budget &mdash; May</h2>
+      <span class="subtitle">two materials to purchase</span>
+    </div>
+
+    <div class="setup-box">
+      <p>Each backpack uses two direct materials, budgeted separately. For each one, find the quantity needed for May production, add the desired ending raw-materials inventory, subtract what's on hand, and convert the purchases into dollars. The desired ending inventory keys off <strong>June</strong> production.</p>
+    </div>
+
+    <p class="prompt">Build the <strong>direct materials budget</strong> for each material.</p>
+
+    <div class="group-label">Ripstop fabric (yards)</div>
+    <div class="qa-list">
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Fabric needed</strong> for May production</div>
+        <div class="answer">
+          <label>yards</label>
+          <input type="text" id="m3-aneed" inputmode="decimal" placeholder="yards">
+          <span class="corr-hint" id="h-m3-aneed"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Desired ending fabric</strong>, May 31</div>
+        <div class="answer">
+          <label>yards</label>
+          <input type="text" id="m3-aend" inputmode="decimal" placeholder="yards">
+          <span class="corr-hint" id="h-m3-aend"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Fabric to purchase</strong></div>
+        <div class="answer">
+          <label>yards</label>
+          <input type="text" id="m3-apqty" inputmode="decimal" placeholder="yards">
+          <span class="corr-hint" id="h-m3-apqty"></span>
+        </div>
+      </div>
+      <div class="qa-row total-row">
+        <div class="qa-prompt"><strong>Cost of fabric purchases</strong></div>
+        <div class="answer">
+          <label>$</label>
+          <input type="text" id="m3-acost" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-m3-acost"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="group-label">Webbing &amp; hardware (units)</div>
+    <div class="qa-list">
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Hardware needed</strong> for May production</div>
+        <div class="answer">
+          <label>units</label>
+          <input type="text" id="m3-bneed" inputmode="decimal" placeholder="units">
+          <span class="corr-hint" id="h-m3-bneed"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Desired ending hardware</strong>, May 31</div>
+        <div class="answer">
+          <label>units</label>
+          <input type="text" id="m3-bend" inputmode="decimal" placeholder="units">
+          <span class="corr-hint" id="h-m3-bend"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Hardware to purchase</strong></div>
+        <div class="answer">
+          <label>units</label>
+          <input type="text" id="m3-bpqty" inputmode="decimal" placeholder="units">
+          <span class="corr-hint" id="h-m3-bpqty"></span>
+        </div>
+      </div>
+      <div class="qa-row total-row">
+        <div class="qa-prompt"><strong>Cost of hardware purchases</strong></div>
+        <div class="answer">
+          <label>$</label>
+          <input type="text" id="m3-bcost" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-m3-bcost"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep3()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep3()">Reset</button>
+      <span id="score3-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep4(true)" id="reveal-step4-btn">Skip ahead &rarr;</button>
+    </div>
+
+    <div id="step3-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 4 — Direct labor budget ───────── -->
+  <section class="part reveal" id="step4">
+    <div class="part-header">
+      <span class="part-tag solve">Step 4</span>
+      <h2>Direct labor budget &mdash; May</h2>
+      <span class="subtitle">labor hours and cost</span>
+    </div>
+
+    <div class="setup-box">
+      <p>Direct labor is driven by the units produced, not the units sold. Convert May production into the labor hours required, then into a labor cost.</p>
+    </div>
+
+    <p class="prompt">Build the <strong>May direct labor budget</strong>.</p>
+
+    <div class="qa-list">
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Direct labor hours</strong> required</div>
+        <div class="answer">
+          <label>hours</label>
+          <input type="text" id="m4-dlh" inputmode="decimal" placeholder="hours">
+          <span class="corr-hint" id="h-m4-dlh"></span>
+        </div>
+      </div>
+      <div class="qa-row total-row">
+        <div class="qa-prompt"><strong>Total direct labor cost</strong></div>
+        <div class="answer">
+          <label>$</label>
+          <input type="text" id="m4-dlcost" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-m4-dlcost"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep4()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep4()">Reset</button>
+      <span id="score4-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep5(true)" id="reveal-step5-btn">Skip ahead &rarr;</button>
+    </div>
+
+    <div id="step4-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 5 — Manufacturing overhead budget ───────── -->
+  <section class="part reveal" id="step5">
+    <div class="part-header">
+      <span class="part-tag build">Step 5</span>
+      <h2>Manufacturing overhead budget &mdash; May</h2>
+      <span class="subtitle">variable and fixed overhead</span>
+    </div>
+
+    <div class="setup-box">
+      <p>Overhead has a variable component that moves with direct labor hours and a fixed component that does not. After totaling them, compute a predetermined overhead rate per direct labor hour &mdash; the rate used to apply overhead to each unit.</p>
+    </div>
+
+    <p class="prompt">Build the <strong>May overhead budget</strong> and the predetermined rate.</p>
+
+    <div class="qa-list">
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Variable overhead</strong> for May</div>
+        <div class="answer">
+          <label>$</label>
+          <input type="text" id="m5-var" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-m5-var"></span>
+        </div>
+      </div>
+      <div class="qa-row total-row">
+        <div class="qa-prompt"><strong>Total manufacturing overhead</strong></div>
+        <div class="answer">
+          <label>$</label>
+          <input type="text" id="m5-tot" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-m5-tot"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Predetermined overhead rate</strong> <small>per direct labor hour</small></div>
+        <div class="answer">
+          <label>$ / hour</label>
+          <input type="text" id="m5-rate" inputmode="decimal" placeholder="$/hr">
+          <span class="corr-hint" id="h-m5-rate"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep5()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep5()">Reset</button>
+      <span id="score5-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep6(true)" id="reveal-step6-btn">Skip ahead &rarr;</button>
+    </div>
+
+    <div id="step5-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 6 — Unit cost & COGS ───────── -->
+  <section class="part reveal" id="step6">
+    <div class="part-header">
+      <span class="part-tag capstone">Capstone</span>
+      <h2>Unit cost &amp; cost of goods sold &mdash; May</h2>
+      <span class="subtitle">unit cost and cost of goods sold</span>
+    </div>
+
+    <div class="setup-box">
+      <p>Combine the budgets into a single manufacturing cost per unit, then use it to value cost of goods sold and ending finished goods. Each backpack absorbs both direct materials, direct labor, and overhead applied at the predetermined rate.</p>
+    </div>
+
+    <p class="prompt">Compute the <strong>budgeted unit cost</strong> and the amounts it drives.</p>
+
+    <div class="qa-list">
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Overhead cost per unit</strong></div>
+        <div class="answer">
+          <label>$ / unit</label>
+          <input type="text" id="m6-mohunit" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-m6-mohunit"></span>
+        </div>
+      </div>
+      <div class="qa-row total-row">
+        <div class="qa-prompt"><strong>Total manufacturing cost per unit</strong></div>
+        <div class="answer">
+          <label>$ / unit</label>
+          <input type="text" id="m6-cpu" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-m6-cpu"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Budgeted cost of goods sold</strong>, May</div>
+        <div class="answer">
+          <label>$</label>
+          <input type="text" id="m6-cogs" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-m6-cogs"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Ending finished goods inventory</strong>, May 31 <small>at cost</small></div>
+        <div class="answer">
+          <label>$</label>
+          <input type="text" id="m6-endfg" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-m6-endfg"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep6()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep6()">Reset</button>
+      <span id="score6-out" class="score-out"></span>
+    </div>
+
+    <div id="step6-insight"></div>
+  </section>
+
+</main>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════════════════ */
+function parseNum(s) {
+  if (typeof s !== 'string') return NaN;
+  return parseFloat(s.replace(/[\$,\s%]/g, ''));
+}
+function fmtMoney(v, decimals) {
+  var d = (decimals === undefined) ? 0 : decimals;
+  var rounded = Math.round(v * 100) / 100;
+  var sign = rounded < 0 ? '-$' : '$';
+  return sign + Math.abs(rounded).toLocaleString('en-US', {
+    minimumFractionDigits: d,
+    maximumFractionDigits: d
+  });
+}
+function fmtUnits(v) {
+  return Math.round(v).toLocaleString('en-US');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   AUDIO
+═══════════════════════════════════════════════════════════════ */
+var audioCtx = null;
+function getAudio() {
+  if (!audioCtx) {
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (AC) audioCtx = new AC();
+  }
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+function playBell() {
+  var ctx = getAudio(); if (!ctx) return;
+  var now = ctx.currentTime;
+  [523.25, 659.25, 783.99].forEach(function(f) {
+    var osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = 'sine'; osc.frequency.value = f;
+    osc.connect(g).connect(ctx.destination);
+    g.gain.setValueAtTime(0, now);
+    g.gain.linearRampToValueAtTime(0.15, now + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 1.6);
+    osc.start(now); osc.stop(now + 1.7);
+  });
+}
+function playHorn() {
+  var ctx = getAudio(); if (!ctx) return;
+  var now = ctx.currentTime;
+  var notes = [
+    { f: 466.16, t: 0.00, d: 0.18 },
+    { f: 440.00, t: 0.20, d: 0.18 },
+    { f: 415.30, t: 0.40, d: 0.55 }
+  ];
+  notes.forEach(function(n) {
+    var osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(n.f, now + n.t);
+    if (n.d > 0.3) osc.frequency.exponentialRampToValueAtTime(n.f * 0.88, now + n.t + n.d);
+    osc.connect(g).connect(ctx.destination);
+    g.gain.setValueAtTime(0, now + n.t);
+    g.gain.linearRampToValueAtTime(0.12, now + n.t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, now + n.t + n.d);
+    osc.start(now + n.t); osc.stop(now + n.t + n.d + 0.05);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   BASE FACTS — Summit Pack Co. (focal month: MAY)
+   Expected answers are DERIVED by formula below, never hard-coded.
+═══════════════════════════════════════════════════════════════ */
+var PRICE = 60;
+var S_APR = 5000, S_MAY = 6000, S_JUN = 7000, S_JUL = 5000;
+var SALES_APR = S_APR * PRICE;   // 300,000
+var SALES_MAY = S_MAY * PRICE;   // 360,000
+var SALES_JUN = S_JUN * PRICE;   // 420,000
+
+var FG_PCT = 0.20, BEG_FG = 1200;
+var PROD_JUN = 6600;             // given, so the materials step needs no recursion
+
+var A_USE = 3, A_PRICE = 4;      // ripstop fabric: yards, $/yard
+var B_USE = 2, B_PRICE = 5;      // hardware: units, $/unit
+var RM_PCT = 0.25, BEG_RM_A = 4650, BEG_RM_B = 3100;
+
+var DLH_PER = 0.5, WAGE = 20, VAR_RATE = 8, FIXED_MOH = 31000;
+
+/* ---- Step 2: production budget ---- */
+var END_FG = FG_PCT * S_JUN;                 // 1,400
+var PROD   = S_MAY + END_FG - BEG_FG;        // 6,200
+
+/* ---- Step 3: direct materials ---- */
+var A_NEED = PROD * A_USE;                    // 18,600 yd
+var A_END  = RM_PCT * (PROD_JUN * A_USE);    // 4,950 yd
+var A_PQTY = A_NEED + A_END - BEG_RM_A;       // 18,900 yd
+var A_COST = A_PQTY * A_PRICE;                // $75,600
+var B_NEED = PROD * B_USE;                    // 12,400 units
+var B_END  = RM_PCT * (PROD_JUN * B_USE);    // 3,300 units
+var B_PQTY = B_NEED + B_END - BEG_RM_B;       // 12,600 units
+var B_COST = B_PQTY * B_PRICE;                // $63,000
+
+/* ---- Step 4: direct labor ---- */
+var DLH    = PROD * DLH_PER;                  // 3,100 hr
+var DL_COST = DLH * WAGE;                     // $62,000
+
+/* ---- Step 5: manufacturing overhead ---- */
+var VAR_MOH = DLH * VAR_RATE;                 // $24,800
+var TOT_MOH = VAR_MOH + FIXED_MOH;            // $55,800
+var OH_RATE = TOT_MOH / DLH;                  // $18 / DLH
+
+/* ---- Step 6: unit cost, COGS, ending FG ---- */
+var MOH_UNIT = OH_RATE * DLH_PER;             // $9
+var CPU = A_USE * A_PRICE + B_USE * B_PRICE + DLH_PER * WAGE + MOH_UNIT; // $41
+var COGS = S_MAY * CPU;                       // $246,000
+var ENDFG_VAL = END_FG * CPU;                 // $57,400
+
+/* ═══════════════════════════════════════════════════════════════
+   GENERIC CHECKER
+   Per-input attempt counter — explanatory hint shown only on the
+   2nd (or later) wrong submission for the same input. Hints explain
+   the approach; they never reveal the number or the literal compute.
+═══════════════════════════════════════════════════════════════ */
+var attemptCounts = {};
+function checkGroup(spec, scoreId, allCorrectFn) {
+  var correct = 0, total = 0, blanks = 0;
+  spec.forEach(function(f) {
+    var inp  = document.getElementById(f.inputId);
+    var hint = document.getElementById(f.hintId);
+    inp.classList.remove('correct', 'wrong');
+    total++;
+    if (inp.value.trim() === '') { blanks++; hint.textContent = ''; return; }
+    var val = parseNum(inp.value);
+    if (!isNaN(val) && Math.abs(val - f.expected) <= f.tol) {
+      inp.classList.add('correct');
+      hint.textContent = '';
+      attemptCounts[f.inputId] = 0;
+      correct++;
+    } else {
+      inp.classList.add('wrong');
+      attemptCounts[f.inputId] = (attemptCounts[f.inputId] || 0) + 1;
+      hint.textContent = (attemptCounts[f.inputId] >= 2 && f.explain) ? f.explain : '';
+    }
+  });
+  var out = document.getElementById(scoreId);
+  if (blanks === total) { out.textContent = 'Fill in some answers first.'; return false; }
+  out.textContent = correct + ' / ' + total + ' correct' + (blanks ? ' (' + blanks + ' blank)' : '');
+  if (correct === total) { playBell(); if (allCorrectFn) allCorrectFn(); return true; }
+  playHorn();
+  return false;
+}
+function resetGroup(spec, scoreId, extraResetFn) {
+  spec.forEach(function(f) {
+    var inp = document.getElementById(f.inputId);
+    var hint = document.getElementById(f.hintId);
+    inp.value = '';
+    inp.classList.remove('correct', 'wrong');
+    hint.textContent = '';
+    attemptCounts[f.inputId] = 0;
+  });
+  document.getElementById(scoreId).textContent = '';
+  if (extraResetFn) extraResetFn();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 1 — Sales budget
+═══════════════════════════════════════════════════════════════ */
+var SALES_HINT = 'Sales revenue for a month = that month’s unit sales × the selling price per unit.';
+var S1 = [
+  { inputId:'m1-apr', hintId:'h-m1-apr', expected:SALES_APR, tol:0.5, explain:SALES_HINT },
+  { inputId:'m1-may', hintId:'h-m1-may', expected:SALES_MAY, tol:0.5, explain:SALES_HINT },
+  { inputId:'m1-jun', hintId:'h-m1-jun', expected:SALES_JUN, tol:0.5, explain:SALES_HINT }
+];
+function checkStep1() {
+  var fb = document.getElementById('step1-insight'); fb.innerHTML = '';
+  checkGroup(S1, 'score1-out', function() {
+    revealStep2(false);
+    fb.innerHTML = '<div class="insight success">May sales revenue is <strong>' + fmtMoney(SALES_MAY, 0) + '</strong>. The sales forecast drives every budget that follows: production, materials, labor, and overhead.</div>';
+  });
+}
+function resetStep1() { resetGroup(S1, 'score1-out', function(){ document.getElementById('step1-insight').innerHTML=''; }); }
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 2 — Production budget
+═══════════════════════════════════════════════════════════════ */
+var S2 = [
+  { inputId:'m2-endfg', hintId:'h-m2-endfg', expected:END_FG, tol:1,
+    explain:'Desired ending finished goods is a percentage of next month’s unit sales.' },
+  { inputId:'m2-prod',  hintId:'h-m2-prod',  expected:PROD, tol:1,
+    explain:'Units to produce = unit sales + desired ending finished goods − beginning finished goods on hand.' }
+];
+function checkStep2() {
+  var fb = document.getElementById('step2-insight'); fb.innerHTML = '';
+  checkGroup(S2, 'score2-out', function() {
+    revealStep3(false);
+    fb.innerHTML = '<div class="insight success">Budgeted production is <strong>' + fmtUnits(PROD) + ' units</strong> — more than the ' + fmtUnits(S_MAY) + ' sold, because the company builds finished-goods inventory for June. Beginning inventory reduces the amount that must be produced.</div>';
+  });
+}
+function resetStep2() { resetGroup(S2, 'score2-out', function(){ document.getElementById('step2-insight').innerHTML=''; }); }
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 3 — Direct materials budget
+═══════════════════════════════════════════════════════════════ */
+var S3 = [
+  { inputId:'m3-aneed', hintId:'h-m3-aneed', expected:A_NEED, tol:1,
+    explain:'Materials needed for production = units produced × the amount of this material used per unit.' },
+  { inputId:'m3-aend',  hintId:'h-m3-aend',  expected:A_END, tol:1,
+    explain:'Desired ending raw materials is a percentage of next month’s production requirement for this material.' },
+  { inputId:'m3-apqty', hintId:'h-m3-apqty', expected:A_PQTY, tol:1,
+    explain:'Purchases = materials needed for production + desired ending raw materials − beginning raw materials on hand.' },
+  { inputId:'m3-acost', hintId:'h-m3-acost', expected:A_COST, tol:0.5,
+    explain:'Convert the quantity purchased into dollars using this material’s price.' },
+  { inputId:'m3-bneed', hintId:'h-m3-bneed', expected:B_NEED, tol:1,
+    explain:'Materials needed for production = units produced × the amount of this material used per unit.' },
+  { inputId:'m3-bend',  hintId:'h-m3-bend',  expected:B_END, tol:1,
+    explain:'Desired ending raw materials is a percentage of next month’s production requirement for this material.' },
+  { inputId:'m3-bpqty', hintId:'h-m3-bpqty', expected:B_PQTY, tol:1,
+    explain:'Purchases = materials needed for production + desired ending raw materials − beginning raw materials on hand.' },
+  { inputId:'m3-bcost', hintId:'h-m3-bcost', expected:B_COST, tol:0.5,
+    explain:'Convert the quantity purchased into dollars using this material’s price.' }
+];
+function checkStep3() {
+  var fb = document.getElementById('step3-insight'); fb.innerHTML = '';
+  checkGroup(S3, 'score3-out', function() {
+    revealStep4(false);
+    fb.innerHTML = '<div class="insight success">Materials purchases total <strong>' + fmtMoney(A_COST + B_COST, 0) + '</strong> (' + fmtUnits(A_PQTY) + ' yards of fabric and ' + fmtUnits(B_PQTY) + ' units of hardware). Purchases exceed production needs because each material also stocks ending inventory for next month.</div>';
+  });
+}
+function resetStep3() { resetGroup(S3, 'score3-out', function(){ document.getElementById('step3-insight').innerHTML=''; }); }
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 4 — Direct labor budget
+═══════════════════════════════════════════════════════════════ */
+var S4 = [
+  { inputId:'m4-dlh',    hintId:'h-m4-dlh',    expected:DLH, tol:1,
+    explain:'Direct labor hours = units produced × the labor hours required per unit.' },
+  { inputId:'m4-dlcost', hintId:'h-m4-dlcost', expected:DL_COST, tol:0.5,
+    explain:'Direct labor cost = total labor hours × the wage rate per hour.' }
+];
+function checkStep4() {
+  var fb = document.getElementById('step4-insight'); fb.innerHTML = '';
+  checkGroup(S4, 'score4-out', function() {
+    revealStep5(false);
+    fb.innerHTML = '<div class="insight success">Direct labor costs <strong>' + fmtMoney(DL_COST, 0) + '</strong> for May — ' + fmtUnits(DLH) + ' hours at ' + fmtMoney(WAGE, 0) + ' per hour. Labor hours are driven by units produced, not units sold.</div>';
+  });
+}
+function resetStep4() { resetGroup(S4, 'score4-out', function(){ document.getElementById('step4-insight').innerHTML=''; }); }
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 5 — Manufacturing overhead budget
+═══════════════════════════════════════════════════════════════ */
+var S5 = [
+  { inputId:'m5-var',  hintId:'h-m5-var',  expected:VAR_MOH, tol:0.5,
+    explain:'Variable overhead = direct labor hours × the variable overhead rate per hour.' },
+  { inputId:'m5-tot',  hintId:'h-m5-tot',  expected:TOT_MOH, tol:0.5,
+    explain:'Total overhead = variable overhead + fixed overhead.' },
+  { inputId:'m5-rate', hintId:'h-m5-rate', expected:OH_RATE, tol:0.05,
+    explain:'The predetermined rate spreads total budgeted overhead across total budgeted direct labor hours.' }
+];
+function checkStep5() {
+  var fb = document.getElementById('step5-insight'); fb.innerHTML = '';
+  checkGroup(S5, 'score5-out', function() {
+    revealStep6(false);
+    fb.innerHTML = '<div class="insight success">Total manufacturing overhead is <strong>' + fmtMoney(TOT_MOH, 0) + '</strong>: ' + fmtMoney(VAR_MOH, 0) + ' variable plus ' + fmtMoney(FIXED_MOH, 0) + ' fixed. Dividing by direct labor hours gives a predetermined rate of <strong>' + fmtMoney(OH_RATE, 0) + ' per hour</strong>, used to apply overhead to each unit.</div>';
+  });
+}
+function resetStep5() { resetGroup(S5, 'score5-out', function(){ document.getElementById('step5-insight').innerHTML=''; }); }
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 6 — Unit cost & cost of goods sold (capstone)
+═══════════════════════════════════════════════════════════════ */
+var S6 = [
+  { inputId:'m6-mohunit', hintId:'h-m6-mohunit', expected:MOH_UNIT, tol:0.05,
+    explain:'Apply the predetermined overhead rate to the labor hours each unit requires.' },
+  { inputId:'m6-cpu',     hintId:'h-m6-cpu',     expected:CPU, tol:0.05,
+    explain:'Add the per-unit cost of each material, direct labor, and applied overhead.' },
+  { inputId:'m6-cogs',    hintId:'h-m6-cogs',    expected:COGS, tol:0.5,
+    explain:'Cost of goods sold = units sold × manufacturing cost per unit.' },
+  { inputId:'m6-endfg',   hintId:'h-m6-endfg',   expected:ENDFG_VAL, tol:0.5,
+    explain:'Ending finished goods value = units in ending inventory × manufacturing cost per unit.' }
+];
+function checkStep6() {
+  var fb = document.getElementById('step6-insight'); fb.innerHTML = '';
+  checkGroup(S6, 'score6-out', function() {
+    fb.innerHTML = '<div class="insight success">Each backpack costs <strong>' + fmtMoney(CPU, 0) + '</strong> to manufacture (' + fmtMoney(A_USE * A_PRICE, 0) + ' fabric + ' + fmtMoney(B_USE * B_PRICE, 0) + ' hardware + ' + fmtMoney(DLH_PER * WAGE, 0) + ' labor + ' + fmtMoney(MOH_UNIT, 0) + ' overhead). At ' + fmtUnits(S_MAY) + ' units sold, budgeted cost of goods sold is <strong>' + fmtMoney(COGS, 0) + '</strong>, and the ' + fmtUnits(END_FG) + ' units in ending finished goods are valued at ' + fmtMoney(ENDFG_VAL, 0) + '. These figures feed the budgeted income statement and balance sheet.</div>';
+  });
+}
+function resetStep6() { resetGroup(S6, 'score6-out', function(){ document.getElementById('step6-insight').innerHTML=''; }); }
+
+/* ═══════════════════════════════════════════════════════════════
+   REVEAL STEPS
+═══════════════════════════════════════════════════════════════ */
+var revealedSteps = new Set();
+function revealStep(stepNum, scroll) {
+  var el = document.getElementById('step' + stepNum);
+  if (!revealedSteps.has(stepNum)) {
+    el.classList.add('show');
+    revealedSteps.add(stepNum);
+    var btn = document.getElementById('reveal-step' + stepNum + '-btn');
+    if (btn) btn.style.display = 'none';
+  }
+  if (scroll) setTimeout(function() { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 60);
+}
+function revealStep2(scroll) { revealStep(2, scroll); }
+function revealStep3(scroll) { revealStep(3, scroll); }
+function revealStep4(scroll) { revealStep(4, scroll); }
+function revealStep5(scroll) { revealStep(5, scroll); }
+function revealStep6(scroll) { revealStep(6, scroll); }
+
+/* ═══════════════════════════════════════════════════════════════
+   QR / SHARE
+═══════════════════════════════════════════════════════════════ */
+function showQR() {
+  var url = location.href;
+  document.getElementById('qr-url').textContent = url;
+  var qrEl = document.getElementById('qr-code');
+  qrEl.innerHTML = '';
+  if (window.QRCode) {
+    new QRCode(qrEl, { text: url, width: 180, height: 180, colorDark: '#1a2744', colorLight: '#ffffff' });
+  }
+  document.getElementById('qr-overlay').classList.add('show');
+}
+function hideQR(ev) {
+  if (ev && ev.target.id !== 'qr-overlay' && ev.target.className !== 'qr-close') return;
+  document.getElementById('qr-overlay').classList.remove('show');
+}
+</script>
+
+</body>
+</html>
