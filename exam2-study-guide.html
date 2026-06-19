@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Exam 2 Study Guide — Chapters 5–8</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  /* ── Reset & base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    background: #f4f0e8;
+    color: #1a2744;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    background: #1a2744;
+    color: #fff;
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .header-left h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+  .header-left p  { font-size: 13px; color: #a0aec0; margin-top: 2px; }
+
+  .qr-btn {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    transition: background .15s;
+  }
+  .qr-btn:hover { background: rgba(255,255,255,0.18); }
+
+  /* QR Modal */
+  .qr-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .qr-overlay.show { display: flex; }
+  .qr-modal {
+    background: #fff;
+    border-radius: 14px;
+    padding: 32px;
+    text-align: center;
+    max-width: 300px;
+    width: 90%;
+  }
+  .qr-modal h2 { font-size: 16px; font-weight: 600; color: #1a2744; margin-bottom: 6px; }
+  .qr-modal p  { font-size: 12px; color: #64748b; margin-bottom: 18px; line-height: 1.5; }
+  #qr-code { display: flex; justify-content: center; margin-bottom: 16px; }
+  #qr-url  { font-size: 11px; color: #94a3b8; word-break: break-all; margin-bottom: 18px; }
+  .qr-close {
+    background: #1a2744; color: #fff;
+    border: none; border-radius: 8px;
+    padding: 8px 24px; font-size: 13px;
+    cursor: pointer; font-family: inherit;
+  }
+
+  /* ── Main layout ── */
+  main {
+    max-width: 920px;
+    margin: 28px auto;
+    padding: 0 20px 48px;
+  }
+
+  /* ── Chapter nav ── */
+  .chapter-nav {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 22px;
+  }
+  .chapter-nav a {
+    display: inline-block;
+    padding: 7px 16px;
+    background: #fff;
+    border: 1px solid #dde3ef;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1a2744;
+    text-decoration: none;
+    transition: background .15s, border-color .15s;
+  }
+  .chapter-nav a:hover {
+    background: #e9eef7;
+    border-color: #b8c4d8;
+  }
+
+  /* ── Cards ── */
+  .part {
+    background: #fff;
+    border: 1px solid #dde3ef;
+    border-radius: 12px;
+    padding: 22px 24px 24px;
+    margin-bottom: 22px;
+  }
+
+  .part-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .part-tag {
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    background: #1a2744;
+    padding: 3px 10px;
+    border-radius: 99px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+  .part-tag.ch5 { background: #3b7dd8; }
+  .part-tag.ch6 { background: #D85A30; }
+  .part-tag.ch7 { background: #5a9e3a; }
+  .part-tag.ch8 { background: #8b5cf6; }
+  .part-tag.formulas { background: #1a2744; }
+  .part-tag.practice { background: #c77900; }
+  .part-header h2 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -.01em;
+  }
+
+  /* ── Content styling ── */
+  .section-intro {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #334155;
+    margin-bottom: 16px;
+  }
+
+  h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a2744;
+    margin: 18px 0 8px;
+  }
+  h3:first-of-type { margin-top: 6px; }
+
+  .concept-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 12px;
+  }
+  .concept-list li {
+    position: relative;
+    padding: 6px 0 6px 20px;
+    font-size: 14px;
+    line-height: 1.55;
+    color: #334155;
+  }
+  .concept-list li::before {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 13px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #94a3b8;
+  }
+  .concept-list li strong { color: #1a2744; }
+
+  /* ── Callout boxes ── */
+  .callout {
+    background: #f8f6f0;
+    border: 1px solid #e6dfd0;
+    border-radius: 9px;
+    padding: 14px 16px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: #334155;
+    margin: 12px 0 16px;
+  }
+  .callout strong { color: #1a2744; }
+  .callout p + p { margin-top: 6px; }
+
+  .callout.formula-box {
+    background: #eef3fb;
+    border-color: #c5d5ed;
+    font-family: 'SF Mono', 'Consolas', 'Menlo', monospace;
+    font-size: 13px;
+  }
+  .callout.formula-box .formula-label {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-weight: 700;
+    color: #1a2744;
+    font-size: 13px;
+    margin-bottom: 4px;
+  }
+
+  /* ── Tables ── */
+  .compare-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+    margin: 10px 0 14px;
+  }
+  .compare-table th {
+    background: #e9eef7;
+    font-size: 12.5px;
+    font-weight: 700;
+    text-align: left;
+    padding: 8px 12px;
+    border-bottom: 2px solid #cbd5e1;
+  }
+  .compare-table td {
+    padding: 7px 12px;
+    border-bottom: 1px solid #f0f3f8;
+    vertical-align: top;
+  }
+  .compare-table tr:last-child td { border-bottom: none; }
+
+  /* ── Decision framework table ── */
+  .decision-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+    margin: 10px 0 14px;
+  }
+  .decision-table th {
+    background: #f3eefe;
+    font-size: 12.5px;
+    font-weight: 700;
+    text-align: left;
+    padding: 8px 12px;
+    border-bottom: 2px solid #c4b5fd;
+  }
+  .decision-table td {
+    padding: 7px 12px;
+    border-bottom: 1px solid #f0f3f8;
+    vertical-align: top;
+  }
+  .decision-table td:first-child { font-weight: 600; white-space: nowrap; }
+  .decision-table tr:last-child td { border-bottom: none; }
+
+  /* ── Practice links ── */
+  .practice-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 10px 0 4px;
+  }
+  .practice-links a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    background: #f8f6f0;
+    border: 1px solid #e6dfd0;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1a2744;
+    text-decoration: none;
+    transition: background .15s, border-color .15s;
+  }
+  .practice-links a:hover {
+    background: #eee9dd;
+    border-color: #d4cbb6;
+  }
+  .practice-links a::before {
+    content: '\2794';
+    font-size: 11px;
+  }
+
+  /* ── Collapsible sections ── */
+  .collapse-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a2744;
+    padding: 4px 0;
+    margin: 18px 0 8px;
+  }
+  .collapse-toggle:first-of-type { margin-top: 6px; }
+  .collapse-toggle .arrow {
+    display: inline-block;
+    font-size: 12px;
+    transition: transform .2s;
+    color: #94a3b8;
+  }
+  .collapse-toggle.open .arrow { transform: rotate(90deg); }
+  .collapsible {
+    display: none;
+    padding: 0;
+  }
+  .collapsible.open { display: block; }
+
+  /* ── Formula reference card ── */
+  .formula-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 10px 0;
+  }
+  @media (max-width: 640px) {
+    .formula-grid { grid-template-columns: 1fr; }
+  }
+  .formula-card {
+    background: #eef3fb;
+    border: 1px solid #c5d5ed;
+    border-radius: 9px;
+    padding: 12px 14px;
+  }
+  .formula-card .fc-title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: #64748b;
+    margin-bottom: 5px;
+  }
+  .formula-card .fc-eq {
+    font-family: 'SF Mono', 'Consolas', 'Menlo', monospace;
+    font-size: 13px;
+    color: #1a2744;
+    line-height: 1.5;
+  }
+
+  /* ── Utility ── */
+  .mt-0 { margin-top: 0; }
+  .mb-sm { margin-bottom: 6px; }
+</style>
+</head>
+<body>
+
+<!-- ═══ Header ═══ -->
+<header>
+  <div class="header-left">
+    <h1>Exam 2 Study Guide</h1>
+    <p>ACCT 2102 &mdash; Chapters 5&ndash;8</p>
+  </div>
+  <button class="qr-btn" onclick="showQR()">
+    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="3" height="3"/><line x1="21" y1="14" x2="21" y2="17"/><line x1="17" y1="21" x2="21" y2="21"/></svg>
+    Share
+  </button>
+</header>
+
+<!-- QR Overlay -->
+<div class="qr-overlay" id="qr-overlay" onclick="hideQR(event)">
+  <div class="qr-modal">
+    <h2>Scan to open</h2>
+    <p>Open this study guide on your phone or share with a classmate.</p>
+    <div id="qr-code"></div>
+    <div id="qr-url"></div>
+    <button class="qr-close" onclick="hideQR(event)">Close</button>
+  </div>
+</div>
+
+<!-- ═══ Main ═══ -->
+<main>
+
+<!-- Jump nav -->
+<nav class="chapter-nav">
+  <a href="#ch5">Ch 5</a>
+  <a href="#ch6">Ch 6</a>
+  <a href="#ch7">Ch 7</a>
+  <a href="#ch8">Ch 8</a>
+  <a href="#formulas">Formulas</a>
+  <a href="#practice">Practice</a>
+</nav>
+
+<!-- ═══════════════════════════════════════════
+     CHAPTER 5
+═══════════════════════════════════════════ -->
+<div class="part" id="ch5">
+  <div class="part-header">
+    <span class="part-tag ch5">Chapter 5</span>
+    <h2>Product Costing Systems</h2>
+  </div>
+
+  <button class="collapse-toggle open" onclick="toggle(this)"><span class="arrow">&#9654;</span> Product vs. Period Costs &amp; Inventory Types</button>
+  <div class="collapsible open">
+    <ul class="concept-list">
+      <li><strong>Product (inventoriable) costs</strong> are the costs of making the product: <strong>direct materials</strong>, <strong>direct labor</strong>, and <strong>manufacturing overhead</strong>. They sit in inventory and become an expense (Cost of Goods Sold) only when the units are sold.</li>
+      <li><strong>Period costs</strong> are non-manufacturing costs (selling and administrative). They are expensed in the period incurred, regardless of when goods are sold.</li>
+      <li><strong>Manufacturing overhead</strong> is every <em>indirect</em> factory cost: indirect materials, indirect labor, factory utilities, factory insurance, and <strong>depreciation on the factory building and production equipment</strong>. Watch the classic trap: factory depreciation is a <em>product</em> cost (overhead), not a period expense.</li>
+      <li><strong>Inventory by organization type:</strong> service firms generally hold only <em>supplies</em>; merchandisers hold <em>merchandise</em> (plus supplies); manufacturers hold <em>raw materials, work-in-process, and finished goods</em> (plus supplies). Only manufacturers convert inputs into outputs, so only they carry RM/WIP/FG.</li>
+    </ul>
+    <div class="callout">
+      <strong>Quick test:</strong> "Could this cost be traced into a unit on the factory floor?" If yes &rarr; product cost (DM, DL, or overhead). If it's about selling or running the office &rarr; period cost.
+    </div>
+  </div>
+
+  <button class="collapse-toggle open" onclick="toggle(this)"><span class="arrow">&#9654;</span> Predetermined Overhead Rates</button>
+  <div class="collapsible open">
+    <div class="callout formula-box">
+      <div class="formula-label">Predetermined Overhead Rate (POHR)</div>
+      POHR = Estimated total overhead / Estimated total allocation base<br>
+      Applied overhead = POHR &times; <em>actual</em> activity used
+    </div>
+    <ul class="concept-list">
+      <li><strong>Why use a predetermined rate?</strong> So jobs can be costed <em>promptly during the period</em> (you don't wait until year-end to learn actual overhead) and so unit costs aren't distorted by <em>seasonal or cyclical swings</em> in activity. It is <em>not</em> a fraud-prevention tool, and actual overhead is still tracked at period end.</li>
+      <li>The <strong>allocation base</strong> (cost driver) should be what actually <em>drives</em> overhead &mdash; commonly direct labor hours or machine hours.</li>
+      <li>Apply the rate using the job's <em>actual</em> base usage.</li>
+    </ul>
+  </div>
+
+  <button class="collapse-toggle open" onclick="toggle(this)"><span class="arrow">&#9654;</span> Job Costing &amp; the Cost-of-Goods-Manufactured Schedule</button>
+  <div class="collapsible open">
+    <ul class="concept-list">
+      <li>Costs flow: <strong>Raw Materials &rarr; Work-in-Process &rarr; Finished Goods &rarr; Cost of Goods Sold.</strong> The <strong>job cost sheet</strong> accumulates DM, DL, and applied overhead for each job.</li>
+      <li>Know how to walk the schedule in <em>both directions</em> &mdash; you may be given the totals and asked to solve backward for an ending balance.</li>
+    </ul>
+    <div class="callout formula-box">
+      <div class="formula-label">Cost-Flow Relationships</div>
+      Direct materials used = Beg RM + Purchases &minus; End RM<br>
+      Total manufacturing cost = DM used + DL + Overhead applied<br>
+      COGM = Beg WIP + Total mfg cost &minus; End WIP<br>
+      COGS = Beg FG + COGM &minus; End FG
+    </div>
+    <ul class="concept-list">
+      <li><strong>Over- / under-applied overhead:</strong> compare overhead <em>applied</em> to overhead <em>actually incurred</em>. Applied &gt; actual = <strong>over-applied</strong>; applied &lt; actual = <strong>under-applied</strong>.</li>
+    </ul>
+  </div>
+
+  <button class="collapse-toggle open" onclick="toggle(this)"><span class="arrow">&#9654;</span> Process Costing &amp; Equivalent Units</button>
+  <div class="collapsible open">
+    <ul class="concept-list">
+      <li><strong>Process costing</strong> is used for continuous, homogeneous production (vs. job costing for distinct jobs). Costs are averaged across all units passing through the process.</li>
+      <li><strong>Equivalent units (EU)</strong> translate partially-complete units into whole-unit equivalents.</li>
+      <li><strong>Weighted-average</strong> method: combines beginning inventory work with current-period work (it does <em>not</em> separate out the prior period's effort the way FIFO does).</li>
+    </ul>
+    <div class="callout formula-box">
+      <div class="formula-label">Weighted-Average Process Costing</div>
+      EU = Units completed + (Ending WIP units &times; % complete)<br>
+      Cost per EU = (Beginning cost + Current-period cost) / EU<br>
+      Cost of goods completed = Units completed &times; Cost per EU<br>
+      Cost of ending WIP = Ending EU &times; Cost per EU
+    </div>
+    <div class="callout">
+      <strong>Tip:</strong> when "all costs are added uniformly," materials and conversion share one completion percentage, so you only need a single equivalent-unit computation.
+    </div>
+  </div>
+
+  <button class="collapse-toggle open" onclick="toggle(this)"><span class="arrow">&#9654;</span> Absorption vs. Variable Costing</button>
+  <div class="collapsible open">
+    <table class="compare-table">
+      <thead><tr><th>Cost</th><th>Absorption Costing</th><th>Variable Costing</th></tr></thead>
+      <tbody>
+        <tr><td>Direct materials &amp; direct labor</td><td>Product cost</td><td>Product cost</td></tr>
+        <tr><td>Variable manufacturing overhead</td><td>Product cost</td><td>Product cost</td></tr>
+        <tr><td><strong>Fixed manufacturing overhead</strong></td><td><strong>Product cost</strong> (in inventory)</td><td><strong>Period cost</strong> (expensed now)</td></tr>
+        <tr><td>Selling &amp; administrative</td><td>Period cost</td><td>Period cost</td></tr>
+      </tbody>
+    </table>
+    <ul class="concept-list">
+      <li>The <em>only</em> difference is the treatment of <strong>fixed manufacturing overhead</strong>: capitalized into inventory under absorption costing, expensed immediately under variable costing.</li>
+      <li>When inventory <strong>increases</strong> (produce &gt; sell), absorption income is <em>higher</em> (fixed overhead is deferred in inventory). When inventory <strong>decreases</strong>, absorption income is lower. Equal production and sales &rarr; the two methods give the same income.</li>
+    </ul>
+  </div>
+
+  <h3>Practice Activities</h3>
+  <div class="practice-links">
+    <a href="https://jmoon312.github.io/acct2102/cost-flow-pipeline.html" target="_blank">Cost Flow Pipeline</a>
+    <a href="https://jmoon312.github.io/acct2102/pdoh-rates.html" target="_blank">Predetermined Overhead Rates</a>
+    <a href="https://jmoon312.github.io/acct2102/process-costing.html" target="_blank">Process Costing (Weighted Average)</a>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     CHAPTER 6
+═══════════════════════════════════════════ -->
+<div class="part" id="ch6">
+  <div class="part-header">
+    <span class="part-tag ch6">Chapter 6</span>
+    <h2>Activity-Based Costing &amp; Management</h2>
+  </div>
+
+  <button class="collapse-toggle open" onclick="toggle(this)"><span class="arrow">&#9654;</span> Three Ways to Assign Overhead</button>
+  <div class="collapsible open">
+    <table class="compare-table">
+      <thead><tr><th>Method</th><th>How overhead is applied</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Plantwide rate</strong></td><td>One rate for the whole plant, using a single base (e.g., total direct labor hours).</td></tr>
+        <tr><td><strong>Departmental rates</strong></td><td>A separate rate for each department, each using the base that best fits that department (e.g., DL hours in one department, machine hours in another).</td></tr>
+        <tr><td><strong>Activity-based costing</strong></td><td>A separate rate for each <em>activity cost pool</em>, using the cost driver for that activity.</td></tr>
+      </tbody>
+    </table>
+    <ul class="concept-list">
+      <li><strong>Plantwide:</strong> rate = total overhead / total base; apply by multiplying the rate by each product's base usage, then build product cost = DM + DL + applied overhead.</li>
+      <li><strong>Departmental:</strong> rate for each department = that department's overhead / that department's base. Apply each department's rate using <em>that department's</em> driver. A job touches both departments, so add the two pieces.</li>
+    </ul>
+  </div>
+
+  <button class="collapse-toggle open" onclick="toggle(this)"><span class="arrow">&#9654;</span> The Activity Cost Hierarchy</button>
+  <div class="collapsible open">
+    <table class="decision-table">
+      <thead><tr><th>Level</th><th>Driven by &hellip;</th></tr></thead>
+      <tbody>
+        <tr><td>Unit-level</td><td>Each individual unit (direct materials, per-unit power, per-unit inspection).</td></tr>
+        <tr><td>Batch-level</td><td>Each batch/run, regardless of its size (machine setups, retooling between runs, a purchase order).</td></tr>
+        <tr><td>Product-level</td><td>An entire product line (product design, branding, engineering a new model).</td></tr>
+        <tr><td>Facility-level</td><td>The plant as a whole (plant insurance, property taxes, general-purpose equipment, the plant manager's salary).</td></tr>
+      </tbody>
+    </table>
+    <div class="callout">
+      <strong>How to classify:</strong> ask "what makes this cost go up?" One more unit &rarr; unit-level. One more batch &rarr; batch-level. One more product in the line &rarr; product-level. None of those &mdash; it just keeps the doors open &rarr; facility-level.
+    </div>
+  </div>
+
+  <button class="collapse-toggle open" onclick="toggle(this)"><span class="arrow">&#9654;</span> Two-Stage ABC &amp; Cost Distortion</button>
+  <div class="collapsible open">
+    <div class="callout formula-box">
+      <div class="formula-label">ABC Application</div>
+      Activity rate = Activity cost pool / total cost-driver volume<br>
+      Overhead applied to a product = &Sigma;(Activity rate &times; driver units the product uses)
+    </div>
+    <ul class="concept-list">
+      <li>Stage 1: gather overhead into activity cost pools. Stage 2: assign each pool to products using its driver.</li>
+      <li><strong>Cost distortion:</strong> compared with ABC, a traditional volume-based system <strong>overcosts</strong> high-volume, low-complexity products and <strong>undercosts</strong> low-volume, high-complexity products. ABC corrects this by tracing costs to the activities each product actually consumes.</li>
+    </ul>
+  </div>
+
+  <button class="collapse-toggle open" onclick="toggle(this)"><span class="arrow">&#9654;</span> ABC for Customer Profitability</button>
+  <div class="collapsible open">
+    <ul class="concept-list">
+      <li>ABC applies beyond the factory: assign <strong>customer-service / support activity costs</strong> (visits, calls, special handling) to each customer using the appropriate drivers.</li>
+      <li><strong>Customer profit = the customer's gross profit &minus; assigned support costs.</strong> Two customers with identical gross profit can have very different bottom-line profitability if one consumes far more support resources.</li>
+      <li>The <strong>customer profitability profile</strong> ("whale curve") plots cumulative profit against customers ranked most- to least-profitable. Cumulative profit <em>rises</em> to a <strong>peak</strong>, then <em>declines</em> &mdash; customers past the peak are unprofitable and erode total profit. The peak marks the number of profitable customers; the most expensive/least profitable customers are the ones to analyze and fix.</li>
+    </ul>
+  </div>
+
+  <button class="collapse-toggle open" onclick="toggle(this)"><span class="arrow">&#9654;</span> Multi-Level Contribution &amp; Break-Even</button>
+  <div class="collapsible open">
+    <ul class="concept-list">
+      <li>A <strong>multi-level (cost-hierarchy) contribution statement</strong> peels costs off in tiers &mdash; subtract unit-level costs to get a unit-level margin, then batch-, product-, customer-, and finally facility-level costs. This shows profitability at each level, not just the bottom line.</li>
+      <li><strong>Break-even / target volume</strong> works the same as in CVP (Chapter 3): the contribution earned per unit (or per customer) must cover the higher-level costs plus any target profit. Solve <em>required volume = (higher-level costs + target profit) / contribution per unit</em>, and round customer counts <em>up</em>.</li>
+      <li>When the "contribution" is a margin on each sales dollar (e.g., a commission rate net of a per-dollar cost), divide the fixed/structural costs by that contribution <em>rate</em> to find the sales dollars needed to break even.</li>
+    </ul>
+    <div class="callout">
+      <strong>Connection to Exam 1:</strong> this is the CVP profit equation applied at the activity/customer level &mdash; revisit the Chapter 3 break-even and target-profit formulas if this feels rusty.
+    </div>
+  </div>
+
+  <h3>Practice Activities</h3>
+  <div class="practice-links">
+    <a href="https://jmoon312.github.io/acct2102/traditional-vs-departmental.html" target="_blank">Traditional vs. Departmental Costing</a>
+    <a href="https://jmoon312.github.io/acct2102/abc-process.html" target="_blank">Activity-Based Costing (Full Process)</a>
+    <a href="https://jmoon312.github.io/acct2102/customer-profitability.html" target="_blank">Customer Profitability Analysis</a>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     CHAPTER 7
+═══════════════════════════════════════════ -->
+<div class="part" id="ch7">
+  <div class="part-header">
+    <span class="part-tag ch7">Chapter 7</span>
+    <h2>Service Allocation, Capacity &amp; Lean Operations</h2>
+  </div>
+
+  <button class="collapse-toggle open" onclick="toggle(this)"><span class="arrow">&#9654;</span> Service Department Cost Allocation</button>
+  <div class="collapsible open">
+    <ul class="concept-list">
+      <li>Service departments (maintenance, IT, payroll) support production departments. Their costs are allocated to production departments using a reasonable base.</li>
+      <li><strong>Direct method:</strong> allocate each service department's cost <em>only</em> to production departments &mdash; ignore services provided to other service departments.</li>
+      <li><strong>Step (step-down) method:</strong> allocate service departments in sequence, recognizing services provided to <em>other</em> service departments. Start with the department that serves the most other service departments.</li>
+    </ul>
+  </div>
+
+  <button class="collapse-toggle open" onclick="toggle(this)"><span class="arrow">&#9654;</span> Capacity &amp; the Cost of Excess Capacity</button>
+  <div class="collapsible open">
+    <ul class="concept-list">
+      <li>Three capacity measures: <strong>theoretical</strong> (the absolute maximum, never achievable), <strong>practical</strong> (realistic sustainable output allowing for downtime), and <strong>normal/budgeted</strong> (expected actual usage).</li>
+      <li><strong>Use practical capacity</strong> as the denominator for the overhead rate that goes on a customer quote. This charges products only for capacity they use and isolates the cost of idle capacity.</li>
+      <li><strong>Denominator matters:</strong> the larger the capacity denominator, the lower the rate. Using <em>theoretical</em> capacity yields a rate that is too low &mdash; it understates unit product cost and leaves a large pool of unassigned cost.</li>
+    </ul>
+    <div class="callout formula-box">
+      <div class="formula-label">Cost of Excess (Unused) Capacity</div>
+      Capacity rate = Budgeted capacity cost / Practical capacity<br>
+      Cost of excess capacity = (Practical capacity &minus; capacity used) &times; rate
+    </div>
+    <div class="callout">
+      <strong>Who bears it?</strong> The cost of idle capacity should <em>not</em> be buried in product cost. It is reported separately as a period cost of unused capacity so management can see and manage it &mdash; charging it to the product would inflate unit cost and can trigger a "death spiral."
+    </div>
+  </div>
+
+  <button class="collapse-toggle open" onclick="toggle(this)"><span class="arrow">&#9654;</span> JIT / Lean &amp; Cycle Time</button>
+  <div class="collapsible open">
+    <ul class="concept-list">
+      <li><strong>Just-in-time (JIT)</strong> is a <em>pull</em> system: produce in response to demand, minimizing inventory storage and waiting time. It is the opposite of a "just-in-case" / push (forecast-driven, buffer-stock) approach.</li>
+      <li><strong>Cycle time (throughput time)</strong> is the total time to move a batch/unit through the process.</li>
+      <li><strong>Manufacturing cycle efficiency (MCE)</strong> measures how much of that time is value-adding. Only <em>processing</em> time adds value; moving, waiting, and inspection do not. A higher MCE = a more efficient process.</li>
+    </ul>
+    <div class="callout formula-box">
+      <div class="formula-label">Cycle Time &amp; Efficiency</div>
+      Cycle (throughput) time = processing + inspection + movement + waiting time<br>
+      MCE = Value-added (processing) time / Total cycle time
+    </div>
+  </div>
+
+  <h3>Practice Activities</h3>
+  <div class="practice-links">
+    <a href="https://jmoon312.github.io/acct2102/service-allocation.html" target="_blank">Service Department Cost Allocation</a>
+    <a href="https://jmoon312.github.io/acct2102/capacity-rate-sandbox.html" target="_blank">Capacity Rates &amp; Excess Capacity</a>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     CHAPTER 8
+═══════════════════════════════════════════ -->
+<div class="part" id="ch8">
+  <div class="part-header">
+    <span class="part-tag ch8">Chapter 8</span>
+    <h2>Pricing, Target Costing &amp; Continuous Improvement</h2>
+  </div>
+
+  <button class="collapse-toggle open" onclick="toggle(this)"><span class="arrow">&#9654;</span> Cost-Based (Cost-Plus) Pricing</button>
+  <div class="collapsible open">
+    <ul class="concept-list">
+      <li>Cost-plus pricing builds a selling price by adding a <strong>markup</strong> on top of a cost base. The markup must cover all the costs <em>not</em> in the base, plus the desired profit.</li>
+      <li><strong>Variable-cost markup method:</strong> the base is total variable cost, so the markup must cover total fixed costs and target profit.</li>
+    </ul>
+    <div class="callout formula-box">
+      <div class="formula-label">Variable-Cost Markup Method</div>
+      Markup % = (Total fixed costs + Target profit) / Total variable costs<br>
+      Unit selling price = Unit variable cost &times; (1 + Markup %)
+    </div>
+    <ul class="concept-list">
+      <li><strong>Critique of cost-based pricing:</strong> it ignores customer demand. Because the price is built from internal cost data alone, the resulting price may be one <em>customers are unwilling to pay</em>. (Cost data themselves are readily available &mdash; that is not the weakness.)</li>
+    </ul>
+  </div>
+
+  <button class="collapse-toggle open" onclick="toggle(this)"><span class="arrow">&#9654;</span> Target Costing</button>
+  <div class="collapsible open">
+    <div class="callout formula-box">
+      <div class="formula-label">Target Costing</div>
+      Target cost = Target (market) price &minus; Required profit per unit
+    </div>
+    <ul class="concept-list">
+      <li>Target costing is <strong>market-driven</strong> and runs in reverse: start from the price the market will bear and the profit the company requires, then back into the cost the product <em>must</em> hit.</li>
+      <li>The product is then engineered (design for production) to meet that target cost &mdash; cost management happens up front, in design, not after the fact.</li>
+    </ul>
+  </div>
+
+  <button class="collapse-toggle open" onclick="toggle(this)"><span class="arrow">&#9654;</span> Continuous Improvement (Kaizen) &amp; Benchmarking</button>
+  <div class="collapsible open">
+    <div class="callout formula-box">
+      <div class="formula-label">Kaizen / Continuous-Improvement Budget</div>
+      Next-period budget = Current cost &times; (1 + growth rate) &times; (1 &minus; improvement target %)
+    </div>
+    <ul class="concept-list">
+      <li><strong>Kaizen costing</strong> builds a continuous cost-reduction target into the budget. When volume (and therefore cost) is also expected to grow, apply the growth factor <em>and</em> the improvement reduction &mdash; grow first, then trim by the improvement target.</li>
+      <li><strong>Benchmarking</strong> is the systematic search for, and adoption of, the <em>best practices</em> used by leading organizations in order to improve performance.</li>
+      <li>Related continuous-improvement ideas: total quality management (TQM), the costs of quality, and lean/JIT (Chapter 7) all push toward eliminating waste and improving over time.</li>
+    </ul>
+  </div>
+
+  <h3>Practice Activities</h3>
+  <div class="practice-links">
+    <a href="https://jmoon312.github.io/acct2102/cost-based-pricing.html" target="_blank">Cost-Based Pricing</a>
+    <a href="https://jmoon312.github.io/acct2102/kaizen-and-tools.html" target="_blank">Kaizen Costing &amp; Pricing Toolkit</a>
+    <a href="https://jmoon312.github.io/acct2102/budgeting-approaches.html" target="_blank">Budgeting Approaches</a>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     FORMULA QUICK REFERENCE
+═══════════════════════════════════════════ -->
+<div class="part" id="formulas">
+  <div class="part-header">
+    <span class="part-tag formulas">Reference</span>
+    <h2>Formula Quick Reference</h2>
+  </div>
+
+  <div class="formula-grid">
+    <div class="formula-card">
+      <div class="fc-title">Predetermined OH Rate</div>
+      <div class="fc-eq">POHR = Est. overhead / Est. base<br>Applied = POHR &times; actual base</div>
+    </div>
+    <div class="formula-card">
+      <div class="fc-title">Direct Materials Used</div>
+      <div class="fc-eq">Beg RM + Purchases &minus; End RM</div>
+    </div>
+    <div class="formula-card">
+      <div class="fc-title">Cost of Goods Manufactured</div>
+      <div class="fc-eq">Beg WIP + (DM + DL + OH) &minus; End WIP</div>
+    </div>
+    <div class="formula-card">
+      <div class="fc-title">Cost of Goods Sold</div>
+      <div class="fc-eq">Beg FG + COGM &minus; End FG</div>
+    </div>
+    <div class="formula-card">
+      <div class="fc-title">Over- / Under-Applied OH</div>
+      <div class="fc-eq">Applied &minus; Actual<br>(+ over-applied, &minus; under-applied)</div>
+    </div>
+    <div class="formula-card">
+      <div class="fc-title">Equivalent Units (WA)</div>
+      <div class="fc-eq">Completed + (End WIP &times; % complete)</div>
+    </div>
+    <div class="formula-card">
+      <div class="fc-title">Cost per Equivalent Unit (WA)</div>
+      <div class="fc-eq">(Beg cost + Current cost) / EU</div>
+    </div>
+    <div class="formula-card">
+      <div class="fc-title">Departmental OH Rate</div>
+      <div class="fc-eq">Dept overhead / Dept allocation base</div>
+    </div>
+    <div class="formula-card">
+      <div class="fc-title">ABC Activity Rate</div>
+      <div class="fc-eq">Activity cost pool / total driver volume<br>Applied = rate &times; driver units used</div>
+    </div>
+    <div class="formula-card">
+      <div class="fc-title">Customer Profit</div>
+      <div class="fc-eq">Customer gross profit &minus; assigned support costs</div>
+    </div>
+    <div class="formula-card">
+      <div class="fc-title">Cost of Excess Capacity</div>
+      <div class="fc-eq">Rate = budgeted cost / practical capacity<br>(Practical &minus; used) &times; rate</div>
+    </div>
+    <div class="formula-card">
+      <div class="fc-title">Manufacturing Cycle Efficiency</div>
+      <div class="fc-eq">MCE = Processing time / Total cycle time</div>
+    </div>
+    <div class="formula-card">
+      <div class="fc-title">Variable-Cost Markup</div>
+      <div class="fc-eq">(Fixed costs + Target profit) / Total VC<br>Price = unit VC &times; (1 + markup)</div>
+    </div>
+    <div class="formula-card">
+      <div class="fc-title">Target Cost</div>
+      <div class="fc-eq">Target price &minus; Required profit per unit</div>
+    </div>
+    <div class="formula-card">
+      <div class="fc-title">Kaizen Budget</div>
+      <div class="fc-eq">Current &times; (1 + growth) &times; (1 &minus; improvement %)</div>
+    </div>
+    <div class="formula-card">
+      <div class="fc-title">Absorption vs. Variable</div>
+      <div class="fc-eq">Difference = &Delta;Inventory units &times; fixed OH per unit</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     PRACTICE HUB
+═══════════════════════════════════════════ -->
+<div class="part" id="practice">
+  <div class="part-header">
+    <span class="part-tag practice">Practice</span>
+    <h2>All Practice Activities</h2>
+  </div>
+  <p class="section-intro">
+    These are the interactive activities from class. Each one lets you work through problems
+    and check your answers. They're organized by chapter &mdash; start with the topics you find
+    most challenging.
+  </p>
+
+  <h3>Comprehensive Practice Problem (Ch 5&ndash;6)</h3>
+  <p class="section-intro" style="margin-bottom:8px">
+    The <strong>Boulangerie Saint-Louis</strong> problem we worked through in class ties Chapters 5 and 6
+    together in a single scenario: job-order cost flows, a plantwide predetermined overhead rate,
+    over-/under-applied overhead, and an activity-based-costing overlay. It's the closest single problem to
+    the exam &mdash; work it start to finish, then check yourself against the worked solution.
+  </p>
+  <div class="practice-links">
+    <a href="https://jmoon312.github.io/acct2102/boulangerie-jobcost-abc-problem-student.pdf" target="_blank">Boulangerie Practice Problem</a>
+    <a href="https://jmoon312.github.io/acct2102/boulangerie-jobcost-abc-problem.pdf" target="_blank">Boulangerie Worked Solution</a>
+  </div>
+
+  <h3>Chapter 5 &mdash; Product Costing Systems</h3>
+  <div class="practice-links">
+    <a href="https://jmoon312.github.io/acct2102/cost-flow-pipeline.html" target="_blank">Cost Flow Pipeline</a>
+    <a href="https://jmoon312.github.io/acct2102/pdoh-rates.html" target="_blank">Predetermined Overhead Rates</a>
+    <a href="https://jmoon312.github.io/acct2102/process-costing.html" target="_blank">Process Costing (Weighted Average)</a>
+  </div>
+
+  <h3>Chapter 6 &mdash; Activity-Based Costing</h3>
+  <div class="practice-links">
+    <a href="https://jmoon312.github.io/acct2102/traditional-vs-departmental.html" target="_blank">Traditional vs. Departmental Costing</a>
+    <a href="https://jmoon312.github.io/acct2102/abc-process.html" target="_blank">Activity-Based Costing (Full Process)</a>
+    <a href="https://jmoon312.github.io/acct2102/customer-profitability.html" target="_blank">Customer Profitability Analysis</a>
+  </div>
+
+  <h3>Chapter 7 &mdash; Capacity &amp; Lean Operations</h3>
+  <div class="practice-links">
+    <a href="https://jmoon312.github.io/acct2102/service-allocation.html" target="_blank">Service Department Cost Allocation</a>
+    <a href="https://jmoon312.github.io/acct2102/capacity-rate-sandbox.html" target="_blank">Capacity Rates &amp; Excess Capacity</a>
+  </div>
+
+  <h3>Chapter 8 &mdash; Pricing &amp; Continuous Improvement</h3>
+  <div class="practice-links">
+    <a href="https://jmoon312.github.io/acct2102/cost-based-pricing.html" target="_blank">Cost-Based Pricing</a>
+    <a href="https://jmoon312.github.io/acct2102/kaizen-and-tools.html" target="_blank">Kaizen Costing &amp; Pricing Toolkit</a>
+    <a href="https://jmoon312.github.io/acct2102/budgeting-approaches.html" target="_blank">Budgeting Approaches</a>
+  </div>
+
+  <h3>Slide Deck Worked Examples</h3>
+  <div class="callout">
+    <p>Review these worked examples from the lecture slides for additional practice:</p>
+    <ul class="concept-list" style="margin-bottom:0">
+      <li><strong>Ch 5:</strong> Categorize the costs practice (slides 9&ndash;10), predetermined overhead rate &amp; applying overhead (slides 13&ndash;17), the full job-costing example through COGM and the manufacturer's income statement (slides 24&ndash;37), over-/under-applied overhead (slides 39&ndash;40), cost-of-production report / process costing (slides 45&ndash;47), absorption vs. variable costing (slides 49&ndash;55)</li>
+      <li><strong>Ch 6:</strong> plantwide vs. departmental rate examples (slides 4&ndash;8), the activity cost hierarchy (slide 12), applying overhead with ABC and the cost-distortion comparison (slides 15&ndash;20), customer profitability analysis &amp; the profitability profile graph (slides 26&ndash;31), unit-level break-even (slide 34)</li>
+      <li><strong>Ch 7:</strong> service-department allocation &mdash; direct and step methods (slides 6&ndash;19), the three capacities &amp; cost of excess capacity (slides 21&ndash;25), JIT/lean (slides 27&ndash;31), cycle time &amp; cycle efficiency (slides 34&ndash;37)</li>
+      <li><strong>Ch 8:</strong> cost-based pricing markup examples (slides 5&ndash;10), critique of cost-based pricing (slide 13), target costing (slides 14&ndash;19), continuous improvement / Kaizen costing (slides 20&ndash;22)</li>
+    </ul>
+  </div>
+</div>
+
+</main>
+
+<!-- ═══ Scripts ═══ -->
+<script>
+/* ── Collapsible sections ── */
+function toggle(btn) {
+  btn.classList.toggle('open');
+  const content = btn.nextElementSibling;
+  content.classList.toggle('open');
+}
+
+/* ── QR / Share ── */
+function showQR() {
+  const url = location.href;
+  document.getElementById('qr-url').textContent = url;
+  const qrEl = document.getElementById('qr-code');
+  qrEl.innerHTML = '';
+  if (window.QRCode) {
+    new QRCode(qrEl, { text: url, width: 180, height: 180, colorDark: '#1a2744', colorLight: '#ffffff' });
+  }
+  document.getElementById('qr-overlay').classList.add('show');
+}
+function hideQR(ev) {
+  if (ev && ev.target.id !== 'qr-overlay' && ev.target.className !== 'qr-close') return;
+  document.getElementById('qr-overlay').classList.remove('show');
+}
+</script>
+
+</body>
+</html>
