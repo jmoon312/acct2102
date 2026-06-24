@@ -720,7 +720,7 @@
     <div class="part-header">
       <span class="part-tag explore">Step 2</span>
       <h2>Direct materials variances</h2>
-      <span class="subtitle">call the direction, then the size</span>
+      <span class="subtitle">calculate each variance</span>
     </div>
 
     <div class="setup-box">
@@ -734,8 +734,8 @@
         <button onclick="pickDir('dm-price','F')">Favorable</button>
         <button onclick="pickDir('dm-price','U')">Unfavorable</button>
       </div>
-      <div class="mag-row reveal" id="mag-dm-price">
-        <div class="mag-prompt">Enter the <strong>size</strong> of the variance as a positive dollar amount.</div>
+      <div class="mag-row" id="mag-dm-price">
+        <div class="mag-prompt">Calculate the variance and enter it as a positive dollar amount, then mark it favorable or unfavorable above.</div>
         <div class="answer">
           <label>Amount</label>
           <input type="text" id="s2-dm-price" inputmode="decimal" placeholder="$">
@@ -750,8 +750,8 @@
         <button onclick="pickDir('dm-qty','F')">Favorable</button>
         <button onclick="pickDir('dm-qty','U')">Unfavorable</button>
       </div>
-      <div class="mag-row reveal" id="mag-dm-qty">
-        <div class="mag-prompt">Enter the <strong>size</strong> of the variance as a positive dollar amount.</div>
+      <div class="mag-row" id="mag-dm-qty">
+        <div class="mag-prompt">Calculate the variance and enter it as a positive dollar amount, then mark it favorable or unfavorable above.</div>
         <div class="answer">
           <label>Amount</label>
           <input type="text" id="s2-dm-qty" inputmode="decimal" placeholder="$">
@@ -789,8 +789,8 @@
         <button onclick="pickDir('dl-rate','F')">Favorable</button>
         <button onclick="pickDir('dl-rate','U')">Unfavorable</button>
       </div>
-      <div class="mag-row reveal" id="mag-dl-rate">
-        <div class="mag-prompt">Enter the <strong>size</strong> of the variance as a positive dollar amount.</div>
+      <div class="mag-row" id="mag-dl-rate">
+        <div class="mag-prompt">Calculate the variance and enter it as a positive dollar amount, then mark it favorable or unfavorable above.</div>
         <div class="answer">
           <label>Amount</label>
           <input type="text" id="s3-dl-rate" inputmode="decimal" placeholder="$">
@@ -805,8 +805,8 @@
         <button onclick="pickDir('dl-eff','F')">Favorable</button>
         <button onclick="pickDir('dl-eff','U')">Unfavorable</button>
       </div>
-      <div class="mag-row reveal" id="mag-dl-eff">
-        <div class="mag-prompt">Enter the <strong>size</strong> of the variance as a positive dollar amount.</div>
+      <div class="mag-row" id="mag-dl-eff">
+        <div class="mag-prompt">Calculate the variance and enter it as a positive dollar amount, then mark it favorable or unfavorable above.</div>
         <div class="answer">
           <label>Amount</label>
           <input type="text" id="s3-dl-eff" inputmode="decimal" placeholder="$">
@@ -844,8 +844,8 @@
         <button onclick="pickDir('voh-spend','F')">Favorable</button>
         <button onclick="pickDir('voh-spend','U')">Unfavorable</button>
       </div>
-      <div class="mag-row reveal" id="mag-voh-spend">
-        <div class="mag-prompt">Enter the <strong>size</strong> of the variance as a positive dollar amount.</div>
+      <div class="mag-row" id="mag-voh-spend">
+        <div class="mag-prompt">Calculate the variance and enter it as a positive dollar amount, then mark it favorable or unfavorable above.</div>
         <div class="answer">
           <label>Amount</label>
           <input type="text" id="s4-voh-spend" inputmode="decimal" placeholder="$">
@@ -860,8 +860,8 @@
         <button onclick="pickDir('voh-eff','F')">Favorable</button>
         <button onclick="pickDir('voh-eff','U')">Unfavorable</button>
       </div>
-      <div class="mag-row reveal" id="mag-voh-eff">
-        <div class="mag-prompt">Enter the <strong>size</strong> of the variance as a positive dollar amount.</div>
+      <div class="mag-row" id="mag-voh-eff">
+        <div class="mag-prompt">Calculate the variance and enter it as a positive dollar amount, then mark it favorable or unfavorable above.</div>
         <div class="answer">
           <label>Amount</label>
           <input type="text" id="s4-voh-eff" inputmode="decimal" placeholder="$">
@@ -888,7 +888,7 @@
       <span class="subtitle">change the actuals and re-solve all six variances</span>
     </div>
 
-    <p class="build-prompt">Output stays at <strong>5,400 candles</strong> and the standards are fixed (wax 0.50 lb @ $4.00; labor 0.10 hr @ $15.00; VOH $8.00 per labor hour). Change any of Copperline's <strong>actual</strong> results below, then call the direction and enter the size for each of the six variances. Leave a magnitude blank to skip that one.</p>
+    <p class="build-prompt">Output stays at <strong>5,400 candles</strong> and the standards are fixed (wax 0.50 lb @ $4.00; labor 0.10 hr @ $15.00; VOH $8.00 per labor hour). Change any of Copperline's <strong>actual</strong> results below, then calculate each of the six variances — enter the amount and mark it favorable or unfavorable. Leave an amount blank to skip that one.</p>
 
     <div class="params-card">
       <div class="param-row">
@@ -1211,7 +1211,7 @@ function checkVarGroup(spec, scoreId, allCorrectFn) {
   });
   const out = document.getElementById(scoreId);
   if (attempted === 0) {
-    out.textContent = 'Pick a direction and enter a size first.';
+    out.textContent = 'Calculate a variance, then enter the amount and mark favorable/unfavorable.';
     return false;
   }
   out.textContent = correct + ' / ' + total + ' correct';
