@@ -1,0 +1,1549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Variance &amp; Profit Reconciliation</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  /* ── Reset & base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    background: #f4f0e8;
+    color: #1a2744;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    background: #1a2744;
+    color: #fff;
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .header-left h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+  .header-left p  { font-size: 13px; color: #a0aec0; margin-top: 2px; }
+
+  .qr-btn {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    transition: background .15s;
+  }
+  .qr-btn:hover { background: rgba(255,255,255,0.18); }
+
+  /* QR Modal */
+  .qr-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .qr-overlay.show { display: flex; }
+  .qr-modal {
+    background: #fff;
+    border-radius: 14px;
+    padding: 32px;
+    text-align: center;
+    max-width: 300px;
+    width: 90%;
+  }
+  .qr-modal h2 { font-size: 16px; font-weight: 600; color: #1a2744; margin-bottom: 6px; }
+  .qr-modal p  { font-size: 12px; color: #64748b; margin-bottom: 18px; line-height: 1.5; }
+  #qr-code { display: flex; justify-content: center; margin-bottom: 16px; }
+  #qr-url  { font-size: 11px; color: #94a3b8; word-break: break-all; margin-bottom: 18px; }
+  .qr-close {
+    background: #1a2744; color: #fff;
+    border: none; border-radius: 8px;
+    padding: 8px 24px; font-size: 13px;
+    cursor: pointer; font-family: inherit;
+  }
+
+  /* ── Main layout — two columns: sticky data panel + step stack ── */
+  main {
+    max-width: 1140px;
+    margin: 28px auto;
+    padding: 0 20px 48px;
+    display: grid;
+    grid-template-columns: 330px 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+
+  /* ── Sticky data panel ── */
+  .data-panel {
+    position: sticky;
+    top: 16px;
+    background: #fff;
+    border: 1px solid #dde3ef;
+    border-radius: 12px;
+    padding: 16px 16px 18px;
+    align-self: start;
+  }
+  .data-panel h3 {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: #1a2744;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e6dfd0;
+  }
+  .data-panel .panel-intro {
+    font-size: 12px;
+    color: #64748b;
+    line-height: 1.5;
+    margin-bottom: 12px;
+  }
+  .data-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-variant-numeric: tabular-nums;
+    margin-bottom: 14px;
+  }
+  .data-table caption {
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    padding: 6px 0 5px;
+  }
+  .data-table caption.budget  { color: #3b7dd8; }
+  .data-table caption.actual  { color: #D85A30; }
+  .data-table caption small {
+    display: block;
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 400;
+    color: #94a3b8;
+    font-size: 10.5px;
+    margin-top: 1px;
+  }
+  .data-table tbody td {
+    padding: 4px 4px;
+    font-size: 12.5px;
+    border-bottom: 1px solid #f0f3f8;
+    color: #334155;
+  }
+  .data-table tbody td.lab { color: #475569; }
+  .data-table tbody td.val {
+    text-align: right;
+    font-weight: 600;
+    color: #1a2744;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .data-table tbody tr.subtotal td {
+    border-top: 1px solid #cbd5e1;
+    border-bottom: none;
+    padding-top: 5px;
+    font-weight: 700;
+  }
+  .data-table tbody tr.subtotal td.lab { color: #1a2744; }
+
+  /* ── Step column ── */
+  .steps { min-width: 0; }
+
+  .part {
+    background: #fff;
+    border: 1px solid #dde3ef;
+    border-radius: 12px;
+    padding: 22px 24px 24px;
+    margin-bottom: 22px;
+  }
+
+  .part-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .part-tag {
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    background: #1a2744;
+    padding: 3px 10px;
+    border-radius: 99px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+  .part-tag.practice { background: #D85A30; }
+  .part-tag.explore  { background: #3b7dd8; }
+  .part-tag.solve    { background: #7a5cb6; }
+  .part-tag.build    { background: #5a9e3a; }
+  .part-header h2 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -.01em;
+  }
+  .part-header .subtitle {
+    font-size: 13px;
+    color: #64748b;
+  }
+
+  .setup-box {
+    background: #f8f6f0;
+    border: 1px solid #e6dfd0;
+    border-radius: 9px;
+    padding: 14px 16px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: #334155;
+    margin-bottom: 16px;
+  }
+  .setup-box strong { color: #1a2744; }
+  .setup-box em { font-style: italic; color: #1a2744; }
+  .setup-box p + p { margin-top: 6px; }
+  .setup-box .meta-line {
+    margin-top: 10px;
+    font-size: 13px;
+    color: #475569;
+  }
+
+  .prompt {
+    font-size: 14px;
+    color: #1a2744;
+    margin-bottom: 12px;
+    line-height: 1.55;
+  }
+  .prompt strong { font-weight: 700; }
+
+  .corr-hint {
+    display: block;
+    font-size: 11.5px;
+    color: #64748b;
+    font-weight: 500;
+    margin-top: 4px;
+    min-height: 14px;
+    line-height: 1.4;
+  }
+
+  /* ── Per-question stacked layout ── */
+  .qa-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 4px; }
+  .qa-row {
+    display: grid;
+    grid-template-columns: 1fr 200px;
+    gap: 14px;
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #e1eaf3;
+    border-radius: 9px;
+    padding: 13px 16px;
+  }
+  .qa-row .qa-prompt {
+    font-size: 13.5px;
+    color: #1a2744;
+    line-height: 1.5;
+  }
+  .qa-row .qa-prompt strong { font-weight: 700; }
+  .qa-row .qa-prompt small {
+    display: block;
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 3px;
+  }
+  .qa-row .answer { display: flex; flex-direction: column; }
+  .qa-row .answer label {
+    font-size: 10.5px;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 4px;
+  }
+  .qa-row .answer input {
+    padding: 8px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .qa-row .answer input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .qa-row .answer input.correct {
+    border-color: #5a9e3a;
+    background: #f0f9e8;
+    color: #2d6a1f;
+  }
+  .qa-row .answer input.wrong {
+    border-color: #c94040;
+    background: #fff1f1;
+    color: #9b2020;
+  }
+  .qa-row .answer .corr-hint { text-align: center; margin-top: 3px; }
+
+  /* ── Variance rows: F/U toggle + magnitude ── */
+  .var-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 14px;
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #e1eaf3;
+    border-radius: 9px;
+    padding: 13px 16px;
+  }
+  .var-row .var-prompt {
+    font-size: 13.5px;
+    color: #1a2744;
+    line-height: 1.5;
+  }
+  .var-row .var-prompt strong { font-weight: 700; }
+  .var-row .var-prompt small {
+    display: block;
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 3px;
+  }
+  .fu-toggle { display: flex; gap: 0; }
+  .fu-toggle button {
+    background: #fff;
+    border: 1.5px solid #cbd5e1;
+    color: #475569;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-family: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .12s;
+  }
+  .fu-toggle button:first-child { border-radius: 6px 0 0 6px; border-right: none; }
+  .fu-toggle button:last-child  { border-radius: 0 6px 6px 0; }
+  .fu-toggle button.sel-f {
+    background: #5a9e3a; border-color: #5a9e3a; color: #fff;
+  }
+  .fu-toggle button.sel-u {
+    background: #c94040; border-color: #c94040; color: #fff;
+  }
+  .var-row .mag { display: flex; flex-direction: column; width: 130px; }
+  .var-row .mag label {
+    font-size: 10.5px;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 4px;
+  }
+  .var-row .mag input {
+    padding: 8px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .var-row .mag input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .var-row .mag input.correct {
+    border-color: #5a9e3a;
+    background: #f0f9e8;
+    color: #2d6a1f;
+  }
+  .var-row .mag input.wrong {
+    border-color: #c94040;
+    background: #fff1f1;
+    color: #9b2020;
+  }
+  .var-row.flagged { border-color: #c94040; }
+
+  /* Reveal animation */
+  .reveal {
+    display: none;
+    animation: slideIn 0.4s ease-out;
+  }
+  .reveal.show { display: block; }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Single-cell solve */
+  .single-solve {
+    display: grid;
+    grid-template-columns: 1fr 200px;
+    gap: 14px;
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #e1eaf3;
+    border-radius: 9px;
+    padding: 16px 18px;
+    margin-bottom: 10px;
+  }
+  .single-solve .solve-prompt {
+    font-size: 14px;
+    color: #1a2744;
+    line-height: 1.55;
+  }
+  .single-solve .solve-prompt strong { font-weight: 700; }
+  .single-solve .solve-prompt small {
+    display: block;
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 4px;
+  }
+  .single-solve .answer { display: flex; flex-direction: column; }
+  .single-solve .answer label {
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 4px;
+  }
+  .single-solve .answer input {
+    padding: 9px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 15px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .single-solve .answer input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .single-solve .answer input.correct {
+    border-color: #5a9e3a;
+    background: #f0f9e8;
+    color: #2d6a1f;
+  }
+  .single-solve .answer input.wrong {
+    border-color: #c94040;
+    background: #fff1f1;
+    color: #9b2020;
+  }
+
+  /* ── Reconciliation bridge (Step 4 / Step 5) ── */
+  .bridge {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 6px 0 8px;
+    font-variant-numeric: tabular-nums;
+  }
+  .bridge tbody td {
+    padding: 9px 12px;
+    font-size: 13.5px;
+    border-bottom: 1px solid #f0f3f8;
+    color: #1a2744;
+  }
+  .bridge tbody td.lab { text-align: left; }
+  .bridge tbody td.lab small { color: #94a3b8; font-size: 11.5px; }
+  .bridge tbody td.amt {
+    text-align: right;
+    font-weight: 600;
+    width: 130px;
+    white-space: nowrap;
+  }
+  .bridge tbody td.run {
+    text-align: right;
+    width: 130px;
+    color: #64748b;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .bridge tbody td.amt.fav { color: #2d6a1f; }
+  .bridge tbody td.amt.unfav { color: #9b2020; }
+  .bridge tbody tr.anchor td {
+    background: #eef3fb;
+    font-weight: 700;
+  }
+  .bridge tbody tr.anchor td.lab { color: #1a2744; }
+  .bridge tbody tr.final td {
+    background: #fde9c8;
+    font-weight: 700;
+    border-top: 2px solid #f0c674;
+    border-bottom: none;
+    font-size: 14px;
+  }
+  .bridge thead th {
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: #94a3b8;
+    font-weight: 700;
+    text-align: right;
+    padding: 0 12px 5px;
+  }
+  .bridge thead th:first-child { text-align: left; }
+  .bridge tbody td.empty { color: #cbd5e1; font-weight: 400; }
+
+  .footer {
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .check-btn {
+    background: #1a2744; color: #fff;
+    border: none; border-radius: 9px;
+    padding: 10px 24px; font-size: 14px;
+    cursor: pointer; font-family: inherit;
+    font-weight: 500;
+    transition: background .15s;
+  }
+  .check-btn:hover { background: #243660; }
+  .reset-btn {
+    font-size: 13px; color: #64748b;
+    background: none; border: none;
+    cursor: pointer; text-decoration: underline;
+    font-family: inherit;
+  }
+  .reveal-link {
+    margin-left: auto;
+    font-size: 12.5px;
+    color: #64748b;
+    background: none; border: none;
+    cursor: pointer; text-decoration: underline;
+    font-family: inherit;
+  }
+  .reveal-link:hover { color: #1a2744; }
+  .score-out {
+    font-size: 14px; font-weight: 600;
+    color: #1a2744;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 6px 14px;
+  }
+  .score-out:empty { display: none; }
+
+  /* ── Build-your-own (Step 5) ── */
+  .build-prompt {
+    font-size: 14px;
+    color: #1a2744;
+    margin-bottom: 14px;
+    line-height: 1.55;
+  }
+  .params-card {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .params-card .param-row {
+    display: grid;
+    grid-template-columns: 1fr 130px;
+    gap: 10px;
+    align-items: center;
+    background: #f8f6f0;
+    border: 1px solid #e6dfd0;
+    border-radius: 8px;
+    padding: 10px 14px;
+  }
+  .params-card .param-row label {
+    font-size: 13px;
+    color: #1a2744;
+    font-weight: 500;
+  }
+  .params-card .param-row label small {
+    display: block;
+    font-size: 11.5px;
+    color: #64748b;
+    font-weight: 400;
+    margin-top: 1px;
+  }
+  .params-card .param-row input {
+    padding: 7px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-variant-numeric: tabular-nums;
+  }
+  .params-card .param-row input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .params-card .param-row input.changed {
+    border-color: #D85A30;
+    background: #fff7f0;
+  }
+  .build-section-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: #5a9e3a;
+    margin: 4px 0 8px;
+  }
+  .build-solve {
+    display: grid;
+    grid-template-columns: 1fr 200px;
+    gap: 14px;
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #e1eaf3;
+    border-radius: 9px;
+    padding: 16px 18px;
+    margin: 10px 0;
+  }
+  .build-solve .solve-prompt { font-size: 14px; color: #1a2744; line-height: 1.55; }
+  .build-solve .solve-prompt strong { font-weight: 700; }
+  .build-solve .answer { display: flex; flex-direction: column; }
+  .build-solve .answer label {
+    font-size: 11px; color: #64748b; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .04em; margin-bottom: 4px;
+  }
+  .build-solve .answer input {
+    padding: 9px 10px; border: 1.5px solid #cbd5e1; border-radius: 6px;
+    font-size: 15px; font-family: inherit; text-align: center;
+    background: #fff; color: #1a2744; font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .build-solve .answer input:focus { outline: none; border-color: #3b7dd8; background: #f8fbff; }
+  .build-solve .answer input.correct { border-color: #5a9e3a; background: #f0f9e8; color: #2d6a1f; }
+  .build-solve .answer input.wrong { border-color: #c94040; background: #fff1f1; color: #9b2020; }
+
+  .insight {
+    margin-top: 8px;
+    background: #eff6ff;
+    border: 1px solid #c7dcf5;
+    border-left: 4px solid #3b7dd8;
+    border-radius: 0 8px 8px 0;
+    padding: 11px 14px;
+    font-size: 13px;
+    line-height: 1.55;
+    color: #1a2744;
+  }
+  .insight strong { color: #1e40af; }
+  .insight.success {
+    background: #f0f9e8;
+    border-color: #c4e0a3;
+    border-left-color: #5a9e3a;
+  }
+  .insight.success strong { color: #2d6a1f; }
+
+  /* Responsive — collapse to single column, pin data panel at top */
+  @media (max-width: 700px) {
+    header { padding: 14px 16px; }
+    main {
+      grid-template-columns: 1fr;
+      gap: 16px;
+      padding: 0 12px 40px;
+      margin: 16px auto;
+    }
+    .data-panel {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      padding: 12px 14px 14px;
+      box-shadow: 0 4px 10px rgba(26,39,68,0.08);
+      max-height: 46vh;
+      overflow-y: auto;
+    }
+    .data-panel .panel-intro { display: none; }
+    .data-table tbody td { font-size: 12px; padding: 3px 4px; }
+    .part { padding: 18px 14px 18px; }
+    .qa-row { grid-template-columns: 1fr; gap: 8px; }
+    .var-row { grid-template-columns: 1fr; gap: 10px; }
+    .var-row .mag { width: 100%; }
+    .single-solve { grid-template-columns: 1fr; gap: 8px; }
+    .build-solve { grid-template-columns: 1fr; gap: 8px; }
+    .params-card { grid-template-columns: 1fr; }
+    .bridge tbody td { font-size: 12.5px; padding: 7px 8px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="header-left">
+    <h1>Variance &amp; Profit Reconciliation</h1>
+  </div>
+  <button class="qr-btn" onclick="showQR()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="2" height="2"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="19" width="3" height="2"/><rect x="19" y="19" width="2" height="2"/></svg>
+    Share with students
+  </button>
+</header>
+
+<!-- QR Modal -->
+<div class="qr-overlay" id="qr-overlay" onclick="hideQR(event)">
+  <div class="qr-modal">
+    <h2>Scan to open on your device</h2>
+    <p>Students can scan this QR code or type the URL to open the activity on their phone or laptop.</p>
+    <div id="qr-code"></div>
+    <div id="qr-url"></div>
+    <button class="qr-close" onclick="hideQR()">Close</button>
+  </div>
+</div>
+
+<!-- Main -->
+<main>
+
+  <!-- ───────── STICKY DATA PANEL ───────── -->
+  <aside class="data-panel">
+    <h3>Harbor Lights Co.</h3>
+    <p class="panel-intro">Solar lanterns, one product. The board approved the budget below; the month closed at the actuals shown. Keep these numbers in view as you work.</p>
+
+    <table class="data-table">
+      <caption class="budget">Budget <small>board-approved forecast</small></caption>
+      <tbody>
+        <tr><td class="lab">Lanterns</td><td class="val">4,000</td></tr>
+        <tr><td class="lab">Selling price / unit</td><td class="val">$50.00</td></tr>
+        <tr><td class="lab">DM / unit</td><td class="val">$12.00</td></tr>
+        <tr><td class="lab">DL / unit</td><td class="val">$8.00</td></tr>
+        <tr><td class="lab">Variable OH / unit</td><td class="val">$5.00</td></tr>
+        <tr class="subtotal"><td class="lab">Variable cost / unit</td><td class="val">$25.00</td></tr>
+        <tr><td class="lab">Fixed costs (mfg + S&amp;A)</td><td class="val">$60,000</td></tr>
+      </tbody>
+    </table>
+
+    <table class="data-table">
+      <caption class="actual">Actual <small>month just closed</small></caption>
+      <tbody>
+        <tr><td class="lab">Lanterns sold</td><td class="val">4,200</td></tr>
+        <tr><td class="lab">Selling price / unit</td><td class="val">$49.00</td></tr>
+        <tr><td class="lab">Direct materials</td><td class="val">$50,800</td></tr>
+        <tr><td class="lab">Direct labor</td><td class="val">$33,200</td></tr>
+        <tr><td class="lab">Variable overhead</td><td class="val">$21,300</td></tr>
+        <tr><td class="lab">Fixed costs</td><td class="val">$61,500</td></tr>
+      </tbody>
+    </table>
+  </aside>
+
+  <!-- ───────── STEP STACK ───────── -->
+  <div class="steps">
+
+  <!-- ───────── STEP 1 — Two bottom lines ───────── -->
+  <section class="part">
+    <div class="part-header">
+      <span class="part-tag practice">Step 1</span>
+      <h2>The gap to explain</h2>
+      <span class="subtitle">budget vs. actual operating income</span>
+    </div>
+
+    <div class="setup-box">
+      <p>The controller at Harbor Lights is closing the month. The board approved a forecast back at the start of the period; now the actual results are in. Before digging into why, she needs both bottom lines on the table.</p>
+      <p>Using the panel on the left, work out the operating income the budget called for and the operating income the month actually delivered.</p>
+    </div>
+
+    <div class="qa-list">
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Budgeted</strong> operating income<small>what the board signed off on</small></div>
+        <div class="answer">
+          <label>Budgeted OI</label>
+          <input type="text" id="s1-budget" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s1-budget"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Actual</strong> operating income<small>what the month delivered</small></div>
+        <div class="answer">
+          <label>Actual OI</label>
+          <input type="text" id="s1-actual" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s1-actual"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep1()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep1()">Reset</button>
+      <span id="score1-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep2(true)" id="reveal-step2-btn">Skip ahead →</button>
+    </div>
+
+    <div id="step1-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 2 — Sales variances ───────── -->
+  <section class="part reveal" id="step2">
+    <div class="part-header">
+      <span class="part-tag explore">Step 2</span>
+      <h2>The sales story</h2>
+      <span class="subtitle">volume and price</span>
+    </div>
+
+    <div class="setup-box">
+      <p>Two things happened on the revenue side. Harbor Lights moved more lanterns than planned — but had to shave the price to do it. For each variance below, decide whether it helped (Favorable) or hurt (Unfavorable) operating income, then enter the dollar size.</p>
+      <p class="meta-line">Enter each amount as a positive number; the Favorable / Unfavorable toggle carries the direction.</p>
+    </div>
+
+    <div class="qa-list">
+      <div class="var-row" id="vrow-s2-vol">
+        <div class="var-prompt">
+          <strong>Sales volume variance</strong>
+          <small>selling 200 lanterns more than the 4,000 planned, valued at the budgeted unit contribution margin</small>
+        </div>
+        <div class="fu-toggle" id="fu-s2-vol">
+          <button type="button" onclick="pickFU('s2-vol','F')">Favorable</button>
+          <button type="button" onclick="pickFU('s2-vol','U')">Unfavorable</button>
+        </div>
+        <div class="mag">
+          <label>Amount</label>
+          <input type="text" id="s2-vol" inputmode="decimal" placeholder="$">
+        </div>
+      </div>
+
+      <div class="var-row" id="vrow-s2-price">
+        <div class="var-prompt">
+          <strong>Sales price variance</strong>
+          <small>the actual price differed from the budgeted price, across all units actually sold</small>
+        </div>
+        <div class="fu-toggle" id="fu-s2-price">
+          <button type="button" onclick="pickFU('s2-price','F')">Favorable</button>
+          <button type="button" onclick="pickFU('s2-price','U')">Unfavorable</button>
+        </div>
+        <div class="mag">
+          <label>Amount</label>
+          <input type="text" id="s2-price" inputmode="decimal" placeholder="$">
+        </div>
+      </div>
+    </div>
+    <span class="corr-hint" id="hint-s2"></span>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep2()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep2()">Reset</button>
+      <span id="score2-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep3(true)" id="reveal-step3-btn">Skip ahead →</button>
+    </div>
+
+    <div id="step2-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 3 — Cost variances ───────── -->
+  <section class="part reveal" id="step3">
+    <div class="part-header">
+      <span class="part-tag solve">Step 3</span>
+      <h2>The cost story</h2>
+      <span class="subtitle">four spending lines vs. the flexible budget</span>
+    </div>
+
+    <div class="setup-box">
+      <p>Now the costs. The fair benchmark for each variable cost is what it <em>should</em> have run at the actual output of 4,200 lanterns — the flexible budget — measured against what was actually spent. Fixed costs are judged against the original budgeted lump sum.</p>
+      <p class="meta-line">For each line, set the Favorable / Unfavorable toggle and enter the dollar size as a positive number. Favorable means actual spending came in below the benchmark.</p>
+    </div>
+
+    <div class="qa-list">
+      <div class="var-row" id="vrow-s3-dm">
+        <div class="var-prompt"><strong>Direct materials</strong> variance</div>
+        <div class="fu-toggle" id="fu-s3-dm">
+          <button type="button" onclick="pickFU('s3-dm','F')">Favorable</button>
+          <button type="button" onclick="pickFU('s3-dm','U')">Unfavorable</button>
+        </div>
+        <div class="mag"><label>Amount</label><input type="text" id="s3-dm" inputmode="decimal" placeholder="$"></div>
+      </div>
+      <div class="var-row" id="vrow-s3-dl">
+        <div class="var-prompt"><strong>Direct labor</strong> variance</div>
+        <div class="fu-toggle" id="fu-s3-dl">
+          <button type="button" onclick="pickFU('s3-dl','F')">Favorable</button>
+          <button type="button" onclick="pickFU('s3-dl','U')">Unfavorable</button>
+        </div>
+        <div class="mag"><label>Amount</label><input type="text" id="s3-dl" inputmode="decimal" placeholder="$"></div>
+      </div>
+      <div class="var-row" id="vrow-s3-voh">
+        <div class="var-prompt"><strong>Variable overhead</strong> variance</div>
+        <div class="fu-toggle" id="fu-s3-voh">
+          <button type="button" onclick="pickFU('s3-voh','F')">Favorable</button>
+          <button type="button" onclick="pickFU('s3-voh','U')">Unfavorable</button>
+        </div>
+        <div class="mag"><label>Amount</label><input type="text" id="s3-voh" inputmode="decimal" placeholder="$"></div>
+      </div>
+      <div class="var-row" id="vrow-s3-fixed">
+        <div class="var-prompt"><strong>Fixed cost</strong> variance<small>budgeted lump sum vs. actual</small></div>
+        <div class="fu-toggle" id="fu-s3-fixed">
+          <button type="button" onclick="pickFU('s3-fixed','F')">Favorable</button>
+          <button type="button" onclick="pickFU('s3-fixed','U')">Unfavorable</button>
+        </div>
+        <div class="mag"><label>Amount</label><input type="text" id="s3-fixed" inputmode="decimal" placeholder="$"></div>
+      </div>
+    </div>
+    <span class="corr-hint" id="hint-s3"></span>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep3()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep3()">Reset</button>
+      <span id="score3-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep4(true)" id="reveal-step4-btn">Skip ahead →</button>
+    </div>
+
+    <div id="step3-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 4 — Reconciliation bridge ───────── -->
+  <section class="part reveal" id="step4">
+    <div class="part-header">
+      <span class="part-tag solve">Step 4</span>
+      <h2>The reconciliation bridge</h2>
+      <span class="subtitle">do the six variances close the gap?</span>
+    </div>
+
+    <div class="setup-box">
+      <p>Here is the payoff. Start from the budgeted operating income, layer the six variances on top — favorable amounts add, unfavorable amounts subtract — and watch the running total walk toward the actual result. If the standard-costing framework holds together, the bridge lands exactly on the month's actual operating income.</p>
+      <p class="meta-line">The bridge below fills in from your Step 2 and Step 3 answers. Read off where it lands, enter the reconciled figure, and confirm it ties.</p>
+    </div>
+
+    <table class="bridge">
+      <thead>
+        <tr><th>Line</th><th>Effect on OI</th><th>Running OI</th></tr>
+      </thead>
+      <tbody>
+        <tr class="anchor"><td class="lab">Budgeted operating income</td><td class="amt" id="br-start">—</td><td class="run" id="br-run-start">—</td></tr>
+        <tr><td class="lab">Sales volume variance</td><td class="amt empty" id="br-vol">—</td><td class="run empty" id="br-run-vol">—</td></tr>
+        <tr><td class="lab">Sales price variance</td><td class="amt empty" id="br-price">—</td><td class="run empty" id="br-run-price">—</td></tr>
+        <tr><td class="lab">Direct materials variance</td><td class="amt empty" id="br-dm">—</td><td class="run empty" id="br-run-dm">—</td></tr>
+        <tr><td class="lab">Direct labor variance</td><td class="amt empty" id="br-dl">—</td><td class="run empty" id="br-run-dl">—</td></tr>
+        <tr><td class="lab">Variable overhead variance</td><td class="amt empty" id="br-voh">—</td><td class="run empty" id="br-run-voh">—</td></tr>
+        <tr><td class="lab">Fixed cost variance</td><td class="amt empty" id="br-fixed">—</td><td class="run empty" id="br-run-fixed">—</td></tr>
+        <tr class="final"><td class="lab">Reconciled operating income</td><td class="amt"></td><td class="run" id="br-final">—</td></tr>
+      </tbody>
+    </table>
+
+    <div class="single-solve">
+      <div class="solve-prompt">
+        Where does the bridge land — Harbor Lights' <strong>actual operating income</strong>?
+        <small>Confirm the figure the running total walks to.</small>
+      </div>
+      <div class="answer">
+        <label>Reconciled OI</label>
+        <input type="text" id="s4-recon" placeholder="$">
+        <span class="corr-hint" id="hint-s4-recon"></span>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep4()">Check answer</button>
+      <button class="reset-btn" onclick="resetStep4()">Reset</button>
+      <span id="score4-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep5(true)" id="reveal-step5-btn">Skip ahead →</button>
+    </div>
+
+    <div id="step4-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 5 — Build your own ───────── -->
+  <section class="part reveal" id="step5">
+    <div class="part-header">
+      <span class="part-tag build">Step 5</span>
+      <h2>Build your own month</h2>
+      <span class="subtitle">change the actuals and re-run the reconciliation</span>
+    </div>
+
+    <p class="build-prompt">Try a different month. The budget stays as the board approved it; change any of the actuals below and the six variances and the bridge recompute live. Predict the <strong>actual operating income</strong> the bridge should land on, enter it, and confirm it ties. The budget is fixed: 4,000 lanterns at $50.00, variable cost $25.00/unit (DM $12 / DL $8 / VOH $5), fixed costs $60,000.</p>
+
+    <p class="build-section-label">Your actuals</p>
+    <div class="params-card">
+      <div class="param-row">
+        <label>Lanterns sold</label>
+        <input type="text" class="var-input" id="bv-units" inputmode="numeric" value="4,200">
+      </div>
+      <div class="param-row">
+        <label>Selling price / unit</label>
+        <input type="text" class="var-input" id="bv-price" inputmode="decimal" value="$49.00">
+      </div>
+      <div class="param-row">
+        <label>Direct materials <small>total spent</small></label>
+        <input type="text" class="var-input" id="bv-dm" inputmode="decimal" value="$50,800">
+      </div>
+      <div class="param-row">
+        <label>Direct labor <small>total spent</small></label>
+        <input type="text" class="var-input" id="bv-dl" inputmode="decimal" value="$33,200">
+      </div>
+      <div class="param-row">
+        <label>Variable overhead <small>total spent</small></label>
+        <input type="text" class="var-input" id="bv-voh" inputmode="decimal" value="$21,300">
+      </div>
+      <div class="param-row">
+        <label>Fixed costs <small>total spent</small></label>
+        <input type="text" class="var-input" id="bv-fixed" inputmode="decimal" value="$61,500">
+      </div>
+    </div>
+
+    <p class="build-section-label">Live reconciliation</p>
+    <table class="bridge">
+      <thead>
+        <tr><th>Line</th><th>Effect on OI</th><th>Running OI</th></tr>
+      </thead>
+      <tbody>
+        <tr class="anchor"><td class="lab">Budgeted operating income</td><td class="amt" id="bv-br-start">—</td><td class="run" id="bv-run-start">—</td></tr>
+        <tr><td class="lab">Sales volume variance</td><td class="amt" id="bv-br-vol">—</td><td class="run" id="bv-run-vol">—</td></tr>
+        <tr><td class="lab">Sales price variance</td><td class="amt" id="bv-br-price">—</td><td class="run" id="bv-run-price">—</td></tr>
+        <tr><td class="lab">Direct materials variance</td><td class="amt" id="bv-br-dm">—</td><td class="run" id="bv-run-dm">—</td></tr>
+        <tr><td class="lab">Direct labor variance</td><td class="amt" id="bv-br-dl">—</td><td class="run" id="bv-run-dl">—</td></tr>
+        <tr><td class="lab">Variable overhead variance</td><td class="amt" id="bv-br-voh">—</td><td class="run" id="bv-run-voh">—</td></tr>
+        <tr><td class="lab">Fixed cost variance</td><td class="amt" id="bv-br-fixed">—</td><td class="run" id="bv-run-fixed">—</td></tr>
+        <tr class="final"><td class="lab">Reconciled operating income</td><td class="amt"></td><td class="run" id="bv-br-final">—</td></tr>
+      </tbody>
+    </table>
+
+    <div class="build-solve">
+      <div class="solve-prompt">Predict the <strong>actual operating income</strong> this month delivers — then confirm the bridge ties to it.</div>
+      <div class="answer">
+        <label>Actual OI</label>
+        <input type="text" id="bv-oi" placeholder="$">
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep5()">Check</button>
+      <button class="reset-btn" onclick="resetStep5()">Reset to original</button>
+      <span id="score5-out" class="score-out"></span>
+    </div>
+
+    <div id="step5-feedback"></div>
+  </section>
+
+  </div><!-- /.steps -->
+
+</main>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   DATA — Harbor Lights Co., solar lanterns (single product)
+═══════════════════════════════════════════════════════════════ */
+const BUDGET = {
+  units: 4000,
+  price: 50.00,
+  dmPerUnit: 12.00,
+  dlPerUnit: 8.00,
+  vohPerUnit: 5.00,
+  fixed: 60000
+};
+BUDGET.vcPerUnit = BUDGET.dmPerUnit + BUDGET.dlPerUnit + BUDGET.vohPerUnit; // 25
+BUDGET.cmPerUnit = BUDGET.price - BUDGET.vcPerUnit;                          // 25
+
+const ACTUAL = {
+  units: 4200,
+  price: 49.00,
+  dm: 50800,
+  dl: 33200,
+  voh: 21300,
+  fixed: 61500
+};
+
+/* ── Core engine: from a budget + actuals, derive OIs and all six variances ──
+   Sign convention: signed variance = effect on operating income.
+   Positive = Favorable (raises OI); Negative = Unfavorable (lowers OI). */
+function reconcile(budget, actual) {
+  const budgetedOI = budget.units * budget.cmPerUnit - budget.fixed;
+  const actualRevenue = actual.units * actual.price;
+  const actualVarCost = actual.dm + actual.dl + actual.voh;
+  const actualOI = actualRevenue - actualVarCost - actual.fixed;
+
+  // Sales volume: extra units × budgeted CM/unit (raises OI when units > budget)
+  const volume = (actual.units - budget.units) * budget.cmPerUnit;
+  // Sales price: (actual price − budget price) × actual units
+  const price = (actual.price - budget.price) * actual.units;
+  // Cost variances: flexible-budget cost (at actual units) − actual cost
+  //   positive (flex > actual ⇒ spent less) = Favorable
+  const dm    = budget.dmPerUnit  * actual.units - actual.dm;
+  const dl    = budget.dlPerUnit  * actual.units - actual.dl;
+  const voh   = budget.vohPerUnit * actual.units - actual.voh;
+  const fixed = budget.fixed - actual.fixed;
+
+  const sum = volume + price + dm + dl + voh + fixed;
+  return { budgetedOI, actualOI, volume, price, dm, dl, voh, fixed, sum };
+}
+
+const R = reconcile(BUDGET, ACTUAL);
+// Expected: budgetedOI 40000, actualOI 39000,
+// volume +5000, price -4200, dm -400, dl +400, voh -300, fixed -1500, sum -1000
+
+/* ═══════════════════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════════════════ */
+function parseNum(s) {
+  if (typeof s !== 'string') return NaN;
+  return parseFloat(s.replace(/[\$,\s%]/g, ''));
+}
+function fmtMoney(v, decimals) {
+  const d = (decimals === undefined) ? 0 : decimals;
+  const rounded = Math.round(v * 100) / 100;
+  const sign = rounded < 0 ? '-$' : '$';
+  return sign + Math.abs(rounded).toLocaleString('en-US', {
+    minimumFractionDigits: d,
+    maximumFractionDigits: d
+  });
+}
+function fmtMoneySigned(v) {
+  const rounded = Math.round(v * 100) / 100;
+  if (rounded === 0) return '$0';
+  const sign = rounded > 0 ? '+' : '−';
+  return sign + '$' + Math.abs(rounded).toLocaleString('en-US');
+}
+function fmtUnits(v) {
+  return Math.round(v).toLocaleString('en-US');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   AUDIO
+═══════════════════════════════════════════════════════════════ */
+let audioCtx = null;
+function getAudio() {
+  if (!audioCtx) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (AC) audioCtx = new AC();
+  }
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+function playBell() {
+  const ctx = getAudio(); if (!ctx) return;
+  const now = ctx.currentTime;
+  [523.25, 659.25, 783.99].forEach(f => {
+    const osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = 'sine'; osc.frequency.value = f;
+    osc.connect(g).connect(ctx.destination);
+    g.gain.setValueAtTime(0, now);
+    g.gain.linearRampToValueAtTime(0.15, now + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 1.6);
+    osc.start(now); osc.stop(now + 1.7);
+  });
+}
+function playHorn() {
+  const ctx = getAudio(); if (!ctx) return;
+  const now = ctx.currentTime;
+  const notes = [
+    { f: 466.16, t: 0.00, d: 0.18 },
+    { f: 440.00, t: 0.20, d: 0.18 },
+    { f: 415.30, t: 0.40, d: 0.55 }
+  ];
+  notes.forEach(({ f, t, d }) => {
+    const osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(f, now + t);
+    if (d > 0.3) osc.frequency.exponentialRampToValueAtTime(f * 0.88, now + t + d);
+    osc.connect(g).connect(ctx.destination);
+    g.gain.setValueAtTime(0, now + t);
+    g.gain.linearRampToValueAtTime(0.12, now + t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, now + t + d);
+    osc.start(now + t); osc.stop(now + t + d + 0.05);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 1 — Budgeted & actual OI
+═══════════════════════════════════════════════════════════════ */
+function simpleCheck(inputId, hintId, expected, tol) {
+  const inp = document.getElementById(inputId);
+  inp.classList.remove('correct', 'wrong');
+  const hint = document.getElementById(hintId);
+  hint.textContent = '';
+  if (inp.value.trim() === '') return { ok: false, blank: true };
+  const v = parseNum(inp.value);
+  if (!isNaN(v) && Math.abs(v - expected) <= tol) {
+    inp.classList.add('correct');
+    return { ok: true, blank: false };
+  }
+  inp.classList.add('wrong');
+  return { ok: false, blank: false };
+}
+
+function checkStep1() {
+  const a = simpleCheck('s1-budget', 'hint-s1-budget', R.budgetedOI, 0.5);
+  const b = simpleCheck('s1-actual', 'hint-s1-actual', R.actualOI, 0.5);
+  const out = document.getElementById('score1-out');
+  const fb = document.getElementById('step1-insight');
+  fb.innerHTML = '';
+  if (a.blank && b.blank) { out.textContent = 'Fill in both answers first.'; return; }
+  const correct = (a.ok ? 1 : 0) + (b.ok ? 1 : 0);
+  out.textContent = correct + ' / 2 correct';
+  if (a.ok && b.ok) {
+    playBell();
+    fb.innerHTML = `<div class="insight success">The board expected ${fmtMoney(R.budgetedOI,0)}; the month delivered ${fmtMoney(R.actualOI,0)}. The job now is to explain that ${fmtMoney(Math.abs(R.actualOI - R.budgetedOI),0)} shortfall, line by line.</div>`;
+    revealStep2(false);
+  } else {
+    playHorn();
+  }
+}
+function resetStep1() {
+  ['s1-budget','s1-actual'].forEach(id => {
+    const el = document.getElementById(id);
+    el.value=''; el.classList.remove('correct','wrong');
+  });
+  document.getElementById('hint-s1-budget').textContent='';
+  document.getElementById('hint-s1-actual').textContent='';
+  document.getElementById('score1-out').textContent='';
+  document.getElementById('step1-insight').innerHTML='';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   F/U TOGGLE state
+═══════════════════════════════════════════════════════════════ */
+const fuState = {}; // key -> 'F' | 'U'
+function pickFU(key, choice) {
+  fuState[key] = choice;
+  const wrap = document.getElementById('fu-' + key);
+  const btns = wrap.querySelectorAll('button');
+  btns[0].classList.toggle('sel-f', choice === 'F');
+  btns[1].classList.toggle('sel-u', choice === 'U');
+}
+
+/* Check one variance row: requires correct F/U direction AND magnitude.
+   `signed` is the expected effect on OI (positive = Favorable). */
+function checkVarRow(key, signed, tol) {
+  const inp = document.getElementById(key);
+  const row = document.getElementById('vrow-' + key);
+  inp.classList.remove('correct', 'wrong');
+  row.classList.remove('flagged');
+  const dir = fuState[key];
+  const mag = parseNum(inp.value);
+  const blank = (inp.value.trim() === '' && !dir);
+  if (blank) return { ok: false, blank: true };
+
+  const expMag = Math.abs(signed);
+  const expDir = signed >= 0 ? 'F' : 'U';
+  const magOk = !isNaN(mag) && Math.abs(mag - expMag) <= tol;
+  const dirOk = (dir === expDir);
+
+  if (magOk && dirOk) {
+    inp.classList.add('correct');
+    return { ok: true, blank: false };
+  }
+  // Wrong: red border, EMPTY hint. Flag the row if direction is missing/wrong.
+  inp.classList.add('wrong');
+  if (!dirOk) row.classList.add('flagged');
+  return { ok: false, blank: false };
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 2 — Sales variances
+═══════════════════════════════════════════════════════════════ */
+function checkStep2() {
+  const v = checkVarRow('s2-vol',   R.volume, 0.5);
+  const p = checkVarRow('s2-price', R.price,  0.5);
+  const out = document.getElementById('score2-out');
+  const fb = document.getElementById('step2-insight');
+  fb.innerHTML = '';
+  document.getElementById('hint-s2').textContent = '';
+  if (v.blank && p.blank) { out.textContent = 'Set the toggles and enter amounts first.'; return; }
+  const correct = (v.ok?1:0) + (p.ok?1:0);
+  out.textContent = correct + ' / 2 correct';
+  if (v.ok && p.ok) {
+    playBell();
+    fb.innerHTML = `<div class="insight success">Selling 200 more lanterns added ${fmtMoney(R.volume,0)}, but the dollar-off price applied to every unit sold cost ${fmtMoney(Math.abs(R.price),0)} — so the price cut more than swallowed the volume gain.</div>`;
+    revealStep3(false);
+  } else {
+    playHorn();
+  }
+}
+function resetStep2() {
+  ['s2-vol','s2-price'].forEach(k => {
+    const el = document.getElementById(k);
+    el.value=''; el.classList.remove('correct','wrong');
+    document.getElementById('vrow-'+k).classList.remove('flagged');
+    delete fuState[k];
+    const wrap = document.getElementById('fu-'+k);
+    wrap.querySelectorAll('button').forEach(b => b.classList.remove('sel-f','sel-u'));
+  });
+  document.getElementById('hint-s2').textContent='';
+  document.getElementById('score2-out').textContent='';
+  document.getElementById('step2-insight').innerHTML='';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 3 — Cost variances
+═══════════════════════════════════════════════════════════════ */
+function checkStep3() {
+  const rows = [
+    checkVarRow('s3-dm',    R.dm,    0.5),
+    checkVarRow('s3-dl',    R.dl,    0.5),
+    checkVarRow('s3-voh',   R.voh,   0.5),
+    checkVarRow('s3-fixed', R.fixed, 0.5)
+  ];
+  const out = document.getElementById('score3-out');
+  const fb = document.getElementById('step3-insight');
+  fb.innerHTML = '';
+  document.getElementById('hint-s3').textContent = '';
+  if (rows.every(r => r.blank)) { out.textContent = 'Set the toggles and enter amounts first.'; return; }
+  const correct = rows.filter(r => r.ok).length;
+  out.textContent = correct + ' / 4 correct';
+  if (rows.every(r => r.ok)) {
+    playBell();
+    fb.innerHTML = `<div class="insight success">Labor came in under benchmark, but materials, variable overhead, and the fixed lump sum all ran over — the cost side netted to a drag on profit this month.</div>`;
+    revealStep4(false);
+    populateBridge();
+  } else {
+    playHorn();
+  }
+}
+function resetStep3() {
+  ['s3-dm','s3-dl','s3-voh','s3-fixed'].forEach(k => {
+    const el = document.getElementById(k);
+    el.value=''; el.classList.remove('correct','wrong');
+    document.getElementById('vrow-'+k).classList.remove('flagged');
+    delete fuState[k];
+    const wrap = document.getElementById('fu-'+k);
+    wrap.querySelectorAll('button').forEach(b => b.classList.remove('sel-f','sel-u'));
+  });
+  document.getElementById('hint-s3').textContent='';
+  document.getElementById('score3-out').textContent='';
+  document.getElementById('step3-insight').innerHTML='';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 4 — Reconciliation bridge (auto-populates from known variances)
+═══════════════════════════════════════════════════════════════ */
+function setBridgeAmt(id, signed) {
+  const el = document.getElementById(id);
+  el.classList.remove('empty', 'fav', 'unfav');
+  el.textContent = fmtMoneySigned(signed);
+  el.classList.add(signed >= 0 ? 'fav' : 'unfav');
+}
+function setBridgeRun(id, val) {
+  const el = document.getElementById(id);
+  el.classList.remove('empty');
+  el.textContent = fmtMoney(val, 0);
+}
+function populateBridge() {
+  const start = R.budgetedOI;
+  const startEl = document.getElementById('br-start');
+  startEl.textContent = fmtMoney(start, 0); startEl.classList.remove('empty');
+  const runStartEl = document.getElementById('br-run-start');
+  runStartEl.textContent = fmtMoney(start, 0); runStartEl.classList.remove('empty');
+
+  let run = start;
+  const steps = [
+    ['vol',   R.volume],
+    ['price', R.price],
+    ['dm',    R.dm],
+    ['dl',    R.dl],
+    ['voh',   R.voh],
+    ['fixed', R.fixed]
+  ];
+  steps.forEach(([k, signed]) => {
+    setBridgeAmt('br-' + k, signed);
+    run += signed;
+    setBridgeRun('br-run-' + k, run);
+  });
+  document.getElementById('br-final').textContent = fmtMoney(run, 0);
+}
+
+function checkStep4() {
+  const inp = document.getElementById('s4-recon');
+  const hint = document.getElementById('hint-s4-recon');
+  const out = document.getElementById('score4-out');
+  const fb = document.getElementById('step4-insight');
+  inp.classList.remove('correct','wrong');
+  hint.textContent=''; out.textContent=''; fb.innerHTML='';
+  if (inp.value.trim() === '') { out.textContent = 'Enter the reconciled figure first.'; return; }
+  const v = parseNum(inp.value);
+  if (!isNaN(v) && Math.abs(v - R.actualOI) <= 0.5) {
+    inp.classList.add('correct');
+    out.textContent = 'Correct!';
+    playBell();
+    fb.innerHTML = `<div class="insight success">It ties. The six variances net to ${fmtMoneySigned(R.sum)}, which is exactly the gap between the ${fmtMoney(R.budgetedOI,0)} the board approved and the ${fmtMoney(R.actualOI,0)} the month delivered. Nothing is left unexplained.</div>`;
+    revealStep5(false);
+  } else {
+    inp.classList.add('wrong');
+    out.textContent = 'Not quite.';
+    playHorn();
+  }
+}
+function resetStep4() {
+  const inp = document.getElementById('s4-recon');
+  inp.value=''; inp.classList.remove('correct','wrong');
+  document.getElementById('hint-s4-recon').textContent='';
+  document.getElementById('score4-out').textContent='';
+  document.getElementById('step4-insight').innerHTML='';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 5 — Build your own actuals
+═══════════════════════════════════════════════════════════════ */
+const BV_DEFAULTS = {
+  units: 4200, price: 49.00, dm: 50800, dl: 33200, voh: 21300, fixed: 61500
+};
+function readBVActual() {
+  return {
+    units: parseNum(document.getElementById('bv-units').value),
+    price: parseNum(document.getElementById('bv-price').value),
+    dm:    parseNum(document.getElementById('bv-dm').value),
+    dl:    parseNum(document.getElementById('bv-dl').value),
+    voh:   parseNum(document.getElementById('bv-voh').value),
+    fixed: parseNum(document.getElementById('bv-fixed').value)
+  };
+}
+function bvChangedFlags(a) {
+  const map = [
+    ['bv-units', a.units, BV_DEFAULTS.units],
+    ['bv-price', a.price, BV_DEFAULTS.price],
+    ['bv-dm',    a.dm,    BV_DEFAULTS.dm],
+    ['bv-dl',    a.dl,    BV_DEFAULTS.dl],
+    ['bv-voh',   a.voh,   BV_DEFAULTS.voh],
+    ['bv-fixed', a.fixed, BV_DEFAULTS.fixed]
+  ];
+  map.forEach(([id, cur, ref]) => {
+    const el = document.getElementById(id);
+    if (!isNaN(cur) && Math.abs(cur - ref) > 0.001) el.classList.add('changed');
+    else el.classList.remove('changed');
+  });
+}
+function refreshBVBridge() {
+  const a = readBVActual();
+  bvChangedFlags(a);
+  const cells = ['units','price','dm','dl','voh','fixed'];
+  const valid = cells.every(k => !isNaN(a[k]));
+  const setEmpty = id => { const el = document.getElementById(id); el.textContent='—'; el.classList.add('empty'); el.classList.remove('fav','unfav'); };
+  if (!valid) {
+    ['start','vol','price','dm','dl','voh','fixed'].forEach(k => { setEmpty('bv-br-'+k); document.getElementById('bv-run-'+k).textContent='—'; });
+    document.getElementById('bv-br-final').textContent='—';
+    return null;
+  }
+  const r = reconcile(BUDGET, a);
+  const startEl = document.getElementById('bv-br-start');
+  startEl.textContent = fmtMoney(r.budgetedOI,0); startEl.classList.remove('empty','fav','unfav');
+  document.getElementById('bv-run-start').textContent = fmtMoney(r.budgetedOI,0);
+  let run = r.budgetedOI;
+  [['vol',r.volume],['price',r.price],['dm',r.dm],['dl',r.dl],['voh',r.voh],['fixed',r.fixed]].forEach(([k,signed])=>{
+    const el = document.getElementById('bv-br-'+k);
+    el.classList.remove('empty','fav','unfav');
+    el.textContent = fmtMoneySigned(signed);
+    el.classList.add(signed >= 0 ? 'fav' : 'unfav');
+    run += signed;
+    document.getElementById('bv-run-'+k).textContent = fmtMoney(run,0);
+  });
+  document.getElementById('bv-br-final').textContent = fmtMoney(run,0);
+  return r;
+}
+
+function checkStep5() {
+  const r = refreshBVBridge();
+  const oiEl = document.getElementById('bv-oi');
+  const out = document.getElementById('score5-out');
+  const fb = document.getElementById('step5-feedback');
+  oiEl.classList.remove('correct','wrong');
+  out.textContent=''; fb.innerHTML='';
+  if (!r) {
+    fb.innerHTML = `<div class="insight">Make sure every actual field has a valid number.</div>`;
+    return;
+  }
+  if (oiEl.value.trim() === '') {
+    fb.innerHTML = `<div class="insight">Enter your predicted actual operating income before checking.</div>`;
+    return;
+  }
+  const v = parseNum(oiEl.value);
+  const tol = Math.max(0.5, Math.abs(r.actualOI) * 0.001);
+  if (!isNaN(v) && Math.abs(v - r.actualOI) <= tol) {
+    oiEl.classList.add('correct');
+    out.textContent = 'Correct!';
+    playBell();
+    const netMsg = r.sum >= 0
+      ? `the six variances net to ${fmtMoneySigned(r.sum)}, lifting the budgeted ${fmtMoney(r.budgetedOI,0)} up to ${fmtMoney(r.actualOI,0)}`
+      : `the six variances net to ${fmtMoneySigned(r.sum)}, pulling the budgeted ${fmtMoney(r.budgetedOI,0)} down to ${fmtMoney(r.actualOI,0)}`;
+    fb.innerHTML = `<div class="insight success">It ties — ${netMsg}.</div>`;
+  } else {
+    oiEl.classList.add('wrong');
+    out.textContent = 'Not quite.';
+    playHorn();
+  }
+}
+function resetStep5() {
+  document.getElementById('bv-units').value = BV_DEFAULTS.units.toLocaleString('en-US');
+  document.getElementById('bv-price').value = '$' + BV_DEFAULTS.price.toFixed(2);
+  document.getElementById('bv-dm').value    = '$' + BV_DEFAULTS.dm.toLocaleString('en-US');
+  document.getElementById('bv-dl').value    = '$' + BV_DEFAULTS.dl.toLocaleString('en-US');
+  document.getElementById('bv-voh').value   = '$' + BV_DEFAULTS.voh.toLocaleString('en-US');
+  document.getElementById('bv-fixed').value = '$' + BV_DEFAULTS.fixed.toLocaleString('en-US');
+  const oiEl = document.getElementById('bv-oi');
+  oiEl.value=''; oiEl.classList.remove('correct','wrong');
+  document.getElementById('score5-out').textContent='';
+  document.getElementById('step5-feedback').innerHTML='';
+  refreshBVBridge();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   REVEAL STEPS
+═══════════════════════════════════════════════════════════════ */
+const revealedSteps = new Set();
+function revealStep(stepNum, scroll) {
+  const el = document.getElementById('step' + stepNum);
+  if (!revealedSteps.has(stepNum)) {
+    el.classList.add('show');
+    revealedSteps.add(stepNum);
+    const btn = document.getElementById('reveal-step' + stepNum + '-btn');
+    if (btn) btn.style.display = 'none';
+  }
+  if (scroll) setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+}
+function revealStep2(scroll) { revealStep(2, scroll); }
+function revealStep3(scroll) { revealStep(3, scroll); }
+function revealStep4(scroll) { revealStep(4, scroll); populateBridge(); }
+function revealStep5(scroll) { revealStep(5, scroll); }
+
+/* ═══════════════════════════════════════════════════════════════
+   QR / SHARE
+═══════════════════════════════════════════════════════════════ */
+function showQR() {
+  const url = location.href;
+  document.getElementById('qr-url').textContent = url;
+  const qrEl = document.getElementById('qr-code');
+  qrEl.innerHTML = '';
+  if (window.QRCode) {
+    new QRCode(qrEl, { text: url, width: 180, height: 180, colorDark: '#1a2744', colorLight: '#ffffff' });
+  }
+  document.getElementById('qr-overlay').classList.add('show');
+}
+function hideQR(ev) {
+  if (ev && ev.target.id !== 'qr-overlay' && ev.target.className !== 'qr-close') return;
+  document.getElementById('qr-overlay').classList.remove('show');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+  ['bv-units','bv-price','bv-dm','bv-dl','bv-voh','bv-fixed'].forEach(id => {
+    document.getElementById(id).addEventListener('input', () => {
+      refreshBVBridge();
+      const oiEl = document.getElementById('bv-oi');
+      oiEl.classList.remove('correct','wrong');
+      document.getElementById('score5-out').textContent='';
+      document.getElementById('step5-feedback').innerHTML='';
+    });
+  });
+  refreshBVBridge();
+});
+</script>
+
+</body>
+</html>

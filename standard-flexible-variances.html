@@ -1,0 +1,1478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Standard Costs &amp; Flexible-Budget Variances</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  /* ── Reset & base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    background: #f4f0e8;
+    color: #1a2744;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    background: #1a2744;
+    color: #fff;
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .header-left h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+  .header-left p  { font-size: 13px; color: #a0aec0; margin-top: 2px; }
+
+  .qr-btn {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    transition: background .15s;
+  }
+  .qr-btn:hover { background: rgba(255,255,255,0.18); }
+
+  /* QR Modal */
+  .qr-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .qr-overlay.show { display: flex; }
+  .qr-modal {
+    background: #fff;
+    border-radius: 14px;
+    padding: 32px;
+    text-align: center;
+    max-width: 300px;
+    width: 90%;
+  }
+  .qr-modal h2 { font-size: 16px; font-weight: 600; color: #1a2744; margin-bottom: 6px; }
+  .qr-modal p  { font-size: 12px; color: #64748b; margin-bottom: 18px; line-height: 1.5; }
+  #qr-code { display: flex; justify-content: center; margin-bottom: 16px; }
+  #qr-url  { font-size: 11px; color: #94a3b8; word-break: break-all; margin-bottom: 18px; }
+  .qr-close {
+    background: #1a2744; color: #fff;
+    border: none; border-radius: 8px;
+    padding: 8px 24px; font-size: 13px;
+    cursor: pointer; font-family: inherit;
+  }
+
+  /* ── Main layout ── */
+  main {
+    max-width: 920px;
+    margin: 28px auto;
+    padding: 0 20px 48px;
+  }
+
+  .part {
+    background: #fff;
+    border: 1px solid #dde3ef;
+    border-radius: 12px;
+    padding: 22px 24px 24px;
+    margin-bottom: 22px;
+  }
+
+  .part-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .part-tag {
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    background: #1a2744;
+    padding: 3px 10px;
+    border-radius: 99px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+  .part-tag.practice { background: #D85A30; }
+  .part-tag.explore  { background: #3b7dd8; }
+  .part-tag.solve    { background: #7a5cb6; }
+  .part-tag.build    { background: #5a9e3a; }
+  .part-header h2 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -.01em;
+  }
+  .part-header .subtitle {
+    font-size: 13px;
+    color: #64748b;
+  }
+
+  .setup-box {
+    background: #f8f6f0;
+    border: 1px solid #e6dfd0;
+    border-radius: 9px;
+    padding: 14px 16px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: #334155;
+    margin-bottom: 16px;
+  }
+  .setup-box strong { color: #1a2744; }
+  .setup-box p + p { margin-top: 6px; }
+  .setup-box .meta-line {
+    margin-top: 10px;
+    font-size: 13px;
+    color: #475569;
+  }
+  .setup-box .meta-line strong { color: #1a2744; }
+
+  /* ── Read-only product table (Step 1) ── */
+  .prompt {
+    font-size: 14px;
+    color: #1a2744;
+    margin-bottom: 12px;
+    line-height: 1.55;
+  }
+  .prompt strong { font-weight: 700; }
+
+  .prod-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-bottom: 6px;
+    font-variant-numeric: tabular-nums;
+  }
+  .prod-table thead th {
+    background: #fde9c8;
+    color: #1a2744;
+    font-size: 12.5px;
+    font-weight: 700;
+    text-align: center;
+    padding: 10px 8px;
+    border-bottom: 2px solid #f0c674;
+  }
+  .prod-table thead th:first-child {
+    border-top-left-radius: 8px;
+    text-align: left;
+    padding-left: 14px;
+  }
+  .prod-table thead th:last-child  { border-top-right-radius: 8px; }
+  .prod-table tbody td {
+    background: #f0f5fa;
+    padding: 9px 8px;
+    text-align: center;
+    border-bottom: 1px solid #e1eaf3;
+  }
+  .prod-table tbody td.prod-name {
+    text-align: left;
+    padding-left: 14px;
+    font-weight: 600;
+    color: #1a2744;
+  }
+  .prod-table tbody tr:last-child td:first-child { border-bottom-left-radius: 8px; }
+  .prod-table tbody tr:last-child td:last-child  { border-bottom-right-radius: 8px; }
+
+  .prod-table input {
+    width: 100%;
+    max-width: 110px;
+    padding: 7px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-variant-numeric: tabular-nums;
+    transition: border-color .12s, background .12s;
+  }
+  .prod-table input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .prod-table input.correct {
+    border-color: #5a9e3a;
+    background: #f0f9e8;
+    color: #2d6a1f;
+    font-weight: 600;
+  }
+  .prod-table input.wrong {
+    border-color: #c94040;
+    background: #fff1f1;
+    color: #9b2020;
+  }
+  .corr-hint {
+    display: block;
+    font-size: 11.5px;
+    color: #64748b;
+    font-weight: 500;
+    margin-top: 4px;
+    min-height: 14px;
+    line-height: 1.4;
+  }
+
+  /* ── Per-question stacked layout ── */
+  .qa-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 4px; }
+  .qa-row {
+    display: grid;
+    grid-template-columns: 1fr 200px;
+    gap: 14px;
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #e1eaf3;
+    border-radius: 9px;
+    padding: 13px 16px;
+  }
+  .qa-row .qa-prompt {
+    font-size: 13.5px;
+    color: #1a2744;
+    line-height: 1.5;
+  }
+  .qa-row .qa-prompt strong { font-weight: 700; }
+  .qa-row .qa-prompt small {
+    display: block;
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 3px;
+  }
+  .qa-row .answer { display: flex; flex-direction: column; }
+  .qa-row .answer label {
+    font-size: 10.5px;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 4px;
+  }
+  .qa-row .answer input {
+    padding: 8px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .qa-row .answer input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .qa-row .answer input.correct {
+    border-color: #5a9e3a;
+    background: #f0f9e8;
+    color: #2d6a1f;
+  }
+  .qa-row .answer input.wrong {
+    border-color: #c94040;
+    background: #fff1f1;
+    color: #9b2020;
+  }
+  .qa-row .answer .corr-hint { text-align: center; margin-top: 3px; }
+
+  /* ── Variance block (direction buttons + magnitude) ── */
+  .var-block {
+    background: #f8fafc;
+    border: 1px solid #e1eaf3;
+    border-radius: 9px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+  .var-block .var-title {
+    font-size: 14px;
+    color: #1a2744;
+    margin-bottom: 10px;
+    line-height: 1.5;
+  }
+  .var-block .var-title strong { font-weight: 700; }
+  .var-block .var-title small {
+    display: block;
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 3px;
+  }
+  .dir-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .dir-buttons button {
+    flex: 1;
+    min-width: 130px;
+    background: #fff;
+    border: 1.5px solid #cbd5e1;
+    color: #1a2744;
+    padding: 11px 14px;
+    border-radius: 9px;
+    font-size: 13.5px;
+    font-family: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .dir-buttons button:hover {
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .dir-buttons button.selected {
+    background: #1a2744;
+    color: #fff;
+    border-color: #1a2744;
+  }
+  .dir-buttons button.dir-wrong {
+    border-color: #c94040;
+    background: #fff1f1;
+    color: #9b2020;
+  }
+  .mag-row {
+    display: grid;
+    grid-template-columns: 1fr 200px;
+    gap: 14px;
+    align-items: center;
+    margin-top: 12px;
+  }
+  .mag-row .mag-prompt {
+    font-size: 13.5px;
+    color: #1a2744;
+    line-height: 1.5;
+  }
+  .mag-row .answer { display: flex; flex-direction: column; }
+  .mag-row .answer label {
+    font-size: 10.5px;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 4px;
+  }
+  .mag-row .answer input {
+    padding: 8px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .mag-row .answer input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .mag-row .answer input.correct {
+    border-color: #5a9e3a;
+    background: #f0f9e8;
+    color: #2d6a1f;
+  }
+  .mag-row .answer input.wrong {
+    border-color: #c94040;
+    background: #fff1f1;
+    color: #9b2020;
+  }
+  .mag-row .answer .corr-hint { text-align: center; margin-top: 3px; }
+
+  /* Reveal animation */
+  .reveal {
+    display: none;
+    animation: slideIn 0.4s ease-out;
+  }
+  .reveal.show { display: block; }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .footer {
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .check-btn {
+    background: #1a2744; color: #fff;
+    border: none; border-radius: 9px;
+    padding: 10px 24px; font-size: 14px;
+    cursor: pointer; font-family: inherit;
+    font-weight: 500;
+    transition: background .15s;
+  }
+  .check-btn:hover { background: #243660; }
+  .reset-btn {
+    font-size: 13px; color: #64748b;
+    background: none; border: none;
+    cursor: pointer; text-decoration: underline;
+    font-family: inherit;
+  }
+  .reveal-link {
+    margin-left: auto;
+    font-size: 12.5px;
+    color: #64748b;
+    background: none; border: none;
+    cursor: pointer; text-decoration: underline;
+    font-family: inherit;
+  }
+  .reveal-link:hover { color: #1a2744; }
+  .score-out {
+    font-size: 14px; font-weight: 600;
+    color: #1a2744;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 6px 14px;
+  }
+  .score-out:empty { display: none; }
+
+  /* ── Build-your-own (Step 5) ── */
+  .build-prompt {
+    font-size: 14px;
+    color: #1a2744;
+    margin-bottom: 14px;
+    line-height: 1.55;
+  }
+  .params-card {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .params-card .param-row {
+    display: grid;
+    grid-template-columns: 1fr 140px;
+    gap: 10px;
+    align-items: center;
+    background: #f8f6f0;
+    border: 1px solid #e6dfd0;
+    border-radius: 8px;
+    padding: 10px 14px;
+  }
+  .params-card .param-row label {
+    font-size: 13.5px;
+    color: #1a2744;
+    font-weight: 500;
+  }
+  .params-card .param-row label small {
+    display: block;
+    font-size: 11.5px;
+    color: #64748b;
+    font-weight: 400;
+    margin-top: 1px;
+  }
+  .params-card .param-row input {
+    padding: 7px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-variant-numeric: tabular-nums;
+  }
+  .params-card .param-row input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .params-card .param-row input.changed {
+    border-color: #D85A30;
+    background: #fff7f0;
+  }
+
+  .build-solve {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .build-solve .solve-card {
+    background: #fff;
+    border: 1px solid #dde3ef;
+    border-radius: 9px;
+    padding: 12px 14px;
+  }
+  .build-solve .solve-card label {
+    display: block;
+    font-size: 12px;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 6px;
+  }
+  .build-solve .solve-card label small {
+    display: block;
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 400;
+    color: #94a3b8;
+    margin-top: 2px;
+  }
+  .build-solve .solve-card .bs-dir {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+  .build-solve .solve-card .bs-dir button {
+    flex: 1;
+    background: #fff;
+    border: 1.5px solid #cbd5e1;
+    color: #1a2744;
+    padding: 6px 4px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-family: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .build-solve .solve-card .bs-dir button:hover {
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .build-solve .solve-card .bs-dir button.selected {
+    background: #1a2744;
+    color: #fff;
+    border-color: #1a2744;
+  }
+  .build-solve .solve-card .bs-dir button.dir-wrong {
+    border-color: #c94040;
+    background: #fff1f1;
+    color: #9b2020;
+  }
+  .build-solve .solve-card input {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 15px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .build-solve .solve-card input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .build-solve .solve-card input.correct {
+    border-color: #5a9e3a;
+    background: #f0f9e8;
+    color: #2d6a1f;
+  }
+  .build-solve .solve-card input.wrong {
+    border-color: #c94040;
+    background: #fff1f1;
+    color: #9b2020;
+  }
+
+  .insight {
+    margin-top: 8px;
+    background: #eff6ff;
+    border: 1px solid #c7dcf5;
+    border-left: 4px solid #3b7dd8;
+    border-radius: 0 8px 8px 0;
+    padding: 11px 14px;
+    font-size: 13px;
+    line-height: 1.55;
+    color: #1a2744;
+  }
+  .insight strong { color: #1e40af; }
+  .insight.success {
+    background: #f0f9e8;
+    border-color: #c4e0a3;
+    border-left-color: #5a9e3a;
+  }
+  .insight.success strong { color: #2d6a1f; }
+
+  /* Responsive */
+  @media (max-width: 700px) {
+    header { padding: 14px 16px; }
+    main { padding: 0 12px 40px; }
+    .part { padding: 18px 14px 18px; }
+    .prod-table thead th, .prod-table tbody td { font-size: 11.5px; padding: 7px 4px; }
+    .qa-row { grid-template-columns: 1fr; gap: 8px; }
+    .mag-row { grid-template-columns: 1fr; gap: 8px; }
+    .params-card { grid-template-columns: 1fr; }
+    .build-solve { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="header-left">
+    <h1>Standard Costs &amp; Flexible-Budget Variances</h1>
+  </div>
+  <button class="qr-btn" onclick="showQR()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="2" height="2"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="19" width="3" height="2"/><rect x="19" y="19" width="2" height="2"/></svg>
+    Share with students
+  </button>
+</header>
+
+<!-- QR Modal -->
+<div class="qr-overlay" id="qr-overlay" onclick="hideQR(event)">
+  <div class="qr-modal">
+    <h2>Scan to open on your device</h2>
+    <p>Students can scan this QR code or type the URL to open the activity on their phone or laptop.</p>
+    <div id="qr-code"></div>
+    <div id="qr-url"></div>
+    <button class="qr-close" onclick="hideQR()">Close</button>
+  </div>
+</div>
+
+<!-- Main -->
+<main>
+
+  <!-- ───────── STEP 1 — Flexible budget ───────── -->
+  <section class="part">
+    <div class="part-header">
+      <span class="part-tag practice">Step 1</span>
+      <h2>Set the flexible budget</h2>
+      <span class="subtitle">benchmark the standards against actual output</span>
+    </div>
+
+    <div class="setup-box">
+      <p>Copperline Candle Co. makes scented candles. The cost accountant built the month's plan from these per-candle standards: each candle should take <strong>0.50 lb of wax at $4.00 per lb</strong>, <strong>0.10 direct-labor hours at $15.00 per hour</strong>, and should absorb <strong>variable overhead at $8.00 per direct-labor hour</strong>.</p>
+      <p>The static (planning) budget assumed <strong>5,000 candles</strong>. Production actually came in at <strong>5,400 candles</strong> this month. Before pulling any variances, the accountant flexes the budget to what the standards say <em>should</em> have been spent at the 5,400-candle output level.</p>
+    </div>
+
+    <p class="prompt">For <strong>5,400 candles</strong>, fill in the standard quantities allowed and the flexible-budget cost for each input:</p>
+
+    <div class="qa-list">
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Standard pounds of wax allowed</strong><small>at the standard rate per candle</small></div>
+        <div class="answer">
+          <label>Standard lb</label>
+          <input type="text" id="s1-dm-q" inputmode="decimal" placeholder="lb">
+          <span class="corr-hint" id="hint-s1-dm-q"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Flexible-budget direct materials</strong> cost</div>
+        <div class="answer">
+          <label>FB materials</label>
+          <input type="text" id="s1-dm-c" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s1-dm-c"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Standard direct-labor hours allowed</strong></div>
+        <div class="answer">
+          <label>Standard hr</label>
+          <input type="text" id="s1-dl-q" inputmode="decimal" placeholder="hr">
+          <span class="corr-hint" id="hint-s1-dl-q"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Flexible-budget direct labor</strong> cost</div>
+        <div class="answer">
+          <label>FB labor</label>
+          <input type="text" id="s1-dl-c" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s1-dl-c"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Flexible-budget variable overhead</strong></div>
+        <div class="answer">
+          <label>FB VOH</label>
+          <input type="text" id="s1-voh-c" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s1-voh-c"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep1()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep1()">Reset</button>
+      <span id="score1-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep2(true)" id="reveal-step2-btn">Skip ahead →</button>
+    </div>
+  </section>
+
+  <!-- ───────── STEP 2 — Direct materials ───────── -->
+  <section class="part reveal" id="step2">
+    <div class="part-header">
+      <span class="part-tag explore">Step 2</span>
+      <h2>Direct materials variances</h2>
+      <span class="subtitle">call the direction, then the size</span>
+    </div>
+
+    <div class="setup-box">
+      <p>Now the actuals. Copperline's purchasing records show the plant <strong>used 2,750 lb of wax</strong> this month at an <strong>actual price of $3.90 per lb</strong>, for total actual materials cost of <strong>$10,725</strong>.</p>
+      <p>Split the materials performance into a <strong>price variance</strong> and a <strong>quantity (usage) variance</strong> against the standards from Step 1.</p>
+    </div>
+
+    <div class="var-block" id="vb-dm-price">
+      <div class="var-title"><strong>Direct materials price variance</strong><small>the rate paid for wax vs. the standard rate, on the pounds actually bought</small></div>
+      <div class="dir-buttons">
+        <button onclick="pickDir('dm-price','F')">Favorable</button>
+        <button onclick="pickDir('dm-price','U')">Unfavorable</button>
+      </div>
+      <div class="mag-row reveal" id="mag-dm-price">
+        <div class="mag-prompt">Enter the <strong>size</strong> of the variance as a positive dollar amount.</div>
+        <div class="answer">
+          <label>Amount</label>
+          <input type="text" id="s2-dm-price" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s2-dm-price"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="var-block" id="vb-dm-qty">
+      <div class="var-title"><strong>Direct materials quantity variance</strong><small>the pounds actually used vs. the pounds standard for 5,400 candles, at the standard price</small></div>
+      <div class="dir-buttons">
+        <button onclick="pickDir('dm-qty','F')">Favorable</button>
+        <button onclick="pickDir('dm-qty','U')">Unfavorable</button>
+      </div>
+      <div class="mag-row reveal" id="mag-dm-qty">
+        <div class="mag-prompt">Enter the <strong>size</strong> of the variance as a positive dollar amount.</div>
+        <div class="answer">
+          <label>Amount</label>
+          <input type="text" id="s2-dm-qty" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s2-dm-qty"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep2()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep2()">Reset</button>
+      <span id="score2-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep3(true)" id="reveal-step3-btn">Skip ahead →</button>
+    </div>
+
+    <div id="step2-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 3 — Direct labor ───────── -->
+  <section class="part reveal" id="step3">
+    <div class="part-header">
+      <span class="part-tag solve">Step 3</span>
+      <h2>Direct labor variances</h2>
+      <span class="subtitle">rate and efficiency</span>
+    </div>
+
+    <div class="setup-box">
+      <p>The payroll register shows Copperline's candle line ran <strong>560 direct-labor hours</strong> this month at an <strong>actual wage of $15.50 per hour</strong>, for total actual labor cost of <strong>$8,680</strong>.</p>
+      <p>Split labor performance into a <strong>rate variance</strong> and an <strong>efficiency variance</strong> against the standards from Step 1.</p>
+    </div>
+
+    <div class="var-block" id="vb-dl-rate">
+      <div class="var-title"><strong>Direct labor rate variance</strong><small>the wage paid vs. the standard wage, on the hours actually worked</small></div>
+      <div class="dir-buttons">
+        <button onclick="pickDir('dl-rate','F')">Favorable</button>
+        <button onclick="pickDir('dl-rate','U')">Unfavorable</button>
+      </div>
+      <div class="mag-row reveal" id="mag-dl-rate">
+        <div class="mag-prompt">Enter the <strong>size</strong> of the variance as a positive dollar amount.</div>
+        <div class="answer">
+          <label>Amount</label>
+          <input type="text" id="s3-dl-rate" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s3-dl-rate"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="var-block" id="vb-dl-eff">
+      <div class="var-title"><strong>Direct labor efficiency variance</strong><small>the hours actually worked vs. the hours standard for 5,400 candles, at the standard wage</small></div>
+      <div class="dir-buttons">
+        <button onclick="pickDir('dl-eff','F')">Favorable</button>
+        <button onclick="pickDir('dl-eff','U')">Unfavorable</button>
+      </div>
+      <div class="mag-row reveal" id="mag-dl-eff">
+        <div class="mag-prompt">Enter the <strong>size</strong> of the variance as a positive dollar amount.</div>
+        <div class="answer">
+          <label>Amount</label>
+          <input type="text" id="s3-dl-eff" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s3-dl-eff"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep3()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep3()">Reset</button>
+      <span id="score3-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep4(true)" id="reveal-step4-btn">Skip ahead →</button>
+    </div>
+
+    <div id="step3-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 4 — Variable overhead ───────── -->
+  <section class="part reveal" id="step4">
+    <div class="part-header">
+      <span class="part-tag solve">Step 4</span>
+      <h2>Variable overhead variances</h2>
+      <span class="subtitle">spending and efficiency</span>
+    </div>
+
+    <div class="setup-box">
+      <p>Variable overhead at Copperline is applied on direct-labor hours. Actual variable overhead incurred this month was <strong>$4,592</strong>, against the same <strong>560 actual labor hours</strong> from Step 3.</p>
+      <p>Split variable overhead into a <strong>spending variance</strong> and an <strong>efficiency variance</strong>. The efficiency piece is driven by the same hour gap as labor.</p>
+    </div>
+
+    <div class="var-block" id="vb-voh-spend">
+      <div class="var-title"><strong>Variable overhead spending variance</strong><small>actual VOH incurred vs. what VOH should have cost at the actual hours worked</small></div>
+      <div class="dir-buttons">
+        <button onclick="pickDir('voh-spend','F')">Favorable</button>
+        <button onclick="pickDir('voh-spend','U')">Unfavorable</button>
+      </div>
+      <div class="mag-row reveal" id="mag-voh-spend">
+        <div class="mag-prompt">Enter the <strong>size</strong> of the variance as a positive dollar amount.</div>
+        <div class="answer">
+          <label>Amount</label>
+          <input type="text" id="s4-voh-spend" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s4-voh-spend"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="var-block" id="vb-voh-eff">
+      <div class="var-title"><strong>Variable overhead efficiency variance</strong><small>the actual hours vs. standard hours for 5,400 candles, at the standard VOH rate</small></div>
+      <div class="dir-buttons">
+        <button onclick="pickDir('voh-eff','F')">Favorable</button>
+        <button onclick="pickDir('voh-eff','U')">Unfavorable</button>
+      </div>
+      <div class="mag-row reveal" id="mag-voh-eff">
+        <div class="mag-prompt">Enter the <strong>size</strong> of the variance as a positive dollar amount.</div>
+        <div class="answer">
+          <label>Amount</label>
+          <input type="text" id="s4-voh-eff" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s4-voh-eff"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep4()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep4()">Reset</button>
+      <span id="score4-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep5(true)" id="reveal-step5-btn">Skip ahead →</button>
+    </div>
+
+    <div id="step4-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 5 — Build your own ───────── -->
+  <section class="part reveal" id="step5">
+    <div class="part-header">
+      <span class="part-tag build">Step 5</span>
+      <h2>Build your own month</h2>
+      <span class="subtitle">change the actuals and re-solve all six variances</span>
+    </div>
+
+    <p class="build-prompt">Output stays at <strong>5,400 candles</strong> and the standards are fixed (wax 0.50 lb @ $4.00; labor 0.10 hr @ $15.00; VOH $8.00 per labor hour). Change any of Copperline's <strong>actual</strong> results below, then call the direction and enter the size for each of the six variances. Leave a magnitude blank to skip that one.</p>
+
+    <div class="params-card">
+      <div class="param-row">
+        <label>Actual wax used <small>pounds</small></label>
+        <input type="text" class="var-input" id="bv-dm-q" inputmode="decimal" value="2,750">
+      </div>
+      <div class="param-row">
+        <label>Actual wax price <small>$ per lb</small></label>
+        <input type="text" class="var-input" id="bv-dm-p" inputmode="decimal" value="$3.90">
+      </div>
+      <div class="param-row">
+        <label>Actual labor hours <small>hours</small></label>
+        <input type="text" class="var-input" id="bv-dl-q" inputmode="decimal" value="560">
+      </div>
+      <div class="param-row">
+        <label>Actual labor rate <small>$ per hour</small></label>
+        <input type="text" class="var-input" id="bv-dl-p" inputmode="decimal" value="$15.50">
+      </div>
+      <div class="param-row">
+        <label>Actual variable overhead <small>total incurred</small></label>
+        <input type="text" class="var-input" id="bv-voh" inputmode="decimal" value="$4,592">
+      </div>
+    </div>
+
+    <div class="build-solve">
+      <div class="solve-card">
+        <label>DM price variance</label>
+        <div class="bs-dir">
+          <button onclick="pickBVDir('dm-price','F')">F</button>
+          <button onclick="pickBVDir('dm-price','U')">U</button>
+        </div>
+        <input type="text" id="bv-dm-price" placeholder="$">
+      </div>
+      <div class="solve-card">
+        <label>DM quantity variance</label>
+        <div class="bs-dir">
+          <button onclick="pickBVDir('dm-qty','F')">F</button>
+          <button onclick="pickBVDir('dm-qty','U')">U</button>
+        </div>
+        <input type="text" id="bv-dm-qty" placeholder="$">
+      </div>
+      <div class="solve-card">
+        <label>DL rate variance</label>
+        <div class="bs-dir">
+          <button onclick="pickBVDir('dl-rate','F')">F</button>
+          <button onclick="pickBVDir('dl-rate','U')">U</button>
+        </div>
+        <input type="text" id="bv-dl-rate" placeholder="$">
+      </div>
+      <div class="solve-card">
+        <label>DL efficiency variance</label>
+        <div class="bs-dir">
+          <button onclick="pickBVDir('dl-eff','F')">F</button>
+          <button onclick="pickBVDir('dl-eff','U')">U</button>
+        </div>
+        <input type="text" id="bv-dl-eff" placeholder="$">
+      </div>
+      <div class="solve-card">
+        <label>VOH spending variance</label>
+        <div class="bs-dir">
+          <button onclick="pickBVDir('voh-spend','F')">F</button>
+          <button onclick="pickBVDir('voh-spend','U')">U</button>
+        </div>
+        <input type="text" id="bv-voh-spend" placeholder="$">
+      </div>
+      <div class="solve-card">
+        <label>VOH efficiency variance</label>
+        <div class="bs-dir">
+          <button onclick="pickBVDir('voh-eff','F')">F</button>
+          <button onclick="pickBVDir('voh-eff','U')">U</button>
+        </div>
+        <input type="text" id="bv-voh-eff" placeholder="$">
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep5()">Check</button>
+      <button class="reset-btn" onclick="resetStep5()">Reset to original</button>
+      <span id="score5-out" class="score-out"></span>
+    </div>
+
+    <div id="step5-feedback"></div>
+  </section>
+
+</main>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   STANDARDS & ACTUALS — Copperline Candle Co.
+═══════════════════════════════════════════════════════════════ */
+const OUTPUT = 5400;          // actual candles produced
+
+// Per-candle standards
+const STD_DM_PER  = 0.50;     // lb of wax per candle
+const STD_DM_RATE = 4.00;     // $ per lb
+const STD_DL_PER  = 0.10;     // labor hr per candle
+const STD_DL_RATE = 15.00;    // $ per hr
+const STD_VOH_RATE = 8.00;    // $ per labor hr
+
+// Standard quantities allowed for actual output
+const STD_DM_Q  = STD_DM_PER * OUTPUT;   // 2,700 lb
+const STD_DL_Q  = STD_DL_PER * OUTPUT;   // 540 hr
+
+// Flexible-budget costs
+const FB_DM  = STD_DM_Q * STD_DM_RATE;   // 10,800
+const FB_DL  = STD_DL_Q * STD_DL_RATE;   // 8,100
+const FB_VOH = STD_DL_Q * STD_VOH_RATE;  // 4,320
+
+// Actual results
+const ACT_DM_Q  = 2750;   // lb
+const ACT_DM_P  = 3.90;   // $ per lb
+const ACT_DL_Q  = 560;    // hr
+const ACT_DL_P  = 15.50;  // $ per hr
+const ACT_VOH   = 4592;   // total $ incurred
+
+/* ═══════════════════════════════════════════════════════════════
+   VARIANCE MATH (signed: + = unfavorable, − = favorable)
+   Returns { mag, dir } with mag a positive number and dir 'F'/'U'.
+═══════════════════════════════════════════════════════════════ */
+function dmPrice(actQ, actP)            { return signedVar((actP - STD_DM_RATE) * actQ); }
+function dmQty(actQ)                     { return signedVar((actQ - STD_DM_Q) * STD_DM_RATE); }
+function dlRate(actQ, actP)             { return signedVar((actP - STD_DL_RATE) * actQ); }
+function dlEff(actQ)                     { return signedVar((actQ - STD_DL_Q) * STD_DL_RATE); }
+function vohSpend(actVOH, actQ)         { return signedVar(actVOH - actQ * STD_VOH_RATE); }
+function vohEff(actQ)                     { return signedVar((actQ - STD_DL_Q) * STD_VOH_RATE); }
+function signedVar(signed) {
+  // signed > 0 → cost higher than standard → Unfavorable
+  return { mag: Math.abs(signed), dir: signed > 0 ? 'U' : 'F' };
+}
+
+// Baseline variance answers (from the given actuals)
+const V_DM_PRICE = dmPrice(ACT_DM_Q, ACT_DM_P);   // 275 F
+const V_DM_QTY   = dmQty(ACT_DM_Q);               // 200 U
+const V_DL_RATE  = dlRate(ACT_DL_Q, ACT_DL_P);    // 280 U
+const V_DL_EFF   = dlEff(ACT_DL_Q);               // 300 U
+const V_VOH_SPEND = vohSpend(ACT_VOH, ACT_DL_Q);  // 112 U
+const V_VOH_EFF  = vohEff(ACT_DL_Q);              // 160 U
+
+/* ═══════════════════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════════════════ */
+function parseNum(s) {
+  if (typeof s !== 'string') return NaN;
+  return parseFloat(s.replace(/[\$,\s%]/g, ''));
+}
+function fmtMoney(v, decimals) {
+  const d = (decimals === undefined) ? 0 : decimals;
+  const rounded = Math.round(v * 100) / 100;
+  const sign = rounded < 0 ? '-$' : '$';
+  return sign + Math.abs(rounded).toLocaleString('en-US', {
+    minimumFractionDigits: d,
+    maximumFractionDigits: d
+  });
+}
+function fmtUnits(v) {
+  return Math.round(v).toLocaleString('en-US');
+}
+function dirWord(d) { return d === 'F' ? 'Favorable' : 'Unfavorable'; }
+
+/* ═══════════════════════════════════════════════════════════════
+   AUDIO
+═══════════════════════════════════════════════════════════════ */
+let audioCtx = null;
+function getAudio() {
+  if (!audioCtx) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (AC) audioCtx = new AC();
+  }
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+function playBell() {
+  const ctx = getAudio(); if (!ctx) return;
+  const now = ctx.currentTime;
+  [523.25, 659.25, 783.99].forEach(f => {
+    const osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = 'sine'; osc.frequency.value = f;
+    osc.connect(g).connect(ctx.destination);
+    g.gain.setValueAtTime(0, now);
+    g.gain.linearRampToValueAtTime(0.15, now + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 1.6);
+    osc.start(now); osc.stop(now + 1.7);
+  });
+}
+function playHorn() {
+  const ctx = getAudio(); if (!ctx) return;
+  const now = ctx.currentTime;
+  const notes = [
+    { f: 466.16, t: 0.00, d: 0.18 },
+    { f: 440.00, t: 0.20, d: 0.18 },
+    { f: 415.30, t: 0.40, d: 0.55 }
+  ];
+  notes.forEach(({ f, t, d }) => {
+    const osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(f, now + t);
+    if (d > 0.3) osc.frequency.exponentialRampToValueAtTime(f * 0.88, now + t + d);
+    osc.connect(g).connect(ctx.destination);
+    g.gain.setValueAtTime(0, now + t);
+    g.gain.linearRampToValueAtTime(0.12, now + t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, now + t + d);
+    osc.start(now + t); osc.stop(now + t + d + 0.05);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   GENERIC qa-row group checker (Step 1)
+   No hint reveals: wrong inputs get a red border and EMPTY hint.
+═══════════════════════════════════════════════════════════════ */
+function checkGroup(spec, scoreId, allCorrectFn) {
+  let correct = 0, total = 0, blanks = 0;
+  spec.forEach(f => {
+    const inp  = document.getElementById(f.inputId);
+    const hint = document.getElementById(f.hintId);
+    inp.classList.remove('correct', 'wrong');
+    hint.textContent = '';
+    total++;
+    if (inp.value.trim() === '') { blanks++; return; }
+    const val = parseNum(inp.value);
+    if (!isNaN(val) && Math.abs(val - f.expected) <= f.tol) {
+      inp.classList.add('correct');
+      correct++;
+    } else {
+      inp.classList.add('wrong');
+    }
+  });
+  const out = document.getElementById(scoreId);
+  if (blanks === total) {
+    out.textContent = 'Fill in some answers first.';
+    return false;
+  }
+  out.textContent = correct + ' / ' + total + ' correct' + (blanks ? ' (' + blanks + ' blank)' : '');
+  if (correct === total) {
+    playBell();
+    if (allCorrectFn) allCorrectFn();
+    return true;
+  } else {
+    playHorn();
+    return false;
+  }
+}
+function resetGroup(spec, scoreId, extraResetFn) {
+  spec.forEach(f => {
+    const inp = document.getElementById(f.inputId);
+    const hint = document.getElementById(f.hintId);
+    inp.value = '';
+    inp.classList.remove('correct', 'wrong');
+    hint.textContent = '';
+  });
+  document.getElementById(scoreId).textContent = '';
+  if (extraResetFn) extraResetFn();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 1 — Flexible budget
+═══════════════════════════════════════════════════════════════ */
+const STEP1_SPEC = [
+  { inputId: 's1-dm-q',  hintId: 'hint-s1-dm-q',  expected: STD_DM_Q, tol: 1   },
+  { inputId: 's1-dm-c',  hintId: 'hint-s1-dm-c',  expected: FB_DM,    tol: 0.5 },
+  { inputId: 's1-dl-q',  hintId: 'hint-s1-dl-q',  expected: STD_DL_Q, tol: 1   },
+  { inputId: 's1-dl-c',  hintId: 'hint-s1-dl-c',  expected: FB_DL,    tol: 0.5 },
+  { inputId: 's1-voh-c', hintId: 'hint-s1-voh-c', expected: FB_VOH,   tol: 0.5 }
+];
+function checkStep1() {
+  checkGroup(STEP1_SPEC, 'score1-out', () => revealStep2(false));
+}
+function resetStep1() {
+  resetGroup(STEP1_SPEC, 'score1-out');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DIRECTION + MAGNITUDE variance blocks (Steps 2–4)
+   Each variance keyed by id. Pick F/U → reveal magnitude input.
+   Check verifies BOTH the direction choice AND the magnitude.
+   Wrong → red border, EMPTY hint.
+═══════════════════════════════════════════════════════════════ */
+const dirChoice = {};   // key → 'F' | 'U'
+function pickDir(key, choice) {
+  dirChoice[key] = choice;
+  const block = document.getElementById('vb-' + key);
+  const btns = block.querySelectorAll('.dir-buttons button');
+  btns[0].classList.toggle('selected', choice === 'F');
+  btns[1].classList.toggle('selected', choice === 'U');
+  btns.forEach(b => b.classList.remove('dir-wrong'));
+  const mag = document.getElementById('mag-' + key);
+  if (!mag.classList.contains('show')) mag.classList.add('show');
+}
+
+// spec entry: { key, inputId, hintId, answer:{mag,dir} }
+function checkVarGroup(spec, scoreId, allCorrectFn) {
+  let correct = 0, total = 0, attempted = 0;
+  spec.forEach(f => {
+    total++;
+    const inp = document.getElementById(f.inputId);
+    const hint = document.getElementById(f.hintId);
+    const block = document.getElementById('vb-' + f.key);
+    const btns = block.querySelectorAll('.dir-buttons button');
+    inp.classList.remove('correct', 'wrong');
+    hint.textContent = '';
+    btns.forEach(b => b.classList.remove('dir-wrong'));
+
+    const chosenDir = dirChoice[f.key];
+    const magRaw = inp.value.trim();
+    // Treat the variance as "attempted" only if a direction is picked or a magnitude typed.
+    if (!chosenDir && magRaw === '') return;
+    attempted++;
+
+    const val = parseNum(magRaw);
+    const magOK = (magRaw !== '') && !isNaN(val) && Math.abs(val - f.answer.mag) <= 0.5;
+    const dirOK = (chosenDir === f.answer.dir);
+
+    if (magRaw !== '') inp.classList.add(magOK ? 'correct' : 'wrong');
+    else inp.classList.add('wrong');                 // direction picked but no magnitude
+    if (!dirOK) {
+      // mark the wrongly chosen (or absent) direction button
+      const idx = chosenDir === 'F' ? 0 : (chosenDir === 'U' ? 1 : -1);
+      if (idx >= 0) btns[idx].classList.add('dir-wrong');
+    }
+    if (magOK && dirOK) correct++;
+  });
+  const out = document.getElementById(scoreId);
+  if (attempted === 0) {
+    out.textContent = 'Pick a direction and enter a size first.';
+    return false;
+  }
+  out.textContent = correct + ' / ' + total + ' correct';
+  if (correct === total) {
+    playBell();
+    if (allCorrectFn) allCorrectFn();
+    return true;
+  } else {
+    playHorn();
+    return false;
+  }
+}
+function resetVarGroup(spec, scoreId, extraResetFn) {
+  spec.forEach(f => {
+    const inp = document.getElementById(f.inputId);
+    const hint = document.getElementById(f.hintId);
+    inp.value = '';
+    inp.classList.remove('correct', 'wrong');
+    hint.textContent = '';
+    const block = document.getElementById('vb-' + f.key);
+    block.querySelectorAll('.dir-buttons button').forEach(b => b.classList.remove('selected', 'dir-wrong'));
+    document.getElementById('mag-' + f.key).classList.remove('show');
+    delete dirChoice[f.key];
+  });
+  document.getElementById(scoreId).textContent = '';
+  if (extraResetFn) extraResetFn();
+}
+
+/* ── STEP 2 — Direct materials ── */
+const STEP2_SPEC = [
+  { key: 'dm-price', inputId: 's2-dm-price', hintId: 'hint-s2-dm-price', answer: V_DM_PRICE },
+  { key: 'dm-qty',   inputId: 's2-dm-qty',   hintId: 'hint-s2-dm-qty',   answer: V_DM_QTY }
+];
+function checkStep2() {
+  const fb = document.getElementById('step2-insight');
+  fb.innerHTML = '';
+  checkVarGroup(STEP2_SPEC, 'score2-out', () => {
+    revealStep3(false);
+    fb.innerHTML = `<div class="insight success">A favorable price on wax this month was partly offset by using more wax than the 5,400 candles called for — the two materials variances pull in opposite directions.</div>`;
+  });
+}
+function resetStep2() {
+  resetVarGroup(STEP2_SPEC, 'score2-out', () => { document.getElementById('step2-insight').innerHTML = ''; });
+}
+
+/* ── STEP 3 — Direct labor ── */
+const STEP3_SPEC = [
+  { key: 'dl-rate', inputId: 's3-dl-rate', hintId: 'hint-s3-dl-rate', answer: V_DL_RATE },
+  { key: 'dl-eff',  inputId: 's3-dl-eff',  hintId: 'hint-s3-dl-eff',  answer: V_DL_EFF }
+];
+function checkStep3() {
+  const fb = document.getElementById('step3-insight');
+  fb.innerHTML = '';
+  checkVarGroup(STEP3_SPEC, 'score3-out', () => {
+    revealStep4(false);
+    fb.innerHTML = `<div class="insight success">Both labor variances are unfavorable this month: Copperline paid above-standard wages and the line took more hours than the standard allowed for 5,400 candles.</div>`;
+  });
+}
+function resetStep3() {
+  resetVarGroup(STEP3_SPEC, 'score3-out', () => { document.getElementById('step3-insight').innerHTML = ''; });
+}
+
+/* ── STEP 4 — Variable overhead ── */
+const STEP4_SPEC = [
+  { key: 'voh-spend', inputId: 's4-voh-spend', hintId: 'hint-s4-voh-spend', answer: V_VOH_SPEND },
+  { key: 'voh-eff',   inputId: 's4-voh-eff',   hintId: 'hint-s4-voh-eff',   answer: V_VOH_EFF }
+];
+function checkStep4() {
+  const fb = document.getElementById('step4-insight');
+  fb.innerHTML = '';
+  checkVarGroup(STEP4_SPEC, 'score4-out', () => {
+    revealStep5(false);
+    fb.innerHTML = `<div class="insight success">The overhead efficiency variance rides on the same extra labor hours as the labor efficiency variance — when the line runs long, it drags variable overhead along with it.</div>`;
+  });
+}
+function resetStep4() {
+  resetVarGroup(STEP4_SPEC, 'score4-out', () => { document.getElementById('step4-insight').innerHTML = ''; });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 5 — Build your own
+═══════════════════════════════════════════════════════════════ */
+const BV_DEFAULTS = { dmQ: ACT_DM_Q, dmP: ACT_DM_P, dlQ: ACT_DL_Q, dlP: ACT_DL_P, voh: ACT_VOH };
+
+const bvDir = {};   // key → 'F' | 'U'
+function pickBVDir(key, choice) {
+  bvDir[key] = choice;
+  const card = document.getElementById('bv-' + key).parentElement;
+  const btns = card.querySelectorAll('.bs-dir button');
+  btns[0].classList.toggle('selected', choice === 'F');
+  btns[1].classList.toggle('selected', choice === 'U');
+  btns.forEach(b => b.classList.remove('dir-wrong'));
+}
+
+function readBVActuals() {
+  return {
+    dmQ: parseNum(document.getElementById('bv-dm-q').value),
+    dmP: parseNum(document.getElementById('bv-dm-p').value),
+    dlQ: parseNum(document.getElementById('bv-dl-q').value),
+    dlP: parseNum(document.getElementById('bv-dl-p').value),
+    voh: parseNum(document.getElementById('bv-voh').value)
+  };
+}
+
+function refreshBVComputed() {
+  const a = readBVActuals();
+  const pairs = [
+    { id: 'bv-dm-q', cur: a.dmQ, ref: BV_DEFAULTS.dmQ },
+    { id: 'bv-dm-p', cur: a.dmP, ref: BV_DEFAULTS.dmP },
+    { id: 'bv-dl-q', cur: a.dlQ, ref: BV_DEFAULTS.dlQ },
+    { id: 'bv-dl-p', cur: a.dlP, ref: BV_DEFAULTS.dlP },
+    { id: 'bv-voh',  cur: a.voh, ref: BV_DEFAULTS.voh }
+  ];
+  pairs.forEach(({ id, cur, ref }) => {
+    const el = document.getElementById(id);
+    if (!isNaN(cur) && Math.abs(cur - ref) > 0.001) el.classList.add('changed');
+    else el.classList.remove('changed');
+  });
+}
+
+function checkStep5() {
+  const a = readBVActuals();
+  const out = document.getElementById('score5-out');
+  const fb  = document.getElementById('step5-feedback');
+  out.textContent = '';
+  fb.innerHTML = '';
+
+  if (Object.values(a).some(isNaN)) {
+    fb.innerHTML = `<div class="insight">Make sure every actual input has a valid number.</div>`;
+    return;
+  }
+
+  // Live answers from current actuals
+  const ans = {
+    'dm-price': dmPrice(a.dmQ, a.dmP),
+    'dm-qty':   dmQty(a.dmQ),
+    'dl-rate':  dlRate(a.dlQ, a.dlP),
+    'dl-eff':   dlEff(a.dlQ),
+    'voh-spend': vohSpend(a.voh, a.dlQ),
+    'voh-eff':  vohEff(a.dlQ)
+  };
+  const keys = ['dm-price','dm-qty','dl-rate','dl-eff','voh-spend','voh-eff'];
+
+  let attempted = 0, correct = 0, total = 0;
+  keys.forEach(key => {
+    total++;
+    const inp = document.getElementById('bv-' + key);
+    const card = inp.parentElement;
+    const btns = card.querySelectorAll('.bs-dir button');
+    inp.classList.remove('correct', 'wrong');
+    btns.forEach(b => b.classList.remove('dir-wrong'));
+
+    const chosen = bvDir[key];
+    const magRaw = inp.value.trim();
+    if (!chosen && magRaw === '') return;   // untouched → skip
+    attempted++;
+
+    const expected = ans[key];
+    const tol = Math.max(0.5, Math.abs(expected.mag) * 0.001);
+    const val = parseNum(magRaw);
+    const magOK = (magRaw !== '') && !isNaN(val) && Math.abs(val - expected.mag) <= tol;
+    const dirOK = (chosen === expected.dir);
+
+    if (magRaw !== '') inp.classList.add(magOK ? 'correct' : 'wrong');
+    else inp.classList.add('wrong');
+    if (!dirOK) {
+      const idx = chosen === 'F' ? 0 : (chosen === 'U' ? 1 : -1);
+      if (idx >= 0) btns[idx].classList.add('dir-wrong');
+    }
+    if (magOK && dirOK) correct++;
+  });
+
+  if (attempted === 0) {
+    fb.innerHTML = `<div class="insight">Pick a direction and enter a size for at least one variance before checking.</div>`;
+    return;
+  }
+  out.textContent = correct + ' / ' + total + ' correct';
+  if (correct === attempted && attempted === total) {
+    playBell();
+    fb.innerHTML = `<div class="insight success">All six variances reconcile to your inputs. Total flexible-budget cost for 5,400 candles is fixed; these six variances are exactly the gap between that benchmark and what Copperline actually spent.</div>`;
+  } else if (correct === attempted) {
+    playBell();
+    fb.innerHTML = `<div class="insight success">Everything you attempted ties out. Fill in the rest when you want a full reconciliation.</div>`;
+  } else {
+    playHorn();
+  }
+}
+
+function resetStep5() {
+  document.getElementById('bv-dm-q').value = BV_DEFAULTS.dmQ.toLocaleString('en-US');
+  document.getElementById('bv-dm-p').value = '$' + BV_DEFAULTS.dmP.toFixed(2);
+  document.getElementById('bv-dl-q').value = BV_DEFAULTS.dlQ.toLocaleString('en-US');
+  document.getElementById('bv-dl-p').value = '$' + BV_DEFAULTS.dlP.toFixed(2);
+  document.getElementById('bv-voh').value  = '$' + BV_DEFAULTS.voh.toLocaleString('en-US');
+  ['dm-price','dm-qty','dl-rate','dl-eff','voh-spend','voh-eff'].forEach(key => {
+    const inp = document.getElementById('bv-' + key);
+    inp.value = '';
+    inp.classList.remove('correct', 'wrong');
+    const card = inp.parentElement;
+    card.querySelectorAll('.bs-dir button').forEach(b => b.classList.remove('selected', 'dir-wrong'));
+    delete bvDir[key];
+  });
+  document.getElementById('score5-out').textContent = '';
+  document.getElementById('step5-feedback').innerHTML = '';
+  refreshBVComputed();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   REVEAL STEPS
+═══════════════════════════════════════════════════════════════ */
+const revealedSteps = new Set();
+function revealStep(stepNum, scroll) {
+  const el = document.getElementById('step' + stepNum);
+  if (!revealedSteps.has(stepNum)) {
+    el.classList.add('show');
+    revealedSteps.add(stepNum);
+    const btn = document.getElementById('reveal-step' + stepNum + '-btn');
+    if (btn) btn.style.display = 'none';
+  }
+  if (scroll) setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+}
+function revealStep2(scroll) { revealStep(2, scroll); }
+function revealStep3(scroll) { revealStep(3, scroll); }
+function revealStep4(scroll) { revealStep(4, scroll); }
+function revealStep5(scroll) { revealStep(5, scroll); }
+
+/* ═══════════════════════════════════════════════════════════════
+   QR / SHARE
+═══════════════════════════════════════════════════════════════ */
+function showQR() {
+  const url = location.href;
+  document.getElementById('qr-url').textContent = url;
+  const qrEl = document.getElementById('qr-code');
+  qrEl.innerHTML = '';
+  if (window.QRCode) {
+    new QRCode(qrEl, { text: url, width: 180, height: 180, colorDark: '#1a2744', colorLight: '#ffffff' });
+  }
+  document.getElementById('qr-overlay').classList.add('show');
+}
+function hideQR(ev) {
+  if (ev && ev.target.id !== 'qr-overlay' && ev.target.className !== 'qr-close') return;
+  document.getElementById('qr-overlay').classList.remove('show');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+  ['bv-dm-q','bv-dm-p','bv-dl-q','bv-dl-p','bv-voh'].forEach(id => {
+    document.getElementById(id).addEventListener('input', () => {
+      refreshBVComputed();
+      ['dm-price','dm-qty','dl-rate','dl-eff','voh-spend','voh-eff'].forEach(key => {
+        document.getElementById('bv-' + key).classList.remove('correct', 'wrong');
+      });
+      document.getElementById('score5-out').textContent = '';
+      document.getElementById('step5-feedback').innerHTML = '';
+    });
+  });
+  refreshBVComputed();
+});
+</script>
+
+</body>
+</html>
