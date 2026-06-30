@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Exam 2 Review — Worked Solutions</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  /* ── Reset & base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    background: #f4f0e8;
+    color: #1a2744;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    background: #1a2744;
+    color: #fff;
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .header-left h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+  .header-left p  { font-size: 13px; color: #a0aec0; margin-top: 2px; }
+
+  .qr-btn {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    transition: background .15s;
+  }
+  .qr-btn:hover { background: rgba(255,255,255,0.18); }
+
+  /* QR Modal */
+  .qr-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .qr-overlay.show { display: flex; }
+  .qr-modal {
+    background: #fff;
+    border-radius: 14px;
+    padding: 32px;
+    text-align: center;
+    max-width: 300px;
+    width: 90%;
+  }
+  .qr-modal h2 { font-size: 16px; font-weight: 600; color: #1a2744; margin-bottom: 6px; }
+  .qr-modal p  { font-size: 12px; color: #64748b; margin-bottom: 18px; line-height: 1.5; }
+  #qr-code { display: flex; justify-content: center; margin-bottom: 16px; }
+  #qr-url  { font-size: 11px; color: #94a3b8; word-break: break-all; margin-bottom: 18px; }
+  .qr-close {
+    background: #1a2744; color: #fff;
+    border: none; border-radius: 8px;
+    padding: 8px 24px; font-size: 13px;
+    cursor: pointer; font-family: inherit;
+  }
+
+  /* ── Main layout ── */
+  main {
+    max-width: 920px;
+    margin: 28px auto;
+    padding: 0 20px 48px;
+  }
+
+  /* ── Chapter nav ── */
+  .chapter-nav {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 22px;
+  }
+  .chapter-nav a {
+    display: inline-block;
+    padding: 7px 16px;
+    background: #fff;
+    border: 1px solid #dde3ef;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1a2744;
+    text-decoration: none;
+    transition: background .15s, border-color .15s;
+  }
+  .chapter-nav a:hover {
+    background: #e9eef7;
+    border-color: #b8c4d8;
+  }
+
+  /* ── Cards ── */
+  .part {
+    background: #fff;
+    border: 1px solid #dde3ef;
+    border-radius: 12px;
+    padding: 22px 24px 24px;
+    margin-bottom: 22px;
+  }
+
+  .part-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .part-tag {
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    background: #1a2744;
+    padding: 3px 10px;
+    border-radius: 99px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+  .part-tag.ch5 { background: #3b7dd8; }
+  .part-tag.ch6 { background: #D85A30; }
+  .part-tag.ch7 { background: #5a9e3a; }
+  .part-tag.ch8 { background: #8b5cf6; }
+  .part-tag.formulas { background: #1a2744; }
+  .part-tag.practice { background: #c77900; }
+  .part-header h2 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -.01em;
+  }
+
+  /* ── Content styling ── */
+  .section-intro {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #334155;
+    margin-bottom: 16px;
+  }
+
+  h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a2744;
+    margin: 18px 0 8px;
+  }
+  h3:first-of-type { margin-top: 6px; }
+
+  .concept-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 12px;
+  }
+  .concept-list li {
+    position: relative;
+    padding: 6px 0 6px 20px;
+    font-size: 14px;
+    line-height: 1.55;
+    color: #334155;
+  }
+  .concept-list li::before {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 13px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #94a3b8;
+  }
+  .concept-list li strong { color: #1a2744; }
+
+  /* ── Callout boxes ── */
+  .callout {
+    background: #f8f6f0;
+    border: 1px solid #e6dfd0;
+    border-radius: 9px;
+    padding: 14px 16px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: #334155;
+    margin: 12px 0 16px;
+  }
+  .callout strong { color: #1a2744; }
+  .callout p + p { margin-top: 6px; }
+
+  .callout.formula-box {
+    background: #eef3fb;
+    border-color: #c5d5ed;
+    font-family: 'SF Mono', 'Consolas', 'Menlo', monospace;
+    font-size: 13px;
+  }
+  .callout.formula-box .formula-label {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-weight: 700;
+    color: #1a2744;
+    font-size: 13px;
+    margin-bottom: 4px;
+  }
+
+  /* ── Tables ── */
+  .compare-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+    margin: 10px 0 14px;
+  }
+  .compare-table th {
+    background: #e9eef7;
+    font-size: 12.5px;
+    font-weight: 700;
+    text-align: left;
+    padding: 8px 12px;
+    border-bottom: 2px solid #cbd5e1;
+  }
+  .compare-table td {
+    padding: 7px 12px;
+    border-bottom: 1px solid #f0f3f8;
+    vertical-align: top;
+  }
+  .compare-table tr:last-child td { border-bottom: none; }
+
+  /* ── Decision framework table ── */
+  .decision-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+    margin: 10px 0 14px;
+  }
+  .decision-table th {
+    background: #f3eefe;
+    font-size: 12.5px;
+    font-weight: 700;
+    text-align: left;
+    padding: 8px 12px;
+    border-bottom: 2px solid #c4b5fd;
+  }
+  .decision-table td {
+    padding: 7px 12px;
+    border-bottom: 1px solid #f0f3f8;
+    vertical-align: top;
+  }
+  .decision-table td:first-child { font-weight: 600; white-space: nowrap; }
+  .decision-table tr:last-child td { border-bottom: none; }
+
+  /* ── Practice links ── */
+  .practice-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 10px 0 4px;
+  }
+  .practice-links a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    background: #f8f6f0;
+    border: 1px solid #e6dfd0;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1a2744;
+    text-decoration: none;
+    transition: background .15s, border-color .15s;
+  }
+  .practice-links a:hover {
+    background: #eee9dd;
+    border-color: #d4cbb6;
+  }
+  .practice-links a::before {
+    content: '\2794';
+    font-size: 11px;
+  }
+
+  /* ── Collapsible sections ── */
+  .collapse-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a2744;
+    padding: 4px 0;
+    margin: 18px 0 8px;
+  }
+  .collapse-toggle:first-of-type { margin-top: 6px; }
+  .collapse-toggle .arrow {
+    display: inline-block;
+    font-size: 12px;
+    transition: transform .2s;
+    color: #94a3b8;
+  }
+  .collapse-toggle.open .arrow { transform: rotate(90deg); }
+  .collapsible {
+    display: none;
+    padding: 0;
+  }
+  .collapsible.open { display: block; }
+
+  /* ── Formula reference card ── */
+  .formula-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 10px 0;
+  }
+  @media (max-width: 640px) {
+    .formula-grid { grid-template-columns: 1fr; }
+  }
+  .formula-card {
+    background: #eef3fb;
+    border: 1px solid #c5d5ed;
+    border-radius: 9px;
+    padding: 12px 14px;
+  }
+  .formula-card .fc-title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: #64748b;
+    margin-bottom: 5px;
+  }
+  .formula-card .fc-eq {
+    font-family: 'SF Mono', 'Consolas', 'Menlo', monospace;
+    font-size: 13px;
+    color: #1a2744;
+    line-height: 1.5;
+  }
+
+  /* ── Utility ── */
+  .mt-0 { margin-top: 0; }
+  .mb-sm { margin-bottom: 6px; }
+
+  /* ── Solutions page additions ── */
+  .intro-callout { background:#eef3fb; border:1px solid #c5d5ed; border-radius:10px; padding:16px 18px; font-size:14px; line-height:1.6; color:#334155; margin-bottom:22px; }
+  .intro-callout strong { color:#1a2744; }
+  .given-box { background:#f8f6f0; border:1px solid #e6dfd0; border-radius:9px; padding:13px 16px; font-size:13.5px; line-height:1.6; color:#334155; margin:0 0 4px; }
+  .given-box strong { color:#1a2744; }
+  .part-prompt { font-size:14.5px; font-weight:700; color:#1a2744; margin:16px 0 8px; }
+  .reveal-btn { display:inline-flex; align-items:center; gap:8px; background:#1a2744; color:#fff; border:none; border-radius:8px; padding:9px 18px; font-size:13.5px; font-weight:600; font-family:inherit; cursor:pointer; margin:14px 0 4px; transition:background .15s; }
+  .reveal-btn:hover { background:#27314f; }
+  .reveal-btn .arrow { display:inline-block; font-size:11px; transition:transform .2s; }
+  .reveal-btn.open .arrow { transform:rotate(90deg); }
+  .solution { display:none; padding-top:6px; }
+  .solution.open { display:block; }
+  .step { font-size:13.5px; line-height:1.65; color:#334155; margin:8px 0; }
+  .step .stepnum { display:inline-block; font-weight:700; color:#1a2744; margin-right:4px; }
+  .calc { font-family:'SF Mono','Consolas','Menlo',monospace; font-size:13px; color:#1a2744; background:#eef3fb; border:1px solid #c5d5ed; border-radius:6px; padding:2px 7px; display:inline-block; margin:1px 0; }
+  .answer-box { background:#edf7ef; border:1px solid #b6dcc0; border-left:5px solid #5a9e3a; border-radius:9px; padding:12px 16px; font-size:14px; line-height:1.55; color:#1a3a23; margin:12px 0; }
+  .answer-box strong { color:#1f6b2e; }
+  .check { background:#f4f0e8; border:1px dashed #cbb994; border-radius:8px; padding:9px 14px; font-size:13px; color:#5a4a2a; margin:10px 0; }
+  .check strong { color:#7a5a1a; }
+  .trap { background:#fdf1ee; border:1px solid #f3c9bd; border-left:5px solid #D85A30; border-radius:9px; padding:12px 16px; font-size:13.5px; line-height:1.6; color:#5a2c1c; margin:12px 0; }
+  .trap strong { color:#b3401c; }
+  .trap-title { font-weight:700; color:#b3401c; display:block; margin-bottom:4px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>Exam 2 Review &mdash; Worked Solutions</h1>
+    <p>ACCT 2102 &mdash; Chapters 5&ndash;8 &middot; four in-class review problems</p>
+  </div>
+  <button class="qr-btn" onclick="showQR()">
+    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="3" height="3"/><line x1="21" y1="14" x2="21" y2="17"/><line x1="17" y1="21" x2="21" y2="21"/></svg>
+    Share
+  </button>
+</header>
+
+<div class="qr-overlay" id="qr-overlay" onclick="hideQR(event)">
+  <div class="qr-modal">
+    <h2>Scan to open</h2>
+    <p>Open these solutions on your phone or share with a classmate.</p>
+    <div id="qr-code"></div>
+    <div id="qr-url"></div>
+    <button class="qr-close" onclick="hideQR(event)">Close</button>
+  </div>
+</div>
+
+<main>
+
+<div class="intro-callout">
+  Full worked solutions to the four in-class review problems. <strong>Try each problem first</strong>, then click <strong>Reveal worked solution</strong> to check your steps. Each solution shows every intermediate figure, a reconciliation check, and the most common point-losing traps. Pair these with the <strong>Exam 2 Study Guide</strong> on Canvas. <strong>Exam 2 is Thursday, July 2</strong> (Chapters 5&ndash;8).
+</div>
+
+<nav class="chapter-nav">
+  <a href="#p1">Problem 1</a>
+  <a href="#p2">Problem 2</a>
+  <a href="#p3">Problem 3</a>
+  <a href="#p4">Problem 4</a>
+</nav>
+
+<div class="part" id="p1">
+  <div class="part-header">
+    <span class="part-tag ch5">Problem 1 · Chapter 5</span>
+    <h2>Manufacturing Cost Flows &amp; Departmental Overhead</h2>
+  </div>
+  <div class="given-box">
+    <strong>Summit Forge Manufacturing</strong> — two production departments. Overhead is applied with <strong>departmental</strong> predetermined rates: <strong>machine hours</strong> in Machining, <strong>direct labor hours</strong> in Finishing.<br>
+    Budgeted: Machining — OH $1,800,000, DLH 25,000, MH 120,000. &nbsp;Finishing — OH $960,000, DLH 80,000, MH 12,000.
+  </div>
+  <p class="part-prompt">(a) Predetermined rate per department &nbsp;·&nbsp; (b) Total overhead on Job #512 (Machining 10 DLH / 90 MH; Finishing 150 DLH / 8 MH) &nbsp;·&nbsp; (c) RM used, COGM, COGS ($ thousands)</p>
+  <button class="reveal-btn" onclick="reveal(this)"><span class="arrow">&#9654;</span> Reveal worked solution</button>
+  <div class="solution">
+    <h3>(a) Departmental overhead rates</h3>
+    <p class="step">Each department divides its own budgeted overhead by <em>the base named for that department</em> — Machining by machine hours, Finishing by direct labor hours.</p>
+    <p class="step"><span class="stepnum">Machining:</span> <span class="calc">$1,800,000 &divide; 120,000 MH = $15.00 / MH</span></p>
+    <p class="step"><span class="stepnum">Finishing:</span> <span class="calc">$960,000 &divide; 80,000 DLH = $12.00 / DLH</span></p>
+    <div class="trap"><span class="trap-title">Trap</span>Don't divide Machining's overhead by its labor hours (or Finishing's by its machine hours). The base is fixed by the department, not chosen to match the bigger number.</div>
+
+    <h3>(b) Overhead applied to Job #512</h3>
+    <p class="step">Apply each department's rate to the hours of <em>its own base</em> that the job used.</p>
+    <p class="step"><span class="stepnum">Machining:</span> <span class="calc">90 MH &times; $15.00 = $1,350</span></p>
+    <p class="step"><span class="stepnum">Finishing:</span> <span class="calc">150 DLH &times; $12.00 = $1,800</span></p>
+    <div class="answer-box"><strong>Total overhead applied = $1,350 + $1,800 = $3,150</strong></div>
+    <div class="trap"><span class="trap-title">Trap</span>The job's <strong>10 Machining DLH</strong> and <strong>8 Finishing MH</strong> are distractors — each department ignores the base it doesn't use. Four numbers are given; only two belong in the calculation.</div>
+
+    <h3>(c) Cost-flow schedule ($ thousands)</h3>
+    <p class="step"><span class="stepnum">(i) Raw materials used</span> = Beg RM + Purchases &minus; End RM</p>
+    <p class="step"><span class="calc">150 + 320 &minus; 170 = $300</span></p>
+    <p class="step"><span class="stepnum">(ii) Cost of goods manufactured</span> = RM used + DL + MOH + Beg WIP &minus; End WIP</p>
+    <p class="step"><span class="calc">300 + 240 + 520 + 410 &minus; 70 = $1,400</span></p>
+    <p class="step"><span class="stepnum">(iii) Cost of goods sold</span> = Beg FG + COGM &minus; End FG</p>
+    <p class="step"><span class="calc">280 + 1,400 &minus; 200 = $1,480</span></p>
+    <div class="answer-box"><strong>RM used $300 &nbsp;·&nbsp; COGM $1,400 &nbsp;·&nbsp; COGS $1,480</strong> (thousands)</div>
+    <div class="trap"><span class="trap-title">Trap</span>Put <strong>RM used</strong> (not RM purchased) into the WIP schedule, and remember to <em>subtract</em> the ending balance in each of the three stages. Each line is "beginning + additions &minus; ending."</div>
+  </div>
+</div>
+<div class="part" id="p2">
+  <div class="part-header">
+    <span class="part-tag ch6">Problem 2 · Chapter 6</span>
+    <h2>Activity-Based Costing &amp; Customer Profitability</h2>
+  </div>
+  <div class="given-box">
+    <strong>Part A — Cobalt Instruments</strong> makes <em>Standard</em> and <em>Deluxe</em>; overhead split into four pools: Materials handling $24,000 (requisitions), Machine setups $60,000 (setups), Machining $180,000 (machine hours), Inspection $36,000 (inspections).<br>
+    Driver use — Standard: 30 req / 50 setups / 5,000 MH / 40 insp. &nbsp;Deluxe: 20 req / 70 setups / 7,000 MH / 60 insp.<br><br>
+    <strong>Part B</strong> — three customers, each $600,000 gross profit before support. Support rates: orders $300, rush orders $150, visits $500. Use — Apex 400/100/60, Borealis 900/350/120, Crown 500/120/70.
+  </div>
+  <p class="part-prompt">Part A: (a) activity rate per pool, (b) overhead assigned to each product. &nbsp;Part B: (a) profit per customer after support, (b) which to analyze further.</p>
+  <button class="reveal-btn" onclick="reveal(this)"><span class="arrow">&#9654;</span> Reveal worked solution</button>
+  <div class="solution">
+    <h3>Part A (a) — Activity rates</h3>
+    <p class="step">Rate = pool cost &divide; total driver units (Standard + Deluxe).</p>
+    <p class="step"><span class="calc">Materials handling: $24,000 &divide; 50 = $480 / requisition</span></p>
+    <p class="step"><span class="calc">Machine setups: $60,000 &divide; 120 = $500 / setup</span></p>
+    <p class="step"><span class="calc">Machining: $180,000 &divide; 12,000 = $15 / MH</span></p>
+    <p class="step"><span class="calc">Inspection: $36,000 &divide; 100 = $360 / inspection</span></p>
+
+    <h3>Part A (b) — Overhead assigned</h3>
+    <p class="step"><span class="stepnum">Standard:</span> <span class="calc">30&times;480 + 50&times;500 + 5,000&times;15 + 40&times;360</span> = 14,400 + 25,000 + 75,000 + 14,400 = <strong>$128,800</strong></p>
+    <p class="step"><span class="stepnum">Deluxe:</span> <span class="calc">20&times;480 + 70&times;500 + 7,000&times;15 + 60&times;360</span> = 9,600 + 35,000 + 105,000 + 21,600 = <strong>$171,200</strong></p>
+    <div class="answer-box"><strong>Standard $128,800 &nbsp;·&nbsp; Deluxe $171,200</strong></div>
+    <div class="check"><strong>Check:</strong> 128,800 + 171,200 = $300,000 = sum of the four pools. All overhead is assigned. &#10003;</div>
+
+    <h3>Part B (a) — Customer profitability after support</h3>
+    <p class="step">Support cost = $300&times;orders + $150&times;rush + $500&times;visits; then profit = $600,000 &minus; support.</p>
+    <table class="compare-table">
+      <thead><tr><th>Customer</th><th>Support cost</th><th>Profit after support</th></tr></thead>
+      <tbody>
+        <tr><td>Apex</td><td>120,000 + 15,000 + 30,000 = $165,000</td><td><strong>$435,000</strong></td></tr>
+        <tr><td>Borealis</td><td>270,000 + 52,500 + 60,000 = $382,500</td><td><strong>$217,500</strong></td></tr>
+        <tr><td>Crown</td><td>150,000 + 18,000 + 35,000 = $203,000</td><td><strong>$397,000</strong></td></tr>
+      </tbody>
+    </table>
+
+    <h3>Part B (b) — Which to analyze</h3>
+    <div class="answer-box"><strong>Borealis.</strong> Same $600,000 gross profit as the others, but it consumes by far the most support resources (most orders, rush shipments, and visits), cutting its after-support profit to roughly half. It's where renegotiating order patterns, minimum order sizes, or rush-shipment terms would move profitability most.</div>
+    <div class="trap"><span class="trap-title">Trap</span>Gross profit alone makes all three look identical. The whole point of ABC customer profitability is that <em>cost-to-serve</em> differs — rank by profit <em>after</em> support, not by gross profit. Don't spread support cost evenly across customers.</div>
+  </div>
+</div>
+<div class="part" id="p3">
+  <div class="part-header">
+    <span class="part-tag ch7">Problem 3 · Ch 7&ndash;8</span>
+    <h2>Capacity, Cycle Efficiency &amp; Pricing</h2>
+  </div>
+  <div class="given-box">
+    A five-part rapid-fire across Chapters 7&ndash;8: (a) idle-capacity cost, (b) cycle time &amp; efficiency, (c) cost-plus price, (d) target cost, (e) Kaizen budget. Givens are restated inside each part below.
+  </div>
+
+  <button class="reveal-btn" onclick="reveal(this)"><span class="arrow">&#9654;</span> Reveal worked solution</button>
+  <div class="solution">
+    <h3>(a) Cost of excess (idle) capacity</h3>
+    <p class="step"><em>Cascade Outdoor:</em> machine OH $360,000, practical capacity 7,200 MH, will run at 35%.</p>
+    <p class="step"><span class="calc">Rate = $360,000 &divide; 7,200 = $50 / MH</span></p>
+    <p class="step"><span class="calc">Used = 7,200 &times; 35% = 2,520 MH &nbsp;&rarr;&nbsp; Idle = 7,200 &minus; 2,520 = 4,680 MH</span></p>
+    <div class="answer-box"><strong>(i) Cost of excess capacity = 4,680 &times; $50 = $234,000</strong></div>
+    <p class="step"><span class="stepnum">(ii)</span> <strong>No.</strong> The product line should absorb only the capacity it <em>uses</em> (2,520 &times; $50 = $126,000). The $234,000 of idle cost was caused by the capacity/seasonal-demand decision, not by the units made, so it is reported <strong>separately as a period cost of unused capacity</strong> — keeping unit cost stable and making idle capacity visible to management.</p>
+    <div class="trap"><span class="trap-title">Trap</span>The rate uses <strong>practical capacity</strong> (7,200) as the denominator, not actual hours. Dividing by actual hours would bury the idle cost back in the product.</div>
+
+    <h3>(b) Cycle time &amp; manufacturing cycle efficiency</h3>
+    <p class="step">Cycle time = sum of all five stages. MCE = processing &divide; cycle time (only processing adds value).</p>
+    <table class="compare-table">
+      <thead><tr><th>System</th><th>Cycle time</th><th>MCE</th></tr></thead>
+      <tbody>
+        <tr><td>System A</td><td>180+60+40+80+20 = <strong>380 min</strong></td><td>180 &divide; 380 = <strong>47.4%</strong></td></tr>
+        <tr><td>System B</td><td>150+100+50+100+20 = <strong>420 min</strong></td><td>150 &divide; 420 = <strong>35.7%</strong></td></tr>
+      </tbody>
+    </table>
+    <div class="answer-box"><strong>(iii) System A is more efficient</strong> — higher MCE (47.4% vs 35.7%) and a shorter total cycle time (380 vs 420 min).</div>
+    <div class="trap"><span class="trap-title">Trap</span>Only <strong>processing</strong> is value-added. Setup, movement, waiting, and inspection are all non-value-added — don't include them in the MCE numerator.</div>
+
+    <h3>(c) Cost-plus pricing (variable-cost markup)</h3>
+    <p class="step"><em>Riverbend:</em> 50,000 units; variable $2,800,000 mfg + $1,200,000 S&amp;A; fixed $3,500,000 mfg + $1,500,000 S&amp;A; target profit $1,000,000.</p>
+    <p class="step"><span class="calc">Total variable = 2,800,000 + 1,200,000 = $4,000,000</span> &nbsp; <span class="calc">Total fixed = 3,500,000 + 1,500,000 = $5,000,000</span></p>
+    <p class="step"><span class="stepnum">(i) Markup %</span> = (fixed + target profit) &divide; total variable = <span class="calc">(5,000,000 + 1,000,000) &divide; 4,000,000 = 150%</span></p>
+    <p class="step"><span class="stepnum">(ii) Price</span>: unit variable = 4,000,000 &divide; 50,000 = $80 &nbsp;&rarr;&nbsp; <span class="calc">$80 &times; (1 + 1.50) = $200</span></p>
+    <div class="answer-box"><strong>Markup 150% &nbsp;·&nbsp; Selling price $200 / unit</strong></div>
+    <div class="check"><strong>Check:</strong> 50,000 &times; $200 = $10,000,000 revenue &minus; $9,000,000 total cost = $1,000,000 target profit. &#10003;</div>
+    <div class="trap"><span class="trap-title">Trap</span>With a <em>variable-cost</em> base, fixed costs are <strong>not</strong> in the base — they go in the markup numerator along with profit. Putting fixed cost in the base double-counts it.</div>
+
+    <h3>(d) Target costing</h3>
+    <p class="step"><em>Crestline:</em> cuts price to $780, requires $120 profit per unit.</p>
+    <p class="step"><span class="stepnum">Target cost</span> = target price &minus; required profit = <span class="calc">$780 &minus; $120 = $660</span></p>
+    <div class="answer-box"><strong>Target cost = $660 / unit</strong></div>
+    <div class="trap"><span class="trap-title">Trap</span>Build from the <strong>new</strong> $780 price. The old $900 price and the market-share story are context — they don't enter the calculation.</div>
+
+    <h3>(e) Kaizen costing</h3>
+    <p class="step"><em>Bakery-cafe:</em> packaging $200,000 now, +6% with volume, 4% Kaizen reduction target.</p>
+    <p class="step"><span class="stepnum">Budget</span> = current &times; (1 + growth) &times; (1 &minus; improvement) = <span class="calc">$200,000 &times; 1.06 &times; 0.96 = $203,520</span></p>
+    <p class="step">Cost first rises with volume to $212,000, then the 4% target trims it to $203,520.</p>
+    <div class="answer-box"><strong>Year-2 packaging budget = $203,520</strong></div>
+    <div class="trap"><span class="trap-title">Trap</span>Apply the 4% reduction to the <em>grown</em> $212,000, not to the original $200,000. Two adjustments, in sequence.</div>
+  </div>
+</div>
+<div class="part" id="p4">
+  <div class="part-header">
+    <span class="part-tag ch5">Problem 4 · Chapter 5</span>
+    <h2>Process Costing — Weighted Average</h2>
+  </div>
+  <div class="given-box">
+    <strong>Part A — Birchwood Company</strong>, all costs added uniformly. Beginning WIP 6,000 units, 30% complete: DM $5,000, DL $7,000, OH $3,000. Added in March: DM $48,000, DL $65,000, OH $32,000. Completed 38,000 units; ending WIP 4,000 units, 50% complete.<br><br>
+    <strong>Part B</strong> — Beginning 10,000 units (20% complete), ending 14,000 units (40% complete), 50,000 started. Equivalent units of conversion, weighted-average.
+  </div>
+  <p class="part-prompt">Part A: (i) cost of goods completed, (ii) cost of ending inventory. &nbsp;Part B: equivalent units of conversion (multiple choice).</p>
+  <button class="reveal-btn" onclick="reveal(this)"><span class="arrow">&#9654;</span> Reveal worked solution</button>
+  <div class="solution">
+    <h3>Part A — Cost completed &amp; ending inventory</h3>
+    <p class="step">All costs uniform &rarr; one completion % and one blended cost per equivalent unit. <strong>Weighted average ignores the beginning-WIP % entirely.</strong></p>
+    <p class="step"><span class="stepnum">Equivalent units</span> = completed + (ending &times; %) = <span class="calc">38,000 + (4,000 &times; 50%) = 40,000 EU</span></p>
+    <p class="step"><span class="stepnum">Total cost to account for</span> = beginning WIP + costs added = <span class="calc">(5,000+7,000+3,000) + (48,000+65,000+32,000) = 15,000 + 145,000 = $160,000</span></p>
+    <p class="step"><span class="stepnum">Cost per EU</span> = <span class="calc">160,000 &divide; 40,000 = $4.00</span></p>
+    <p class="step"><span class="stepnum">(i) Cost of goods completed</span> = <span class="calc">38,000 &times; $4.00 = $152,000</span></p>
+    <p class="step"><span class="stepnum">(ii) Cost of ending inventory</span> = <span class="calc">2,000 EU &times; $4.00 = $8,000</span></p>
+    <div class="answer-box"><strong>Completed $152,000 &nbsp;·&nbsp; Ending inventory $8,000</strong></div>
+    <div class="check"><strong>Check:</strong> 152,000 + 8,000 = $160,000 = total cost to account for. &#10003;</div>
+    <div class="trap"><span class="trap-title">Trap</span>The beginning-WIP <strong>30%</strong> is a distractor. Weighted average blends prior-period and current cost together, so the beginning completion % never enters the math.</div>
+
+    <h3>Part B — Equivalent units of conversion</h3>
+    <p class="step"><span class="stepnum">Units completed</span> = beginning + started &minus; ending = <span class="calc">10,000 + 50,000 &minus; 14,000 = 46,000</span></p>
+    <p class="step"><span class="stepnum">Weighted-average EU</span> = completed + (ending &times; %) = <span class="calc">46,000 + (14,000 &times; 40%) = 51,600</span></p>
+    <div class="answer-box"><strong>Answer: (c) 51,600 units</strong></div>
+    <div class="trap"><span class="trap-title">Why the other choices are wrong</span>
+      <strong>(a) 46,000</strong> ignores the work done on ending WIP. &nbsp;
+      <strong>(b) 49,600</strong> is the <em>FIFO</em> answer — it subtracts the 2,000 EU of prior-period work in beginning inventory (10,000 &times; 20%), which weighted average does <em>not</em> do. &nbsp;
+      <strong>(d) 60,000</strong> wrongly treats ending WIP as 100% complete. The tell that it's weighted average: the beginning completion % is never used.</div>
+  </div>
+</div>
+
+</main>
+
+<script>
+function reveal(btn) {
+  var open = btn.classList.toggle('open');
+  btn.nextElementSibling.classList.toggle('open');
+  btn.innerHTML = '<span class="arrow">&#9654;</span> ' + (open ? 'Hide worked solution' : 'Reveal worked solution');
+}
+function showQR() {
+  var url = location.href;
+  document.getElementById('qr-url').textContent = url;
+  var qrEl = document.getElementById('qr-code');
+  qrEl.innerHTML = '';
+  if (window.QRCode) new QRCode(qrEl, { text: url, width: 180, height: 180, colorDark: '#1a2744', colorLight: '#ffffff' });
+  document.getElementById('qr-overlay').classList.add('show');
+}
+function hideQR(ev) {
+  if (ev && ev.target.id !== 'qr-overlay' && ev.target.className !== 'qr-close') return;
+  document.getElementById('qr-overlay').classList.remove('show');
+}
+</script>
+
+</body>
+</html>
