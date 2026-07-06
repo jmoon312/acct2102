@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Net Present Value &amp; Internal Rate of Return</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  /* ── Reset & base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    background: #f4f0e8;
+    color: #1a2744;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    background: #1a2744;
+    color: #fff;
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .header-left h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+
+  .qr-btn {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    transition: background .15s;
+  }
+  .qr-btn:hover { background: rgba(255,255,255,0.18); }
+
+  /* QR Modal */
+  .qr-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .qr-overlay.show { display: flex; }
+  .qr-modal {
+    background: #fff;
+    border-radius: 14px;
+    padding: 32px;
+    text-align: center;
+    max-width: 300px;
+    width: 90%;
+  }
+  .qr-modal h2 { font-size: 16px; font-weight: 600; color: #1a2744; margin-bottom: 6px; }
+  .qr-modal p  { font-size: 12px; color: #64748b; margin-bottom: 18px; line-height: 1.5; }
+  #qr-code { display: flex; justify-content: center; margin-bottom: 16px; }
+  #qr-url  { font-size: 11px; color: #94a3b8; word-break: break-all; margin-bottom: 18px; }
+  .qr-close {
+    background: #1a2744; color: #fff;
+    border: none; border-radius: 8px;
+    padding: 8px 24px; font-size: 13px;
+    cursor: pointer; font-family: inherit;
+  }
+
+  /* ── Main layout ── */
+  main {
+    max-width: 920px;
+    margin: 28px auto;
+    padding: 0 20px 48px;
+  }
+
+  .part {
+    background: #fff;
+    border: 1px solid #dde3ef;
+    border-radius: 12px;
+    padding: 22px 24px 24px;
+    margin-bottom: 22px;
+  }
+
+  .part-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .part-tag {
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    background: #1a2744;
+    padding: 3px 10px;
+    border-radius: 99px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+  .part-tag.practice { background: #D85A30; }
+  .part-tag.explore  { background: #3b7dd8; }
+  .part-tag.solve    { background: #7a5cb6; }
+  .part-tag.build    { background: #5a9e3a; }
+  .part-header h2 { font-size: 22px; font-weight: 700; letter-spacing: -.01em; }
+  .part-header .subtitle { font-size: 13px; color: #64748b; }
+
+  .setup-box {
+    background: #f8f6f0;
+    border: 1px solid #e6dfd0;
+    border-radius: 9px;
+    padding: 14px 16px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: #334155;
+    margin-bottom: 16px;
+  }
+  .setup-box strong { color: #1a2744; }
+  .setup-box p + p { margin-top: 6px; }
+
+  .callout {
+    background: #eef4fb;
+    border: 1px solid #d3e2f2;
+    border-radius: 9px;
+    padding: 12px 15px;
+    font-size: 13px;
+    line-height: 1.55;
+    color: #334155;
+    margin-bottom: 16px;
+  }
+  .callout strong { color: #1a2744; }
+
+  .prompt {
+    font-size: 14px;
+    color: #1a2744;
+    margin-bottom: 12px;
+    line-height: 1.55;
+  }
+  .prompt strong { font-weight: 700; }
+
+  /* ── Cash-flow / discount table ── */
+  .cf-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-bottom: 8px;
+    font-variant-numeric: tabular-nums;
+  }
+  .cf-table thead th {
+    background: #fde9c8;
+    color: #1a2744;
+    font-size: 12.5px;
+    font-weight: 700;
+    text-align: center;
+    padding: 10px 8px;
+    border-bottom: 2px solid #f0c674;
+  }
+  .cf-table thead th:first-child {
+    border-top-left-radius: 8px;
+    text-align: left;
+    padding-left: 14px;
+  }
+  .cf-table thead th:last-child { border-top-right-radius: 8px; }
+  .cf-table tbody td {
+    background: #f0f5fa;
+    padding: 9px 8px;
+    text-align: center;
+    border-bottom: 1px solid #e1eaf3;
+    font-size: 13px;
+    color: #334155;
+  }
+  .cf-table tbody td.row-label {
+    text-align: left;
+    padding-left: 14px;
+    font-weight: 600;
+    color: #1a2744;
+  }
+  .cf-table tbody td .given { color: #1a2744; font-weight: 600; }
+  .cf-table tbody td .muted { color: #94a3b8; }
+  .cf-table tbody tr:last-child td:first-child { border-bottom-left-radius: 8px; }
+  .cf-table tbody tr:last-child td:last-child { border-bottom-right-radius: 8px; }
+
+  .cf-table input {
+    width: 100%;
+    max-width: 130px;
+    padding: 7px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-variant-numeric: tabular-nums;
+    transition: border-color .12s, background .12s;
+  }
+  .cf-table input:focus { outline: none; border-color: #3b7dd8; background: #f8fbff; }
+  .cf-table input.correct { border-color: #5a9e3a; background: #f0f9e8; color: #2d6a1f; font-weight: 600; }
+  .cf-table input.wrong { border-color: #c94040; background: #fff1f1; color: #9b2020; }
+  .cf-table input.changed { border-color: #D85A30; background: #fff7f0; }
+
+  /* Read-only computed output cells (activity populates these) */
+  .cf-table td.cf-out {
+    font-weight: 700;
+    color: #1a2744;
+    background: #eef4fb;
+  }
+  .cf-table td.cf-out .placeholder { color: #94a3b8; font-weight: 400; }
+  .npv-out {
+    font-size: 16px; font-weight: 700; color: #1a2744;
+    font-variant-numeric: tabular-nums;
+  }
+  .npv-out .placeholder { color: #94a3b8; font-weight: 400; font-size: 14px; }
+
+  /* ── Per-question stacked layout ── */
+  .qa-list { display: flex; flex-direction: column; gap: 8px; margin: 4px 0; }
+  .qa-row {
+    display: grid;
+    grid-template-columns: 1fr 210px;
+    gap: 14px;
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #e1eaf3;
+    border-radius: 9px;
+    padding: 13px 16px;
+  }
+  .qa-row .qa-prompt { font-size: 13.5px; color: #1a2744; line-height: 1.5; }
+  .qa-row .qa-prompt strong { font-weight: 700; }
+  .qa-row .qa-prompt small { display: block; font-size: 12px; color: #64748b; margin-top: 3px; }
+  .qa-row .answer { display: flex; flex-direction: column; }
+  .qa-row .answer label {
+    font-size: 10.5px; color: #64748b; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .04em; margin-bottom: 4px;
+  }
+  .qa-row .answer input {
+    padding: 8px 10px; border: 1.5px solid #cbd5e1; border-radius: 6px;
+    font-size: 14px; font-family: inherit; text-align: center;
+    background: #fff; color: #1a2744; font-weight: 600; font-variant-numeric: tabular-nums;
+  }
+  .qa-row .answer input:focus { outline: none; border-color: #3b7dd8; background: #f8fbff; }
+  .qa-row .answer input.correct { border-color: #5a9e3a; background: #f0f9e8; color: #2d6a1f; }
+  .qa-row .answer input.wrong { border-color: #c94040; background: #fff1f1; color: #9b2020; }
+  .corr-hint {
+    display: block; font-size: 11.5px; color: #64748b; font-weight: 500;
+    margin-top: 4px; min-height: 14px; line-height: 1.4; text-align: center;
+  }
+
+  /* ── Decision buttons ── */
+  .choice-block { margin-top: 10px; margin-bottom: 4px; }
+  .choice-label { font-size: 13.5px; color: #1a2744; margin-bottom: 8px; line-height: 1.5; }
+  .choice-label strong { font-weight: 700; }
+  .dir-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
+  .dir-buttons button {
+    flex: 1; min-width: 150px; background: #fff; border: 1.5px solid #cbd5e1;
+    color: #1a2744; padding: 11px 14px; border-radius: 9px;
+    font-size: 13.5px; font-family: inherit; font-weight: 600; cursor: pointer; transition: all .15s;
+  }
+  .dir-buttons button:hover { border-color: #3b7dd8; background: #f8fbff; }
+  .dir-buttons button.selected { background: #1a2744; color: #fff; border-color: #1a2744; }
+  .dir-buttons button.dir-wrong { border-color: #c94040; background: #fff1f1; color: #9b2020; }
+
+  /* Reveal animation */
+  .reveal { display: none; animation: slideIn 0.4s ease-out; }
+  .reveal.show { display: block; }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .footer { margin-top: 16px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .check-btn {
+    background: #1a2744; color: #fff; border: none; border-radius: 9px;
+    padding: 10px 24px; font-size: 14px; cursor: pointer; font-family: inherit;
+    font-weight: 500; transition: background .15s;
+  }
+  .check-btn:hover { background: #243660; }
+  .reset-btn {
+    font-size: 13px; color: #64748b; background: none; border: none;
+    cursor: pointer; text-decoration: underline; font-family: inherit;
+  }
+  .reveal-link {
+    margin-left: auto; font-size: 12.5px; color: #64748b; background: none; border: none;
+    cursor: pointer; text-decoration: underline; font-family: inherit;
+  }
+  .reveal-link:hover { color: #1a2744; }
+  .score-out {
+    font-size: 14px; font-weight: 600; color: #1a2744; background: #fff;
+    border: 1px solid #e2e8f0; border-radius: 8px; padding: 6px 14px;
+  }
+  .score-out:empty { display: none; }
+
+  /* ── Build-your-own ── */
+  .build-prompt { font-size: 14px; color: #1a2744; margin-bottom: 14px; line-height: 1.55; }
+  .params-card {
+    display: grid; grid-template-columns: 1fr 140px; gap: 10px;
+    align-items: center; background: #f8f6f0; border: 1px solid #e6dfd0;
+    border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; max-width: 420px;
+  }
+  .params-card label { font-size: 13.5px; color: #1a2744; font-weight: 500; }
+  .params-card label small { display: block; font-size: 11.5px; color: #64748b; font-weight: 400; margin-top: 1px; }
+  .params-card input {
+    padding: 7px 10px; border: 1.5px solid #cbd5e1; border-radius: 6px;
+    font-size: 14px; font-family: inherit; text-align: center;
+    background: #fff; color: #1a2744; font-variant-numeric: tabular-nums;
+  }
+  .params-card input:focus { outline: none; border-color: #3b7dd8; background: #f8fbff; }
+  .params-card input.changed { border-color: #D85A30; background: #fff7f0; }
+
+  .insight {
+    margin-top: 8px; background: #eff6ff; border: 1px solid #c7dcf5;
+    border-left: 4px solid #3b7dd8; border-radius: 0 8px 8px 0;
+    padding: 11px 14px; font-size: 13px; line-height: 1.55; color: #1a2744;
+  }
+  .insight strong { color: #1e40af; }
+  .insight.success { background: #f0f9e8; border-color: #c4e0a3; border-left-color: #5a9e3a; }
+  .insight.success strong { color: #2d6a1f; }
+
+  /* Responsive */
+  @media (max-width: 700px) {
+    header { padding: 14px 16px; }
+    main { padding: 0 12px 40px; }
+    .part { padding: 18px 14px 18px; }
+    .cf-table thead th, .cf-table tbody td { font-size: 11.5px; padding: 7px 4px; }
+    .qa-row { grid-template-columns: 1fr; gap: 8px; }
+    .params-card { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="header-left">
+    <h1>Net Present Value &amp; Internal Rate of Return</h1>
+  </div>
+  <button class="qr-btn" onclick="showQR()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="2" height="2"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="19" width="3" height="2"/><rect x="19" y="19" width="2" height="2"/></svg>
+    Share with students
+  </button>
+</header>
+
+<!-- QR Modal -->
+<div class="qr-overlay" id="qr-overlay" onclick="hideQR(event)">
+  <div class="qr-modal">
+    <h2>Scan to open on your device</h2>
+    <p>Students can scan this QR code or type the URL to open the activity on their phone or laptop.</p>
+    <div id="qr-code"></div>
+    <div id="qr-url"></div>
+    <button class="qr-close" onclick="hideQR()">Close</button>
+  </div>
+</div>
+
+<!-- Main -->
+<main>
+
+  <!-- ───────── STEP 1 — Lay out the cash flows ───────── -->
+  <section class="part">
+    <div class="part-header">
+      <span class="part-tag practice">Step 1</span>
+      <h2>Line up the cash flows, year by year</h2>
+      <span class="subtitle">before any discounting</span>
+    </div>
+
+    <div class="setup-box">
+      <p><strong>Ramble Coffee Roasters</strong> is deciding whether to install an <strong>automated roasting line</strong>. The equipment costs <strong>$155,000</strong> today and will run for <strong>4 years</strong>. As the wholesale accounts ramp up, the line is expected to generate net operating cash inflows of <strong>$45,000</strong> in Year 1, <strong>$50,000</strong> in Year 2, <strong>$55,000</strong> in Year 3, and <strong>$60,000</strong> in Year 4.</p>
+      <p>At the end of Year 4, Ramble expects to sell the line for its <strong>$20,000</strong> salvage value. Ramble's <strong>cost of capital is 10%</strong>.</p>
+    </div>
+
+    <p class="prompt">Fill in the <strong>net cash flow</strong> for each year. Enter the Year 0 cost as a negative number.</p>
+
+    <table class="cf-table">
+      <thead>
+        <tr><th>Year</th><th>Net cash flow</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="row-label">Year 0 (today)</td>
+          <td><input type="text" id="s1-y0" placeholder="$"><span class="corr-hint" id="hint-s1-y0"></span></td>
+        </tr>
+        <tr>
+          <td class="row-label">Year 1</td>
+          <td><input type="text" id="s1-y1" inputmode="decimal" placeholder="$"><span class="corr-hint" id="hint-s1-y1"></span></td>
+        </tr>
+        <tr>
+          <td class="row-label">Year 2</td>
+          <td><input type="text" id="s1-y2" inputmode="decimal" placeholder="$"><span class="corr-hint" id="hint-s1-y2"></span></td>
+        </tr>
+        <tr>
+          <td class="row-label">Year 3</td>
+          <td><input type="text" id="s1-y3" inputmode="decimal" placeholder="$"><span class="corr-hint" id="hint-s1-y3"></span></td>
+        </tr>
+        <tr>
+          <td class="row-label">Year 4</td>
+          <td><input type="text" id="s1-y4" inputmode="decimal" placeholder="$"><span class="corr-hint" id="hint-s1-y4"></span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep1()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep1()">Reset</button>
+      <span id="score1-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep2(true)" id="reveal-step2-btn">Skip ahead →</button>
+    </div>
+
+    <div id="step1-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 2 — Discount at the cost of capital ───────── -->
+  <section class="part reveal" id="step2">
+    <div class="part-header">
+      <span class="part-tag explore">Step 2</span>
+      <h2>Discount each year to today</h2>
+      <span class="subtitle">net present value at 10%</span>
+    </div>
+
+    <div class="setup-box">
+      <p>Ramble evaluates the line at its <strong>10% cost of capital</strong>. Use the <strong>present-value-of-$1 factors</strong> from your handout to bring each year's cash flow back into today's dollars.</p>
+    </div>
+
+    <p class="prompt">The one thing you supply is the <strong>PV factor</strong> for each year — read it off your table. As you enter each factor, the activity fills in that year's present value and totals the NPV for you.</p>
+
+    <table class="cf-table">
+      <thead>
+        <tr><th>Year</th><th>Net cash flow</th><th>PV factor @ 10%</th><th>Present value</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="row-label">1</td>
+          <td class="given">$45,000</td>
+          <td><input type="text" id="s2-f1" inputmode="decimal" placeholder="factor"><span class="corr-hint" id="hint-s2-f1"></span></td>
+          <td class="cf-out" id="s2-pv1"><span class="placeholder">—</span></td>
+        </tr>
+        <tr>
+          <td class="row-label">2</td>
+          <td class="given">$50,000</td>
+          <td><input type="text" id="s2-f2" inputmode="decimal" placeholder="factor"><span class="corr-hint" id="hint-s2-f2"></span></td>
+          <td class="cf-out" id="s2-pv2"><span class="placeholder">—</span></td>
+        </tr>
+        <tr>
+          <td class="row-label">3</td>
+          <td class="given">$55,000</td>
+          <td><input type="text" id="s2-f3" inputmode="decimal" placeholder="factor"><span class="corr-hint" id="hint-s2-f3"></span></td>
+          <td class="cf-out" id="s2-pv3"><span class="placeholder">—</span></td>
+        </tr>
+        <tr>
+          <td class="row-label">4</td>
+          <td class="given">$80,000</td>
+          <td><input type="text" id="s2-f4" inputmode="decimal" placeholder="factor"><span class="corr-hint" id="hint-s2-f4"></span></td>
+          <td class="cf-out" id="s2-pv4"><span class="placeholder">—</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="qa-list">
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Net present value at 10%</strong><small>present value of the inflows minus the $155,000 investment</small></div>
+        <div class="answer">
+          <label>NPV</label>
+          <span class="npv-out" id="s2-npv-out"><span class="placeholder">—</span></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="choice-block">
+      <div class="choice-label">On the NPV rule, should Ramble <strong>accept or reject</strong> the roasting line?</div>
+      <div class="dir-buttons" id="choice-s2-decide">
+        <button data-val="accept" onclick="pickChoice('s2-decide','accept')">Accept</button>
+        <button data-val="reject" onclick="pickChoice('s2-decide','reject')">Reject</button>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep2()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep2()">Reset</button>
+      <span id="score2-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep3(true)" id="reveal-step3-btn">Skip ahead →</button>
+    </div>
+
+    <div id="step2-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 3 — IRR via the tables ───────── -->
+  <section class="part reveal" id="step3">
+    <div class="part-header">
+      <span class="part-tag solve">Step 3</span>
+      <h2>Find the rate that zeroes out NPV</h2>
+      <span class="subtitle">internal rate of return, by table</span>
+    </div>
+
+    <div class="setup-box">
+      <p>The <strong>internal rate of return</strong> is the discount rate that drives this project's NPV to zero. With tables you pin it down by re-pricing the same inflows at higher rates. Test the <strong>16%</strong> and <strong>18%</strong> columns of your PV table.</p>
+    </div>
+
+    <div class="qa-list">
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Present value of the four inflows at 16%</strong></div>
+        <div class="answer">
+          <label>PV of inflows</label>
+          <input type="text" id="s3-pv16" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s3-pv16"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>NPV at 16%</strong></div>
+        <div class="answer">
+          <label>NPV @ 16%</label>
+          <input type="text" id="s3-npv16" placeholder="$">
+          <span class="corr-hint" id="hint-s3-npv16"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>NPV at 18%</strong></div>
+        <div class="answer">
+          <label>NPV @ 18%</label>
+          <input type="text" id="s3-npv18" placeholder="$">
+          <span class="corr-hint" id="hint-s3-npv18"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>The internal rate of return is approximately…</strong><small>to the nearest whole percent</small></div>
+        <div class="answer">
+          <label>IRR</label>
+          <input type="text" id="s3-irr" inputmode="decimal" placeholder="%">
+          <span class="corr-hint" id="hint-s3-irr"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="choice-block">
+      <div class="choice-label">Compared with Ramble's <strong>10% cost of capital</strong>, does the IRR say accept or reject?</div>
+      <div class="dir-buttons" id="choice-s3-decide">
+        <button data-val="accept" onclick="pickChoice('s3-decide','accept')">Accept</button>
+        <button data-val="reject" onclick="pickChoice('s3-decide','reject')">Reject</button>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep3()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep3()">Reset</button>
+      <span id="score3-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep4(true)" id="reveal-step4-btn">Skip ahead →</button>
+    </div>
+
+    <div id="step3-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 4 — One-time shock ───────── -->
+  <section class="part reveal" id="step4">
+    <div class="part-header">
+      <span class="part-tag solve">Step 4</span>
+      <h2>Price in a possible Year-3 failure</h2>
+      <span class="subtitle">building the decision on expected NPV</span>
+    </div>
+
+    <div class="setup-box">
+      <p>Capital budgeting looks forward, so it has to plan for what <em>might</em> happen. Ramble's engineers estimate a <strong>50% chance</strong> that a critical drum on the roasting line fails at the <strong>end of Year 3</strong> and has to be replaced — a <strong>one-time $35,000</strong> cash outlay on top of that year's normal operations. The other 50% of the time the line runs clean and the cash flows are exactly the ones you discounted in Step 2.</p>
+    </div>
+
+    <p class="prompt">First find the NPV <strong>assuming the replacement happens</strong>: only Year 3 moves, so keep the Year 1, 2, and 4 present values from Step 2 and rework Year 3. Then weight the two scenarios by their probabilities to get the <strong>expected NPV</strong>.</p>
+
+    <div class="qa-list">
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Revised Year-3 net cash flow</strong><small>if the $35,000 replacement happens</small></div>
+        <div class="answer">
+          <label>Year 3</label>
+          <input type="text" id="s4-y3cf" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s4-y3cf"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>NPV if the replacement happens</strong><small>discounted at 10%</small></div>
+        <div class="answer">
+          <label>NPV | fail</label>
+          <input type="text" id="s4-npv" placeholder="$">
+          <span class="corr-hint" id="hint-s4-npv"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Expected NPV</strong><small>50% × (no-failure NPV from Step 2) + 50% × (failure NPV above)</small></div>
+        <div class="answer">
+          <label>E[NPV]</label>
+          <input type="text" id="s4-enpv" placeholder="$">
+          <span class="corr-hint" id="hint-s4-enpv"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="choice-block">
+      <div class="choice-label">On its <strong>expected NPV</strong>, should Ramble <strong>accept or reject</strong> the line?</div>
+      <div class="dir-buttons" id="choice-s4-decide">
+        <button data-val="accept" onclick="pickChoice('s4-decide','accept')">Accept</button>
+        <button data-val="reject" onclick="pickChoice('s4-decide','reject')">Reject</button>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep4()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep4()">Reset</button>
+      <span id="score4-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep5(true)" id="reveal-step5-btn">Skip ahead →</button>
+    </div>
+
+    <div id="step4-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 5 — Build your own ───────── -->
+  <section class="part reveal" id="step5">
+    <div class="part-header">
+      <span class="part-tag build">Step 5</span>
+      <h2>Build and discount your own project</h2>
+      <span class="subtitle">any cash flows, any rate — you supply the factors</span>
+    </div>
+
+    <p class="build-prompt">Set the investment and each year's net cash flow, then read the PV factors for whatever discount rate you're testing off your handout and type them in. For each year, compute the present value (cash flow × factor); the activity checks your PV against the factor you entered, then totals the NPV. Change the factors to a different rate to hunt for the IRR yourself.</p>
+
+    <div class="params-card">
+      <label>Initial investment <small>entered as a positive cost</small></label>
+      <input type="text" id="bv-inv" inputmode="decimal" value="$155,000">
+    </div>
+
+    <table class="cf-table">
+      <thead>
+        <tr><th>Year</th><th>Net cash flow</th><th>PV factor</th><th>Present value</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="row-label">1</td>
+          <td><input type="text" id="bv-cf1" inputmode="decimal" value="$45,000"></td>
+          <td><input type="text" id="bv-f1" inputmode="decimal" value="0.9091"></td>
+          <td><input type="text" id="bv-pv1" inputmode="decimal" placeholder="$"><span class="corr-hint" id="hint-bv-pv1"></span></td>
+        </tr>
+        <tr>
+          <td class="row-label">2</td>
+          <td><input type="text" id="bv-cf2" inputmode="decimal" value="$50,000"></td>
+          <td><input type="text" id="bv-f2" inputmode="decimal" value="0.8264"></td>
+          <td><input type="text" id="bv-pv2" inputmode="decimal" placeholder="$"><span class="corr-hint" id="hint-bv-pv2"></span></td>
+        </tr>
+        <tr>
+          <td class="row-label">3</td>
+          <td><input type="text" id="bv-cf3" inputmode="decimal" value="$55,000"></td>
+          <td><input type="text" id="bv-f3" inputmode="decimal" value="0.7513"></td>
+          <td><input type="text" id="bv-pv3" inputmode="decimal" placeholder="$"><span class="corr-hint" id="hint-bv-pv3"></span></td>
+        </tr>
+        <tr>
+          <td class="row-label">4</td>
+          <td><input type="text" id="bv-cf4" inputmode="decimal" value="$80,000"></td>
+          <td><input type="text" id="bv-f4" inputmode="decimal" value="0.6830"></td>
+          <td><input type="text" id="bv-pv4" inputmode="decimal" placeholder="$"><span class="corr-hint" id="hint-bv-pv4"></span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="qa-list">
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Net present value</strong><small>sum of the four present values minus the investment</small></div>
+        <div class="answer">
+          <label>NPV</label>
+          <input type="text" id="bv-npv" placeholder="$">
+          <span class="corr-hint" id="hint-bv-npv"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep5()">Check</button>
+      <button class="reset-btn" onclick="resetStep5()">Reset to original</button>
+      <span id="score5-out" class="score-out"></span>
+    </div>
+
+    <div id="step5-feedback"></div>
+  </section>
+
+</main>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   PROJECT DATA — Ramble Coffee Roasters, automated roasting line
+   Present-value-of-$1 factors are the standard 4-decimal table values.
+   Students read the same factors off the handout; the activity stores
+   them only to check answers (tolerances absorb any table rounding).
+═══════════════════════════════════════════════════════════════ */
+const INVEST = 155000;
+// Net cash flow by year (Year 4 = $60,000 operating + $20,000 salvage)
+const CF = { 1: 45000, 2: 50000, 3: 55000, 4: 80000 };
+
+// PV-of-$1 factors, standard tables
+const PVF = {
+  10: { 1: 0.9091, 2: 0.8264, 3: 0.7513, 4: 0.6830 },
+  16: { 1: 0.8621, 2: 0.7432, 3: 0.6407, 4: 0.5523 },
+  18: { 1: 0.8475, 2: 0.7182, 3: 0.6086, 4: 0.5158 }
+};
+
+function pvInflows(rate) {
+  const f = PVF[rate];
+  return CF[1] * f[1] + CF[2] * f[2] + CF[3] * f[3] + CF[4] * f[4];
+}
+// PV of each year at 10% (for Step 2 row checks)
+const PV10 = { 1: CF[1] * PVF[10][1], 2: CF[2] * PVF[10][2], 3: CF[3] * PVF[10][3], 4: CF[4] * PVF[10][4] };
+const PV_INFLOWS_10 = pvInflows(10);   // 178,191
+const NPV_10  = PV_INFLOWS_10 - INVEST; // 23,191
+const PV_INFLOWS_16 = pvInflows(16);   // 155,377
+const NPV_16  = PV_INFLOWS_16 - INVEST; // 377  (≈ 0  → IRR ≈ 16%)
+const NPV_18  = pvInflows(18) - INVEST; // −6,215.5
+
+/* ═══════════════════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════════════════ */
+function parseNum(s) {
+  if (typeof s !== 'string') return NaN;
+  // keep a leading minus; strip $, commas, %, spaces
+  return parseFloat(s.replace(/[\$,\s%]/g, ''));
+}
+function fmtMoney(v) {
+  const r = Math.round(v * 100) / 100;
+  const sign = r < 0 ? '-$' : '$';
+  return sign + Math.abs(r).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   AUDIO
+═══════════════════════════════════════════════════════════════ */
+let audioCtx = null;
+function getAudio() {
+  if (!audioCtx) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (AC) audioCtx = new AC();
+  }
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+function playBell() {
+  const ctx = getAudio(); if (!ctx) return;
+  const now = ctx.currentTime;
+  [523.25, 659.25, 783.99].forEach(f => {
+    const osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = 'sine'; osc.frequency.value = f;
+    osc.connect(g).connect(ctx.destination);
+    g.gain.setValueAtTime(0, now);
+    g.gain.linearRampToValueAtTime(0.15, now + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 1.6);
+    osc.start(now); osc.stop(now + 1.7);
+  });
+}
+function playHorn() {
+  const ctx = getAudio(); if (!ctx) return;
+  const now = ctx.currentTime;
+  const notes = [
+    { f: 466.16, t: 0.00, d: 0.18 },
+    { f: 440.00, t: 0.20, d: 0.18 },
+    { f: 415.30, t: 0.40, d: 0.55 }
+  ];
+  notes.forEach(({ f, t, d }) => {
+    const osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(f, now + t);
+    if (d > 0.3) osc.frequency.exponentialRampToValueAtTime(f * 0.88, now + t + d);
+    osc.connect(g).connect(ctx.destination);
+    g.gain.setValueAtTime(0, now + t);
+    g.gain.linearRampToValueAtTime(0.12, now + t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, now + t + d);
+    osc.start(now + t); osc.stop(now + t + d + 0.05);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DECISION-BUTTON STATE
+═══════════════════════════════════════════════════════════════ */
+const choicePick = {};
+function pickChoice(key, val) {
+  choicePick[key] = val;
+  const wrap = document.getElementById('choice-' + key);
+  wrap.querySelectorAll('button').forEach(b => {
+    b.classList.toggle('selected', b.dataset.val === val);
+    b.classList.remove('dir-wrong');
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   GENERIC STEP CHECKER (numeric fields + optional choices)
+   No hint reveals: wrong inputs get a red border and EMPTY hint.
+═══════════════════════════════════════════════════════════════ */
+function checkStep(spec, choices, scoreId, okFn) {
+  let correct = 0, total = 0, blanks = 0;
+  spec.forEach(f => {
+    const inp = document.getElementById(f.inputId);
+    const hint = document.getElementById(f.hintId);
+    inp.classList.remove('correct', 'wrong');
+    if (hint) hint.textContent = '';
+    total++;
+    if (inp.value.trim() === '') { blanks++; return; }
+    const val = parseNum(inp.value);
+    if (!isNaN(val) && Math.abs(val - f.expected) <= f.tol) { inp.classList.add('correct'); correct++; }
+    else inp.classList.add('wrong');
+  });
+  (choices || []).forEach(c => {
+    total++;
+    const wrap = document.getElementById('choice-' + c.key);
+    wrap.querySelectorAll('button').forEach(b => b.classList.remove('dir-wrong'));
+    const picked = choicePick[c.key];
+    if (!picked) { blanks++; return; }
+    if (picked === c.expected) correct++;
+    else { const b = wrap.querySelector('button[data-val="' + picked + '"]'); if (b) b.classList.add('dir-wrong'); }
+  });
+  const out = document.getElementById(scoreId);
+  if (blanks === total) { out.textContent = 'Fill in some answers first.'; return false; }
+  out.textContent = correct + ' / ' + total + ' correct' + (blanks ? ' (' + blanks + ' blank)' : '');
+  if (correct === total) { playBell(); if (okFn) okFn(); return true; }
+  playHorn(); return false;
+}
+function resetStepFields(spec, choices, scoreId, insightId) {
+  spec.forEach(f => {
+    const inp = document.getElementById(f.inputId);
+    const hint = document.getElementById(f.hintId);
+    inp.value = '';
+    inp.classList.remove('correct', 'wrong');
+    if (hint) hint.textContent = '';
+  });
+  (choices || []).forEach(c => {
+    const wrap = document.getElementById('choice-' + c.key);
+    wrap.querySelectorAll('button').forEach(b => b.classList.remove('selected', 'dir-wrong'));
+    delete choicePick[c.key];
+  });
+  document.getElementById(scoreId).textContent = '';
+  if (insightId) document.getElementById(insightId).innerHTML = '';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 1 — Lay out the cash flows
+═══════════════════════════════════════════════════════════════ */
+const STEP1_SPEC = [
+  { inputId: 's1-y0', hintId: 'hint-s1-y0', expected: -INVEST, tol: 0.5 },
+  { inputId: 's1-y1', hintId: 'hint-s1-y1', expected: CF[1],   tol: 0.5 },
+  { inputId: 's1-y2', hintId: 'hint-s1-y2', expected: CF[2],   tol: 0.5 },
+  { inputId: 's1-y3', hintId: 'hint-s1-y3', expected: CF[3],   tol: 0.5 },
+  { inputId: 's1-y4', hintId: 'hint-s1-y4', expected: CF[4],   tol: 0.5 }
+];
+function checkStep1() {
+  const fb = document.getElementById('step1-insight');
+  fb.innerHTML = '';
+  checkStep(STEP1_SPEC, [], 'score1-out', () => {
+    revealStep2(false);
+    fb.innerHTML = `<div class="insight success">That's the whole project on a timeline: −$155,000 today, then $45k, $50k, $55k, and $80,000 (the $60,000 operating inflow plus $20,000 salvage) at the end of Year 4. Everything from here is just re-pricing these five numbers in today's dollars.</div>`;
+  });
+}
+function resetStep1() { resetStepFields(STEP1_SPEC, [], 'score1-out', 'step1-insight'); }
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 2 — NPV at 10%
+═══════════════════════════════════════════════════════════════ */
+// Students supply the four PV factors; the activity computes PV and NPV.
+const STEP2_SPEC = [
+  { inputId: 's2-f1', hintId: 'hint-s2-f1', expected: PVF[10][1], tol: 0.0015 },
+  { inputId: 's2-f2', hintId: 'hint-s2-f2', expected: PVF[10][2], tol: 0.0015 },
+  { inputId: 's2-f3', hintId: 'hint-s2-f3', expected: PVF[10][3], tol: 0.0015 },
+  { inputId: 's2-f4', hintId: 'hint-s2-f4', expected: PVF[10][4], tol: 0.0015 }
+];
+const STEP2_CHOICES = [{ key: 's2-decide', expected: 'accept' }];
+
+// Live: as each factor is entered, populate that year's PV and the running NPV.
+function s2Recompute() {
+  let pvSum = 0, allValid = true;
+  [1, 2, 3, 4].forEach(y => {
+    const f = parseNum(document.getElementById('s2-f' + y).value);
+    const cell = document.getElementById('s2-pv' + y);
+    if (document.getElementById('s2-f' + y).value.trim() !== '' && !isNaN(f)) {
+      const pv = CF[y] * f;
+      pvSum += pv;
+      cell.textContent = fmtMoney(pv);
+    } else {
+      allValid = false;
+      cell.innerHTML = '<span class="placeholder">—</span>';
+    }
+  });
+  const npvCell = document.getElementById('s2-npv-out');
+  if (allValid) npvCell.textContent = fmtMoney(pvSum - INVEST);
+  else npvCell.innerHTML = '<span class="placeholder">—</span>';
+}
+function checkStep2() {
+  const fb = document.getElementById('step2-insight');
+  fb.innerHTML = '';
+  checkStep(STEP2_SPEC, STEP2_CHOICES, 'score2-out', () => {
+    revealStep3(false);
+    fb.innerHTML = `<div class="insight success">With the right factors, the present value of the inflows is about $178,191; against a $155,000 outlay that's an <strong>NPV of roughly +$23,200</strong>. A positive NPV means the line clears the 10% hurdle and adds value — accept. The whole exercise turned on reading the correct factor for each year.</div>`;
+  });
+}
+function resetStep2() {
+  resetStepFields(STEP2_SPEC, STEP2_CHOICES, 'score2-out', 'step2-insight');
+  s2Recompute();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 3 — IRR via tables
+═══════════════════════════════════════════════════════════════ */
+const STEP3_SPEC = [
+  { inputId: 's3-pv16',  hintId: 'hint-s3-pv16',  expected: PV_INFLOWS_16, tol: 60  },
+  { inputId: 's3-npv16', hintId: 'hint-s3-npv16', expected: NPV_16,        tol: 120 },
+  { inputId: 's3-npv18', hintId: 'hint-s3-npv18', expected: NPV_18,        tol: 150 },
+  { inputId: 's3-irr',   hintId: 'hint-s3-irr',   expected: 16,            tol: 0.6 }
+];
+const STEP3_CHOICES = [{ key: 's3-decide', expected: 'accept' }];
+function checkStep3() {
+  const fb = document.getElementById('step3-insight');
+  fb.innerHTML = '';
+  checkStep(STEP3_SPEC, STEP3_CHOICES, 'score3-out', () => {
+    revealStep4(false);
+    fb.innerHTML = `<div class="insight success">At 16% the NPV is essentially zero; at 18% it has turned negative. So the rate that zeroes NPV — the <strong>IRR — is right around 16%</strong>, comfortably above the 10% cost of capital, so the IRR rule agrees with NPV. And you never needed an annuity factor: every year stood on its own.</div>`;
+  });
+}
+function resetStep3() { resetStepFields(STEP3_SPEC, STEP3_CHOICES, 'score3-out', 'step3-insight'); }
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 4 — One-time shock in Year 3 (sensitivity)
+═══════════════════════════════════════════════════════════════ */
+const SHOCK = 35000;                         // one-time Year-3 outlay if the drum fails
+const P_FAIL = 0.5;                           // engineers' probability of failure
+const S4_Y3_CF = CF[3] - SHOCK;              // 20,000 revised Year-3 net cash flow
+const S4_NPV = NPV_10 - SHOCK * PVF[10][3];  // 23,191 − 35,000×0.7513 = −3,104.5  (NPV | fail)
+const S4_ENPV = (1 - P_FAIL) * NPV_10 + P_FAIL * S4_NPV; // 0.5×23,191 + 0.5×(−3,104.5) = 10,043.25
+
+const STEP4_SPEC = [
+  { inputId: 's4-y3cf', hintId: 'hint-s4-y3cf', expected: S4_Y3_CF, tol: 0.5 },
+  { inputId: 's4-npv',  hintId: 'hint-s4-npv',  expected: S4_NPV,   tol: 120 },
+  { inputId: 's4-enpv', hintId: 'hint-s4-enpv', expected: S4_ENPV,  tol: 150 }
+];
+const STEP4_CHOICES = [{ key: 's4-decide', expected: 'accept' }];
+function checkStep4() {
+  const fb = document.getElementById('step4-insight');
+  fb.innerHTML = '';
+  checkStep(STEP4_SPEC, STEP4_CHOICES, 'score4-out', () => {
+    revealStep5(false);
+    fb.innerHTML = `<div class="insight success">If the drum fails, the $35,000 hit is worth about $35,000 × 0.7513 ≈ $26,300 today, dragging NPV from roughly +$23,200 to about −$3,100. But that outcome is only 50% likely. Weighting the two scenarios gives an <strong>expected NPV of about +$10,000</strong> — still positive, so on an expected-value basis Ramble accepts. That's the budgeting lens: you commit on what the project is worth <em>on average</em> across the futures that could unfold, not on any single scenario.</div>`;
+  });
+}
+function resetStep4() { resetStepFields(STEP4_SPEC, STEP4_CHOICES, 'score4-out', 'step4-insight'); }
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 5 — Build your own (student supplies factors)
+═══════════════════════════════════════════════════════════════ */
+const BV_DEFAULTS = {
+  inv: 155000,
+  cf: { 1: 45000, 2: 50000, 3: 55000, 4: 80000 },
+  f:  { 1: 0.9091, 2: 0.8264, 3: 0.7513, 4: 0.6830 }
+};
+const BV_INPUT_IDS = ['bv-inv', 'bv-cf1', 'bv-f1', 'bv-cf2', 'bv-f2', 'bv-cf3', 'bv-f3', 'bv-cf4', 'bv-f4'];
+
+function readBuild() {
+  const g = id => parseNum(document.getElementById(id).value);
+  return {
+    inv: g('bv-inv'),
+    cf: { 1: g('bv-cf1'), 2: g('bv-cf2'), 3: g('bv-cf3'), 4: g('bv-cf4') },
+    f:  { 1: g('bv-f1'),  2: g('bv-f2'),  3: g('bv-f3'),  4: g('bv-f4') }
+  };
+}
+function refreshBuildChanged() {
+  const map = [
+    ['bv-inv', BV_DEFAULTS.inv],
+    ['bv-cf1', BV_DEFAULTS.cf[1]], ['bv-f1', BV_DEFAULTS.f[1]],
+    ['bv-cf2', BV_DEFAULTS.cf[2]], ['bv-f2', BV_DEFAULTS.f[2]],
+    ['bv-cf3', BV_DEFAULTS.cf[3]], ['bv-f3', BV_DEFAULTS.f[3]],
+    ['bv-cf4', BV_DEFAULTS.cf[4]], ['bv-f4', BV_DEFAULTS.f[4]]
+  ];
+  map.forEach(([id, ref]) => {
+    const el = document.getElementById(id);
+    const cur = parseNum(el.value);
+    if (!isNaN(cur) && Math.abs(cur - ref) > 1e-6) el.classList.add('changed');
+    else el.classList.remove('changed');
+  });
+}
+function checkStep5() {
+  const b = readBuild();
+  const out = document.getElementById('score5-out');
+  const fb = document.getElementById('step5-feedback');
+  out.textContent = '';
+  fb.innerHTML = '';
+
+  const badInput = [b.inv, b.cf[1], b.cf[2], b.cf[3], b.cf[4], b.f[1], b.f[2], b.f[3], b.f[4]].some(isNaN);
+  if (badInput) {
+    fb.innerHTML = `<div class="insight">Give every cash flow, factor, and the investment a valid number first.</div>`;
+    return;
+  }
+
+  // Each year's PV is checked against THAT student's own cash flow × factor.
+  const pv = { 1: b.cf[1] * b.f[1], 2: b.cf[2] * b.f[2], 3: b.cf[3] * b.f[3], 4: b.cf[4] * b.f[4] };
+  const npv = pv[1] + pv[2] + pv[3] + pv[4] - b.inv;
+
+  const rows = [
+    { id: 'bv-pv1', v: pv[1] }, { id: 'bv-pv2', v: pv[2] },
+    { id: 'bv-pv3', v: pv[3] }, { id: 'bv-pv4', v: pv[4] },
+    { id: 'bv-npv', v: npv }
+  ];
+
+  let attempted = 0, correct = 0, total = 0;
+  rows.forEach(r => {
+    total++;
+    const inp = document.getElementById(r.id);
+    inp.classList.remove('correct', 'wrong');
+    const raw = inp.value.trim();
+    if (raw === '') return;
+    attempted++;
+    const val = parseNum(raw);
+    const tol = Math.max(1, Math.abs(r.v) * 0.002);   // scale with magnitude; ~0.2%
+    if (!isNaN(val) && Math.abs(val - r.v) <= tol) { inp.classList.add('correct'); correct++; }
+    else inp.classList.add('wrong');
+  });
+
+  if (attempted === 0) {
+    fb.innerHTML = `<div class="insight">Compute at least one present value before checking.</div>`;
+    return;
+  }
+  out.textContent = correct + ' / ' + total + ' correct';
+  if (correct === total) {
+    playBell();
+    const verdict = npv > 0 ? 'a positive NPV — this project adds value at the rate you tested'
+                            : (npv < 0 ? 'a negative NPV — this project destroys value at the rate you tested'
+                                       : 'an NPV of essentially zero — you found the internal rate of return');
+    fb.innerHTML = `<div class="insight success">Everything ties out to your own factors: NPV is ${fmtMoney(npv)}, ${verdict}. Swap in the 16% or 18% factors from your table and watch the NPV cross through zero.</div>`;
+  } else if (correct === attempted) {
+    playBell();
+    fb.innerHTML = `<div class="insight success">Every value you filled in matches your factors. Finish the rest for the full NPV.</div>`;
+  } else {
+    playHorn();
+  }
+}
+function resetStep5() {
+  document.getElementById('bv-inv').value = '$' + BV_DEFAULTS.inv.toLocaleString('en-US');
+  [1, 2, 3, 4].forEach(y => {
+    document.getElementById('bv-cf' + y).value = '$' + BV_DEFAULTS.cf[y].toLocaleString('en-US');
+    document.getElementById('bv-f' + y).value = BV_DEFAULTS.f[y].toFixed(4);
+    const pv = document.getElementById('bv-pv' + y);
+    pv.value = ''; pv.classList.remove('correct', 'wrong');
+  });
+  const npv = document.getElementById('bv-npv');
+  npv.value = ''; npv.classList.remove('correct', 'wrong');
+  document.getElementById('score5-out').textContent = '';
+  document.getElementById('step5-feedback').innerHTML = '';
+  refreshBuildChanged();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   REVEAL STEPS
+═══════════════════════════════════════════════════════════════ */
+const revealedSteps = new Set();
+function revealStepN(stepNum, scroll) {
+  const el = document.getElementById('step' + stepNum);
+  if (!revealedSteps.has(stepNum)) {
+    el.classList.add('show');
+    revealedSteps.add(stepNum);
+    const btn = document.getElementById('reveal-step' + stepNum + '-btn');
+    if (btn) btn.style.display = 'none';
+  }
+  if (scroll) setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+}
+function revealStep2(s) { revealStepN(2, s); }
+function revealStep3(s) { revealStepN(3, s); }
+function revealStep4(s) { revealStepN(4, s); }
+function revealStep5(s) { revealStepN(5, s); }
+
+/* ═══════════════════════════════════════════════════════════════
+   QR / SHARE
+═══════════════════════════════════════════════════════════════ */
+function showQR() {
+  const url = location.href;
+  document.getElementById('qr-url').textContent = url;
+  const qrEl = document.getElementById('qr-code');
+  qrEl.innerHTML = '';
+  if (window.QRCode) {
+    new QRCode(qrEl, { text: url, width: 180, height: 180, colorDark: '#1a2744', colorLight: '#ffffff' });
+  }
+  document.getElementById('qr-overlay').classList.add('show');
+}
+function hideQR(ev) {
+  if (ev && ev.target.id !== 'qr-overlay' && ev.target.className !== 'qr-close') return;
+  document.getElementById('qr-overlay').classList.remove('show');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+  // Step 2: entering a factor live-populates that year's PV and the NPV total.
+  ['s2-f1', 's2-f2', 's2-f3', 's2-f4'].forEach(id => {
+    document.getElementById(id).addEventListener('input', s2Recompute);
+  });
+  s2Recompute();
+
+  BV_INPUT_IDS.forEach(id => {
+    document.getElementById(id).addEventListener('input', () => {
+      refreshBuildChanged();
+      ['bv-pv1', 'bv-pv2', 'bv-pv3', 'bv-pv4', 'bv-npv'].forEach(k => {
+        document.getElementById(k).classList.remove('correct', 'wrong');
+      });
+      document.getElementById('score5-out').textContent = '';
+      document.getElementById('step5-feedback').innerHTML = '';
+    });
+  });
+  refreshBuildChanged();
+});
+</script>
+
+</body>
+</html>

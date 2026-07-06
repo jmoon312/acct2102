@@ -1,0 +1,1282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Payback Period &amp; Accounting Rate of Return</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  /* ── Reset & base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    background: #f4f0e8;
+    color: #1a2744;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    background: #1a2744;
+    color: #fff;
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .header-left h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+  .header-left p  { font-size: 13px; color: #a0aec0; margin-top: 2px; }
+
+  .qr-btn {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    transition: background .15s;
+  }
+  .qr-btn:hover { background: rgba(255,255,255,0.18); }
+
+  /* QR Modal */
+  .qr-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .qr-overlay.show { display: flex; }
+  .qr-modal {
+    background: #fff;
+    border-radius: 14px;
+    padding: 32px;
+    text-align: center;
+    max-width: 300px;
+    width: 90%;
+  }
+  .qr-modal h2 { font-size: 16px; font-weight: 600; color: #1a2744; margin-bottom: 6px; }
+  .qr-modal p  { font-size: 12px; color: #64748b; margin-bottom: 18px; line-height: 1.5; }
+  #qr-code { display: flex; justify-content: center; margin-bottom: 16px; }
+  #qr-url  { font-size: 11px; color: #94a3b8; word-break: break-all; margin-bottom: 18px; }
+  .qr-close {
+    background: #1a2744; color: #fff;
+    border: none; border-radius: 8px;
+    padding: 8px 24px; font-size: 13px;
+    cursor: pointer; font-family: inherit;
+  }
+
+  /* ── Main layout ── */
+  main {
+    max-width: 920px;
+    margin: 28px auto;
+    padding: 0 20px 48px;
+  }
+
+  .part {
+    background: #fff;
+    border: 1px solid #dde3ef;
+    border-radius: 12px;
+    padding: 22px 24px 24px;
+    margin-bottom: 22px;
+  }
+
+  .part-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .part-tag {
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    background: #1a2744;
+    padding: 3px 10px;
+    border-radius: 99px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+  .part-tag.practice { background: #D85A30; }
+  .part-tag.explore  { background: #3b7dd8; }
+  .part-tag.solve    { background: #7a5cb6; }
+  .part-tag.build    { background: #5a9e3a; }
+  .part-header h2 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -.01em;
+  }
+  .part-header .subtitle {
+    font-size: 13px;
+    color: #64748b;
+  }
+
+  .setup-box {
+    background: #f8f6f0;
+    border: 1px solid #e6dfd0;
+    border-radius: 9px;
+    padding: 14px 16px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: #334155;
+    margin-bottom: 16px;
+  }
+  .setup-box strong { color: #1a2744; }
+  .setup-box p + p { margin-top: 6px; }
+
+  /* Cash-flow chip row for the two projects */
+  .cf-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+  }
+  .cf-chip {
+    background: #fff;
+    border: 1px solid #e1eaf3;
+    border-radius: 7px;
+    padding: 6px 11px;
+    font-size: 12.5px;
+    color: #334155;
+    font-variant-numeric: tabular-nums;
+  }
+  .cf-chip strong { color: #1a2744; }
+  .cf-chip .yr { color: #94a3b8; font-size: 11px; display: block; }
+
+  /* ── Cumulative-schedule table (Step 2) ── */
+  .cf-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-bottom: 12px;
+    font-variant-numeric: tabular-nums;
+  }
+  .cf-table thead th {
+    background: #fde9c8;
+    color: #1a2744;
+    font-size: 12.5px;
+    font-weight: 700;
+    text-align: center;
+    padding: 10px 8px;
+    border-bottom: 2px solid #f0c674;
+  }
+  .cf-table thead th:first-child {
+    border-top-left-radius: 8px;
+    text-align: left;
+    padding-left: 14px;
+  }
+  .cf-table thead th:last-child { border-top-right-radius: 8px; }
+  .cf-table tbody td {
+    background: #f0f5fa;
+    padding: 9px 8px;
+    text-align: center;
+    border-bottom: 1px solid #e1eaf3;
+    font-size: 13px;
+    color: #334155;
+  }
+  .cf-table tbody td.row-label {
+    text-align: left;
+    padding-left: 14px;
+    font-weight: 600;
+    color: #1a2744;
+  }
+  .cf-table tbody td.given { color: #1a2744; font-weight: 600; }
+  .cf-table tbody tr:last-child td:first-child { border-bottom-left-radius: 8px; }
+  .cf-table tbody tr:last-child td:last-child { border-bottom-right-radius: 8px; }
+  .cf-table input {
+    width: 100%;
+    max-width: 150px;
+    padding: 7px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-variant-numeric: tabular-nums;
+    transition: border-color .12s, background .12s;
+  }
+  .cf-table input:focus { outline: none; border-color: #3b7dd8; background: #f8fbff; }
+  .cf-table input.correct { border-color: #5a9e3a; background: #f0f9e8; color: #2d6a1f; font-weight: 600; }
+  .cf-table input.wrong { border-color: #c94040; background: #fff1f1; color: #9b2020; }
+
+  /* ── Written-adjustment field (Step 3) ── */
+  .adjust-block {
+    background: #f8fafc;
+    border: 1px solid #e1eaf3;
+    border-radius: 9px;
+    padding: 13px 16px;
+    margin-bottom: 8px;
+  }
+  .adjust-label { font-size: 13.5px; color: #1a2744; line-height: 1.5; margin-bottom: 8px; }
+  .adjust-label strong { font-weight: 700; }
+  .adjust-input {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    background: #fff;
+    color: #1a2744;
+  }
+  .adjust-input:focus { outline: none; border-color: #3b7dd8; background: #f8fbff; }
+  .adjust-input.correct { border-color: #5a9e3a; background: #f0f9e8; color: #2d6a1f; }
+  .adjust-input.wrong { border-color: #c94040; background: #fff1f1; color: #9b2020; }
+
+  .prompt {
+    font-size: 14px;
+    color: #1a2744;
+    margin-bottom: 12px;
+    line-height: 1.55;
+  }
+  .prompt strong { font-weight: 700; }
+
+  /* ── Per-question stacked layout ── */
+  .qa-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 4px; }
+  .qa-row {
+    display: grid;
+    grid-template-columns: 1fr 200px;
+    gap: 14px;
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #e1eaf3;
+    border-radius: 9px;
+    padding: 13px 16px;
+  }
+  .qa-row .qa-prompt {
+    font-size: 13.5px;
+    color: #1a2744;
+    line-height: 1.5;
+  }
+  .qa-row .qa-prompt strong { font-weight: 700; }
+  .qa-row .qa-prompt small {
+    display: block;
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 3px;
+  }
+  .qa-row .answer { display: flex; flex-direction: column; }
+  .qa-row .answer label {
+    font-size: 10.5px;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 4px;
+  }
+  .qa-row .answer input {
+    padding: 8px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .qa-row .answer input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .qa-row .answer input.correct {
+    border-color: #5a9e3a;
+    background: #f0f9e8;
+    color: #2d6a1f;
+  }
+  .qa-row .answer input.wrong {
+    border-color: #c94040;
+    background: #fff1f1;
+    color: #9b2020;
+  }
+  .corr-hint {
+    display: block;
+    font-size: 11.5px;
+    color: #64748b;
+    font-weight: 500;
+    margin-top: 4px;
+    min-height: 14px;
+    line-height: 1.4;
+    text-align: center;
+  }
+
+  /* ── Decision buttons ── */
+  .choice-block { margin-top: 6px; margin-bottom: 4px; }
+  .choice-label {
+    font-size: 13.5px;
+    color: #1a2744;
+    margin-bottom: 8px;
+    line-height: 1.5;
+  }
+  .choice-label strong { font-weight: 700; }
+  .dir-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .dir-buttons button {
+    flex: 1;
+    min-width: 150px;
+    background: #fff;
+    border: 1.5px solid #cbd5e1;
+    color: #1a2744;
+    padding: 11px 14px;
+    border-radius: 9px;
+    font-size: 13.5px;
+    font-family: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .dir-buttons button:hover {
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .dir-buttons button.selected {
+    background: #1a2744;
+    color: #fff;
+    border-color: #1a2744;
+  }
+  .dir-buttons button.dir-wrong {
+    border-color: #c94040;
+    background: #fff1f1;
+    color: #9b2020;
+  }
+
+  /* Reveal animation */
+  .reveal {
+    display: none;
+    animation: slideIn 0.4s ease-out;
+  }
+  .reveal.show { display: block; }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .footer {
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .check-btn {
+    background: #1a2744; color: #fff;
+    border: none; border-radius: 9px;
+    padding: 10px 24px; font-size: 14px;
+    cursor: pointer; font-family: inherit;
+    font-weight: 500;
+    transition: background .15s;
+  }
+  .check-btn:hover { background: #243660; }
+  .reset-btn {
+    font-size: 13px; color: #64748b;
+    background: none; border: none;
+    cursor: pointer; text-decoration: underline;
+    font-family: inherit;
+  }
+  .reveal-link {
+    margin-left: auto;
+    font-size: 12.5px;
+    color: #64748b;
+    background: none; border: none;
+    cursor: pointer; text-decoration: underline;
+    font-family: inherit;
+  }
+  .reveal-link:hover { color: #1a2744; }
+  .score-out {
+    font-size: 14px; font-weight: 600;
+    color: #1a2744;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 6px 14px;
+  }
+  .score-out:empty { display: none; }
+
+  /* ── Build-your-own (Step 5) ── */
+  .build-prompt {
+    font-size: 14px;
+    color: #1a2744;
+    margin-bottom: 14px;
+    line-height: 1.55;
+  }
+  .params-card {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .params-card .param-row {
+    display: grid;
+    grid-template-columns: 1fr 140px;
+    gap: 10px;
+    align-items: center;
+    background: #f8f6f0;
+    border: 1px solid #e6dfd0;
+    border-radius: 8px;
+    padding: 10px 14px;
+  }
+  .params-card .param-row label {
+    font-size: 13.5px;
+    color: #1a2744;
+    font-weight: 500;
+  }
+  .params-card .param-row label small {
+    display: block;
+    font-size: 11.5px;
+    color: #64748b;
+    font-weight: 400;
+    margin-top: 1px;
+  }
+  .params-card .param-row input {
+    padding: 7px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-variant-numeric: tabular-nums;
+  }
+  .params-card .param-row input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .params-card .param-row input.changed {
+    border-color: #D85A30;
+    background: #fff7f0;
+  }
+
+  .build-solve {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .build-solve .solve-card {
+    background: #fff;
+    border: 1px solid #dde3ef;
+    border-radius: 9px;
+    padding: 12px 14px;
+  }
+  .build-solve .solve-card label {
+    display: block;
+    font-size: 12px;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 6px;
+  }
+  .build-solve .solve-card label small {
+    display: block;
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 400;
+    color: #94a3b8;
+    margin-top: 2px;
+  }
+  .build-solve .solve-card input {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 15px;
+    font-family: inherit;
+    text-align: center;
+    background: #fff;
+    color: #1a2744;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .build-solve .solve-card input:focus {
+    outline: none;
+    border-color: #3b7dd8;
+    background: #f8fbff;
+  }
+  .build-solve .solve-card input.correct {
+    border-color: #5a9e3a;
+    background: #f0f9e8;
+    color: #2d6a1f;
+  }
+  .build-solve .solve-card input.wrong {
+    border-color: #c94040;
+    background: #fff1f1;
+    color: #9b2020;
+  }
+
+  .insight {
+    margin-top: 8px;
+    background: #eff6ff;
+    border: 1px solid #c7dcf5;
+    border-left: 4px solid #3b7dd8;
+    border-radius: 0 8px 8px 0;
+    padding: 11px 14px;
+    font-size: 13px;
+    line-height: 1.55;
+    color: #1a2744;
+  }
+  .insight strong { color: #1e40af; }
+  .insight.success {
+    background: #f0f9e8;
+    border-color: #c4e0a3;
+    border-left-color: #5a9e3a;
+  }
+  .insight.success strong { color: #2d6a1f; }
+
+  /* Responsive */
+  @media (max-width: 700px) {
+    header { padding: 14px 16px; }
+    main { padding: 0 12px 40px; }
+    .part { padding: 18px 14px 18px; }
+    .qa-row { grid-template-columns: 1fr; gap: 8px; }
+    .params-card { grid-template-columns: 1fr; }
+    .build-solve { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="header-left">
+    <h1>Payback Period &amp; Accounting Rate of Return</h1>
+  </div>
+  <button class="qr-btn" onclick="showQR()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="2" height="2"/><rect x="18" y="14" width="3" height="3"/><rect x="14" y="19" width="3" height="2"/><rect x="19" y="19" width="2" height="2"/></svg>
+    Share with students
+  </button>
+</header>
+
+<!-- QR Modal -->
+<div class="qr-overlay" id="qr-overlay" onclick="hideQR(event)">
+  <div class="qr-modal">
+    <h2>Scan to open on your device</h2>
+    <p>Students can scan this QR code or type the URL to open the activity on their phone or laptop.</p>
+    <div id="qr-code"></div>
+    <div id="qr-url"></div>
+    <button class="qr-close" onclick="hideQR()">Close</button>
+  </div>
+</div>
+
+<!-- Main -->
+<main>
+
+  <!-- ───────── STEP 1 — Payback, equal flows ───────── -->
+  <section class="part">
+    <div class="part-header">
+      <span class="part-tag practice">Step 1</span>
+      <h2>How fast does the cash come back?</h2>
+      <span class="subtitle">payback with level annual cash flows</span>
+    </div>
+
+    <div class="setup-box">
+      <p><strong>Ramble Coffee Roasters</strong> is fitting out a new Atlanta café and can fund just one of two equipment packages. Management screens every project first on <strong>payback period</strong>, and its rule is simple: it won't approve anything with a payback longer than <strong>3.25 years</strong>.</p>
+      <p><strong>Project A — the drive-thru espresso lane.</strong> It costs <strong>$100,000</strong> to build, has a <strong>4-year</strong> useful life, and a <strong>$20,000</strong> salvage value at the end. The lane is expected to throw off a steady <strong>$32,000</strong> of net operating cash inflow every year.</p>
+    </div>
+
+    <p class="prompt">Work out how long Project A takes to pay back its cost, then judge it against Ramble's screen.</p>
+
+    <div class="qa-list">
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Payback period for Project A</strong><small>enter the number of years</small></div>
+        <div class="answer">
+          <label>Years</label>
+          <input type="text" id="s1-payback" inputmode="decimal" placeholder="years">
+          <span class="corr-hint" id="hint-s1-payback"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="choice-block">
+      <div class="choice-label">Does Project A <strong>clear the 3.25-year screen?</strong></div>
+      <div class="dir-buttons" id="choice-s1-screen">
+        <button data-val="clears" onclick="pickChoice('s1-screen','clears')">Clears the screen</button>
+        <button data-val="fails" onclick="pickChoice('s1-screen','fails')">Fails the screen</button>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep1()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep1()">Reset</button>
+      <span id="score1-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep2(true)" id="reveal-step2-btn">Skip ahead →</button>
+    </div>
+
+    <div id="step1-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 2 — Payback, unequal flows ───────── -->
+  <section class="part reveal" id="step2">
+    <div class="part-header">
+      <span class="part-tag explore">Step 2</span>
+      <h2>When the cash flows aren't level</h2>
+      <span class="subtitle">payback with a partial final year</span>
+    </div>
+
+    <div class="setup-box">
+      <p><strong>Project B — the cold-brew &amp; pastry bar.</strong> It costs <strong>$115,000</strong>, also runs <strong>4 years</strong>, and has a <strong>$15,000</strong> salvage value. But a new bar takes time to build a following, so its net operating cash inflows ramp up over the four years rather than staying level:</p>
+      <div class="cf-strip">
+        <div class="cf-chip"><span class="yr">Year 1</span><strong>$28,000</strong></div>
+        <div class="cf-chip"><span class="yr">Year 2</span><strong>$34,000</strong></div>
+        <div class="cf-chip"><span class="yr">Year 3</span><strong>$38,000</strong></div>
+        <div class="cf-chip"><span class="yr">Year 4</span><strong>$42,000</strong></div>
+      </div>
+    </div>
+
+    <p class="prompt">With uneven inflows you can't just divide. First build the <strong>cumulative cash recovered</strong> at the end of each year. Then find the year in which the running total passes the <strong>$115,000</strong> cost — that's where payback happens — and work out the fraction of that year needed.</p>
+
+    <table class="cf-table">
+      <thead>
+        <tr><th>Year</th><th>Cash inflow</th><th>Cumulative cash recovered</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="row-label">1</td>
+          <td class="given">$28,000</td>
+          <td><input type="text" id="s2-cum1" inputmode="decimal" placeholder="$"></td>
+        </tr>
+        <tr>
+          <td class="row-label">2</td>
+          <td class="given">$34,000</td>
+          <td><input type="text" id="s2-cum2" inputmode="decimal" placeholder="$"></td>
+        </tr>
+        <tr>
+          <td class="row-label">3</td>
+          <td class="given">$38,000</td>
+          <td><input type="text" id="s2-cum3" inputmode="decimal" placeholder="$"></td>
+        </tr>
+        <tr>
+          <td class="row-label">4</td>
+          <td class="given">$42,000</td>
+          <td><input type="text" id="s2-cum4" inputmode="decimal" placeholder="$"></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="qa-list">
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Payback period for Project B</strong><small>full years plus the fraction of the year in which the total crosses $115,000</small></div>
+        <div class="answer">
+          <label>Years</label>
+          <input type="text" id="s2-payback" inputmode="decimal" placeholder="years">
+          <span class="corr-hint" id="hint-s2-payback"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="choice-block">
+      <div class="choice-label">Does Project B <strong>clear the same 3.25-year screen?</strong></div>
+      <div class="dir-buttons" id="choice-s2-screen">
+        <button data-val="clears" onclick="pickChoice('s2-screen','clears')">Clears the screen</button>
+        <button data-val="fails" onclick="pickChoice('s2-screen','fails')">Fails the screen</button>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep2()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep2()">Reset</button>
+      <span id="score2-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep3(true)" id="reveal-step3-btn">Skip ahead →</button>
+    </div>
+
+    <div id="step2-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 3 — ARR for Project A ───────── -->
+  <section class="part reveal" id="step3">
+    <div class="part-header">
+      <span class="part-tag solve">Step 3</span>
+      <h2>From cash flow to a rate of return</h2>
+      <span class="subtitle">accounting rate of return, Project A</span>
+    </div>
+
+    <div class="setup-box">
+      <p>Payback tells Ramble how fast the cash returns, but not how <em>profitable</em> the project is. The <strong>accounting rate of return</strong> works from <strong>net income</strong>, not cash flow — and the operating cash inflow is not the same as net income. Your first job is to figure out what has to change to get from one to the other.</p>
+      <p>For <strong>Project A</strong>: cost <strong>$100,000</strong>, salvage <strong>$20,000</strong>, life <strong>4 years</strong>, level operating cash inflow <strong>$32,000</strong> per year. Ramble reports ARR two ways — once against the full initial investment, once against the average investment over the asset's life.</p>
+    </div>
+
+    <div class="adjust-block">
+      <div class="adjust-label">The $32,000 is a <strong>cash</strong> figure. In your own words, <strong>what adjustment must you make</strong> to turn that annual operating cash inflow into the project's annual increase in net income?</div>
+      <input type="text" id="s3-adjust" class="adjust-input" placeholder="Write out the adjustment">
+      <span class="corr-hint" id="hint-s3-adjust"></span>
+    </div>
+
+    <p class="prompt">Now put a number on it and build up the return.</p>
+
+    <div class="qa-list">
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Annual straight-line depreciation</strong></div>
+        <div class="answer">
+          <label>Per year</label>
+          <input type="text" id="s3-dep" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s3-dep"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Average annual increase in net income</strong></div>
+        <div class="answer">
+          <label>Per year</label>
+          <input type="text" id="s3-ni" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s3-ni"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>ARR on the initial investment</strong></div>
+        <div class="answer">
+          <label>Percent</label>
+          <input type="text" id="s3-arr-init" inputmode="decimal" placeholder="%">
+          <span class="corr-hint" id="hint-s3-arr-init"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>ARR on the average investment</strong><small>average of the beginning and ending book value</small></div>
+        <div class="answer">
+          <label>Percent</label>
+          <input type="text" id="s3-arr-avg" inputmode="decimal" placeholder="%">
+          <span class="corr-hint" id="hint-s3-arr-avg"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep3()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep3()">Reset</button>
+      <span id="score3-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep4(true)" id="reveal-step4-btn">Skip ahead →</button>
+    </div>
+
+    <div id="step3-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 4 — ARR for Project B + decision ───────── -->
+  <section class="part reveal" id="step4">
+    <div class="part-header">
+      <span class="part-tag solve">Step 4</span>
+      <h2>Same treatment for the bar — then decide</h2>
+      <span class="subtitle">accounting rate of return, Project B</span>
+    </div>
+
+    <div class="setup-box">
+      <p>Now put <strong>Project B</strong> through the same return logic — this time with less scaffolding. Its operating cash inflows are uneven ($28,000 / $34,000 / $38,000 / $42,000). Cost <strong>$115,000</strong>, salvage <strong>$15,000</strong>, life <strong>4 years</strong>.</p>
+      <p>Report ARR on the <strong>average investment</strong> so it's comparable to Project A. Then make the call: with one budget slot open, which project does Ramble fund?</p>
+    </div>
+
+    <div class="qa-list">
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>Average annual increase in net income</strong><small>you'll need to handle the uneven inflows and the depreciation yourself</small></div>
+        <div class="answer">
+          <label>Per year</label>
+          <input type="text" id="s4-ni" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="hint-s4-ni"></span>
+        </div>
+      </div>
+      <div class="qa-row">
+        <div class="qa-prompt"><strong>ARR on the average investment</strong></div>
+        <div class="answer">
+          <label>Percent</label>
+          <input type="text" id="s4-arr-avg" inputmode="decimal" placeholder="%">
+          <span class="corr-hint" id="hint-s4-arr-avg"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="choice-block">
+      <div class="choice-label">With one slot to fill, <strong>which project should Ramble fund?</strong></div>
+      <div class="dir-buttons" id="choice-s4-fund">
+        <button data-val="A" onclick="pickChoice('s4-fund','A')">Project A — espresso lane</button>
+        <button data-val="B" onclick="pickChoice('s4-fund','B')">Project B — cold-brew bar</button>
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep4()">Check answers</button>
+      <button class="reset-btn" onclick="resetStep4()">Reset</button>
+      <span id="score4-out" class="score-out"></span>
+      <button class="reveal-link" onclick="revealStep5(true)" id="reveal-step5-btn">Skip ahead →</button>
+    </div>
+
+    <div id="step4-insight"></div>
+  </section>
+
+  <!-- ───────── STEP 5 — Build your own ───────── -->
+  <section class="part reveal" id="step5">
+    <div class="part-header">
+      <span class="part-tag build">Step 5</span>
+      <h2>Screen your own project</h2>
+      <span class="subtitle">change the numbers and re-run payback and ARR</span>
+    </div>
+
+    <p class="build-prompt">Set up any level-cash-flow project below — cost, salvage, life, and the equal annual operating cash inflow — then compute all five figures. The activity recomputes the answers from whatever you enter. Leave a field blank to skip it.</p>
+
+    <div class="params-card">
+      <div class="param-row">
+        <label>Initial investment <small>cost of the asset</small></label>
+        <input type="text" class="var-input" id="bv-inv" inputmode="decimal" value="$100,000">
+      </div>
+      <div class="param-row">
+        <label>Salvage value <small>at end of life</small></label>
+        <input type="text" class="var-input" id="bv-salv" inputmode="decimal" value="$20,000">
+      </div>
+      <div class="param-row">
+        <label>Useful life <small>years</small></label>
+        <input type="text" class="var-input" id="bv-life" inputmode="decimal" value="4">
+      </div>
+      <div class="param-row">
+        <label>Annual cash inflow <small>level, per year</small></label>
+        <input type="text" class="var-input" id="bv-cf" inputmode="decimal" value="$32,000">
+      </div>
+    </div>
+
+    <div class="build-solve">
+      <div class="solve-card">
+        <label>Payback period<small>years</small></label>
+        <input type="text" id="bv-payback" inputmode="decimal" placeholder="years">
+      </div>
+      <div class="solve-card">
+        <label>Annual depreciation<small>straight-line</small></label>
+        <input type="text" id="bv-dep" inputmode="decimal" placeholder="$">
+      </div>
+      <div class="solve-card">
+        <label>Avg &Delta; net income<small>per year</small></label>
+        <input type="text" id="bv-ni" inputmode="decimal" placeholder="$">
+      </div>
+      <div class="solve-card">
+        <label>ARR — initial<small>on cost</small></label>
+        <input type="text" id="bv-arr-init" inputmode="decimal" placeholder="%">
+      </div>
+      <div class="solve-card">
+        <label>ARR — average<small>on avg investment</small></label>
+        <input type="text" id="bv-arr-avg" inputmode="decimal" placeholder="%">
+      </div>
+    </div>
+
+    <div class="footer">
+      <button class="check-btn" onclick="checkStep5()">Check</button>
+      <button class="reset-btn" onclick="resetStep5()">Reset to original</button>
+      <span id="score5-out" class="score-out"></span>
+    </div>
+
+    <div id="step5-feedback"></div>
+  </section>
+
+</main>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   PROJECT DATA — Ramble Coffee Roasters
+═══════════════════════════════════════════════════════════════ */
+// Project A — drive-thru espresso lane (level cash flows)
+const A_INV = 100000, A_SALV = 20000, A_LIFE = 4, A_CF = 32000;
+// Project B — cold-brew & pastry bar (ramping cash flows)
+const B_INV = 115000, B_SALV = 15000, B_LIFE = 4;
+const B_FLOWS = [28000, 34000, 38000, 42000];
+const SCREEN = 3.25;   // management's maximum payback (years)
+
+// ── Project A derived ──
+const A_PAYBACK  = A_INV / A_CF;                       // 3.125 yrs
+const A_DEP      = (A_INV - A_SALV) / A_LIFE;          // 20,000
+const A_NI       = A_CF - A_DEP;                        // 12,000
+const A_ARR_INIT = A_NI / A_INV * 100;                 // 12.0 %
+const A_ARR_AVG  = A_NI / ((A_INV + A_SALV) / 2) * 100; // 20.0 %
+
+// ── Project B derived ──
+const B_CUM = [                                          // cumulative cash recovered by year-end
+  B_FLOWS[0],                                            // 28,000
+  B_FLOWS[0] + B_FLOWS[1],                               // 62,000
+  B_FLOWS[0] + B_FLOWS[1] + B_FLOWS[2],                  // 100,000
+  B_FLOWS[0] + B_FLOWS[1] + B_FLOWS[2] + B_FLOWS[3]      // 142,000
+];
+const B_UNREC3   = B_INV - B_CUM[2];                     // 15,000 unrecovered entering Year 4
+const B_PAYBACK  = 3 + B_UNREC3 / B_FLOWS[3];            // 3.357 yrs
+const B_AVGCF    = B_FLOWS.reduce((a, b) => a + b, 0) / B_LIFE; // 35,500
+const B_DEP      = (B_INV - B_SALV) / B_LIFE;            // 25,000
+const B_NI       = B_AVGCF - B_DEP;                      // 10,500
+const B_ARR_AVG  = B_NI / ((B_INV + B_SALV) / 2) * 100;  // 16.15 %
+
+/* ═══════════════════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════════════════ */
+function parseNum(s) {
+  if (typeof s !== 'string') return NaN;
+  return parseFloat(s.replace(/[\$,\s%]/g, ''));
+}
+// Percent parser: accepts "12", "12%", or decimal "0.12" → returns percentage points.
+function parsePct(s) {
+  let v = parseNum(s);
+  if (isNaN(v)) return NaN;
+  if (Math.abs(v) <= 1) v = v * 100;   // no ARR in this activity is ≤1%, so decimals are safe to scale
+  return v;
+}
+function fmtMoney(v) {
+  const r = Math.round(v * 100) / 100;
+  const sign = r < 0 ? '-$' : '$';
+  return sign + Math.abs(r).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   AUDIO
+═══════════════════════════════════════════════════════════════ */
+let audioCtx = null;
+function getAudio() {
+  if (!audioCtx) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (AC) audioCtx = new AC();
+  }
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+function playBell() {
+  const ctx = getAudio(); if (!ctx) return;
+  const now = ctx.currentTime;
+  [523.25, 659.25, 783.99].forEach(f => {
+    const osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = 'sine'; osc.frequency.value = f;
+    osc.connect(g).connect(ctx.destination);
+    g.gain.setValueAtTime(0, now);
+    g.gain.linearRampToValueAtTime(0.15, now + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 1.6);
+    osc.start(now); osc.stop(now + 1.7);
+  });
+}
+function playHorn() {
+  const ctx = getAudio(); if (!ctx) return;
+  const now = ctx.currentTime;
+  const notes = [
+    { f: 466.16, t: 0.00, d: 0.18 },
+    { f: 440.00, t: 0.20, d: 0.18 },
+    { f: 415.30, t: 0.40, d: 0.55 }
+  ];
+  notes.forEach(({ f, t, d }) => {
+    const osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(f, now + t);
+    if (d > 0.3) osc.frequency.exponentialRampToValueAtTime(f * 0.88, now + t + d);
+    osc.connect(g).connect(ctx.destination);
+    g.gain.setValueAtTime(0, now + t);
+    g.gain.linearRampToValueAtTime(0.12, now + t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, now + t + d);
+    osc.start(now + t); osc.stop(now + t + d + 0.05);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DECISION-BUTTON STATE
+═══════════════════════════════════════════════════════════════ */
+const choicePick = {};
+function pickChoice(key, val) {
+  choicePick[key] = val;
+  const wrap = document.getElementById('choice-' + key);
+  wrap.querySelectorAll('button').forEach(b => {
+    b.classList.toggle('selected', b.dataset.val === val);
+    b.classList.remove('dir-wrong');
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   GENERIC STEP CHECKER (numeric fields + optional choices)
+   No hint reveals: wrong inputs get a red border and EMPTY hint.
+═══════════════════════════════════════════════════════════════ */
+function checkStep(spec, choices, scoreId, okFn) {
+  let correct = 0, total = 0, blanks = 0;
+  spec.forEach(f => {
+    const inp = document.getElementById(f.inputId);
+    const hint = document.getElementById(f.hintId);
+    inp.classList.remove('correct', 'wrong');
+    if (hint) hint.textContent = '';
+    total++;
+    if (inp.value.trim() === '') { blanks++; return; }
+    if (f.match) {   // free-text field: validated by a matcher, not a numeric compare
+      if (f.match(inp.value)) { inp.classList.add('correct'); correct++; }
+      else inp.classList.add('wrong');
+      return;
+    }
+    const val = (f.parse || parseNum)(inp.value);
+    if (!isNaN(val) && Math.abs(val - f.expected) <= f.tol) {
+      inp.classList.add('correct'); correct++;
+    } else {
+      inp.classList.add('wrong');
+    }
+  });
+  (choices || []).forEach(c => {
+    total++;
+    const wrap = document.getElementById('choice-' + c.key);
+    wrap.querySelectorAll('button').forEach(b => b.classList.remove('dir-wrong'));
+    const picked = choicePick[c.key];
+    if (!picked) { blanks++; return; }
+    if (picked === c.expected) {
+      correct++;
+    } else {
+      const b = wrap.querySelector('button[data-val="' + picked + '"]');
+      if (b) b.classList.add('dir-wrong');
+    }
+  });
+  const out = document.getElementById(scoreId);
+  if (blanks === total) { out.textContent = 'Fill in some answers first.'; return false; }
+  out.textContent = correct + ' / ' + total + ' correct' + (blanks ? ' (' + blanks + ' blank)' : '');
+  if (correct === total) { playBell(); if (okFn) okFn(); return true; }
+  playHorn(); return false;
+}
+function resetStep(spec, choices, scoreId, insightId) {
+  spec.forEach(f => {
+    const inp = document.getElementById(f.inputId);
+    const hint = document.getElementById(f.hintId);
+    inp.value = '';
+    inp.classList.remove('correct', 'wrong');
+    if (hint) hint.textContent = '';
+  });
+  (choices || []).forEach(c => {
+    const wrap = document.getElementById('choice-' + c.key);
+    wrap.querySelectorAll('button').forEach(b => b.classList.remove('selected', 'dir-wrong'));
+    delete choicePick[c.key];
+  });
+  document.getElementById(scoreId).textContent = '';
+  if (insightId) document.getElementById(insightId).innerHTML = '';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 1 — Payback, Project A
+═══════════════════════════════════════════════════════════════ */
+const STEP1_SPEC = [
+  { inputId: 's1-payback', hintId: 'hint-s1-payback', expected: A_PAYBACK, tol: 0.05 }
+];
+const STEP1_CHOICES = [{ key: 's1-screen', expected: 'clears' }];
+function checkStep1() {
+  const fb = document.getElementById('step1-insight');
+  fb.innerHTML = '';
+  checkStep(STEP1_SPEC, STEP1_CHOICES, 'score1-out', () => {
+    revealStep2(false);
+    fb.innerHTML = `<div class="insight success">With a level $32,000 coming in each year, payback is one clean division. At <strong>3.13 years</strong> the espresso lane slips under the 3.25-year screen.</div>`;
+  });
+}
+function resetStep1() { resetStep(STEP1_SPEC, STEP1_CHOICES, 'score1-out', 'step1-insight'); }
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 2 — Payback, Project B
+═══════════════════════════════════════════════════════════════ */
+const STEP2_SPEC = [
+  { inputId: 's2-cum1',    hintId: null,              expected: B_CUM[0],  tol: 0.5  },
+  { inputId: 's2-cum2',    hintId: null,              expected: B_CUM[1],  tol: 0.5  },
+  { inputId: 's2-cum3',    hintId: null,              expected: B_CUM[2],  tol: 0.5  },
+  { inputId: 's2-cum4',    hintId: null,              expected: B_CUM[3],  tol: 0.5  },
+  { inputId: 's2-payback', hintId: 'hint-s2-payback', expected: B_PAYBACK, tol: 0.05 }
+];
+const STEP2_CHOICES = [{ key: 's2-screen', expected: 'fails' }];
+function checkStep2() {
+  const fb = document.getElementById('step2-insight');
+  fb.innerHTML = '';
+  checkStep(STEP2_SPEC, STEP2_CHOICES, 'score2-out', () => {
+    revealStep3(false);
+    fb.innerHTML = `<div class="insight success">Three full years recover $100,000; the last $15,000 arrives partway through Year 4 — $15,000 ÷ $42,000 ≈ 0.36 of the year. At <strong>3.36 years</strong> the bar just misses the same screen the lane cleared.</div>`;
+  });
+}
+function resetStep2() { resetStep(STEP2_SPEC, STEP2_CHOICES, 'score2-out', 'step2-insight'); }
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 3 — ARR, Project A
+═══════════════════════════════════════════════════════════════ */
+// Accept any wording that identifies depreciation AND that it is subtracted.
+function matchDepAdjust(s) {
+  const t = s.toLowerCase();
+  const mentionsDep = /deprec/.test(t);
+  const subtracts = /(subtract|less|minus|deduct|reduce|remove|net out|take out|take off|expense out)/.test(t);
+  return mentionsDep && subtracts;
+}
+const STEP3_SPEC = [
+  { inputId: 's3-adjust',   hintId: 'hint-s3-adjust',   match: matchDepAdjust },
+  { inputId: 's3-dep',      hintId: 'hint-s3-dep',      expected: A_DEP,      tol: 0.5 },
+  { inputId: 's3-ni',       hintId: 'hint-s3-ni',       expected: A_NI,       tol: 0.5 },
+  { inputId: 's3-arr-init', hintId: 'hint-s3-arr-init', expected: A_ARR_INIT, tol: 0.5, parse: parsePct },
+  { inputId: 's3-arr-avg',  hintId: 'hint-s3-arr-avg',  expected: A_ARR_AVG,  tol: 0.5, parse: parsePct }
+];
+function checkStep3() {
+  const fb = document.getElementById('step3-insight');
+  fb.innerHTML = '';
+  checkStep(STEP3_SPEC, [], 'score3-out', () => {
+    revealStep4(false);
+    fb.innerHTML = `<div class="insight success">Same project, two very different rates: <strong>12% on cost</strong> versus <strong>20% on the average investment</strong>. The denominator you pick moves the number a lot — which is exactly why ARR is always reported on a stated base.</div>`;
+  });
+}
+function resetStep3() { resetStep(STEP3_SPEC, [], 'score3-out', 'step3-insight'); }
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 4 — ARR, Project B + decision
+═══════════════════════════════════════════════════════════════ */
+const STEP4_SPEC = [
+  { inputId: 's4-ni',      hintId: 'hint-s4-ni',      expected: B_NI,      tol: 0.5 },
+  { inputId: 's4-arr-avg', hintId: 'hint-s4-arr-avg', expected: B_ARR_AVG, tol: 0.5, parse: parsePct }
+];
+const STEP4_CHOICES = [{ key: 's4-fund', expected: 'A' }];
+function checkStep4() {
+  const fb = document.getElementById('step4-insight');
+  fb.innerHTML = '';
+  checkStep(STEP4_SPEC, STEP4_CHOICES, 'score4-out', () => {
+    revealStep5(false);
+    fb.innerHTML = `<div class="insight success">The espresso lane wins on <em>every</em> measure these models offer — faster payback (3.13 vs 3.36 years) and a higher return (20% vs 16.2% on average investment). But notice what both models ignore: <strong>when</strong> the cash arrives and what a dollar next year is really worth. That's the gap the next activity's NPV and IRR close.</div>`;
+  });
+}
+function resetStep4() { resetStep(STEP4_SPEC, STEP4_CHOICES, 'score4-out', 'step4-insight'); }
+
+/* ═══════════════════════════════════════════════════════════════
+   STEP 5 — Build your own
+═══════════════════════════════════════════════════════════════ */
+const BV_DEFAULTS = { inv: A_INV, salv: A_SALV, life: A_LIFE, cf: A_CF };
+const BV_FIELDS = ['bv-inv', 'bv-salv', 'bv-life', 'bv-cf'];
+
+function readBuild() {
+  return {
+    inv:  parseNum(document.getElementById('bv-inv').value),
+    salv: parseNum(document.getElementById('bv-salv').value),
+    life: parseNum(document.getElementById('bv-life').value),
+    cf:   parseNum(document.getElementById('bv-cf').value)
+  };
+}
+function refreshBuildChanged() {
+  const p = readBuild();
+  [['bv-inv', p.inv, BV_DEFAULTS.inv], ['bv-salv', p.salv, BV_DEFAULTS.salv],
+   ['bv-life', p.life, BV_DEFAULTS.life], ['bv-cf', p.cf, BV_DEFAULTS.cf]].forEach(([id, cur, ref]) => {
+    const el = document.getElementById(id);
+    if (!isNaN(cur) && Math.abs(cur - ref) > 0.001) el.classList.add('changed');
+    else el.classList.remove('changed');
+  });
+}
+function checkStep5() {
+  const p = readBuild();
+  const out = document.getElementById('score5-out');
+  const fb = document.getElementById('step5-feedback');
+  out.textContent = '';
+  fb.innerHTML = '';
+
+  if ([p.inv, p.salv, p.life, p.cf].some(isNaN) || p.life <= 0 || p.cf <= 0) {
+    fb.innerHTML = `<div class="insight">Enter a valid cost, salvage, life (years), and annual cash inflow first.</div>`;
+    return;
+  }
+
+  const dep = (p.inv - p.salv) / p.life;
+  const ni = p.cf - dep;
+  const ans = {
+    'bv-payback':  { v: p.inv / p.cf, tol: 0.05, parse: parseNum },
+    'bv-dep':      { v: dep,          tol: Math.max(0.5, Math.abs(dep) * 0.002), parse: parseNum },
+    'bv-ni':       { v: ni,           tol: Math.max(0.5, Math.abs(ni) * 0.002),  parse: parseNum },
+    'bv-arr-init': { v: ni / p.inv * 100, tol: 0.5, parse: parsePct },
+    'bv-arr-avg':  { v: ni / ((p.inv + p.salv) / 2) * 100, tol: 0.5, parse: parsePct }
+  };
+
+  let attempted = 0, correct = 0, total = 0;
+  Object.keys(ans).forEach(id => {
+    total++;
+    const inp = document.getElementById(id);
+    inp.classList.remove('correct', 'wrong');
+    const raw = inp.value.trim();
+    if (raw === '') return;
+    attempted++;
+    const val = ans[id].parse(raw);
+    if (!isNaN(val) && Math.abs(val - ans[id].v) <= ans[id].tol) { inp.classList.add('correct'); correct++; }
+    else inp.classList.add('wrong');
+  });
+
+  if (attempted === 0) {
+    fb.innerHTML = `<div class="insight">Compute at least one of the five figures before checking.</div>`;
+    return;
+  }
+  out.textContent = correct + ' / ' + total + ' correct';
+  if (correct === total) {
+    playBell();
+    fb.innerHTML = `<div class="insight success">Every figure ties out to your project. Try pushing the salvage value up toward the cost and watch the two ARR numbers pull further apart.</div>`;
+  } else if (correct === attempted) {
+    playBell();
+    fb.innerHTML = `<div class="insight success">Everything you filled in is right. Complete the rest for a full read on your project.</div>`;
+  } else {
+    playHorn();
+  }
+}
+function resetStep5() {
+  document.getElementById('bv-inv').value  = '$' + BV_DEFAULTS.inv.toLocaleString('en-US');
+  document.getElementById('bv-salv').value = '$' + BV_DEFAULTS.salv.toLocaleString('en-US');
+  document.getElementById('bv-life').value = String(BV_DEFAULTS.life);
+  document.getElementById('bv-cf').value   = '$' + BV_DEFAULTS.cf.toLocaleString('en-US');
+  ['bv-payback', 'bv-dep', 'bv-ni', 'bv-arr-init', 'bv-arr-avg'].forEach(id => {
+    const inp = document.getElementById(id);
+    inp.value = '';
+    inp.classList.remove('correct', 'wrong');
+  });
+  document.getElementById('score5-out').textContent = '';
+  document.getElementById('step5-feedback').innerHTML = '';
+  refreshBuildChanged();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   REVEAL STEPS
+═══════════════════════════════════════════════════════════════ */
+const revealedSteps = new Set();
+function revealStepN(stepNum, scroll) {
+  const el = document.getElementById('step' + stepNum);
+  if (!revealedSteps.has(stepNum)) {
+    el.classList.add('show');
+    revealedSteps.add(stepNum);
+    const btn = document.getElementById('reveal-step' + stepNum + '-btn');
+    if (btn) btn.style.display = 'none';
+  }
+  if (scroll) setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+}
+function revealStep2(s) { revealStepN(2, s); }
+function revealStep3(s) { revealStepN(3, s); }
+function revealStep4(s) { revealStepN(4, s); }
+function revealStep5(s) { revealStepN(5, s); }
+
+/* ═══════════════════════════════════════════════════════════════
+   QR / SHARE
+═══════════════════════════════════════════════════════════════ */
+function showQR() {
+  const url = location.href;
+  document.getElementById('qr-url').textContent = url;
+  const qrEl = document.getElementById('qr-code');
+  qrEl.innerHTML = '';
+  if (window.QRCode) {
+    new QRCode(qrEl, { text: url, width: 180, height: 180, colorDark: '#1a2744', colorLight: '#ffffff' });
+  }
+  document.getElementById('qr-overlay').classList.add('show');
+}
+function hideQR(ev) {
+  if (ev && ev.target.id !== 'qr-overlay' && ev.target.className !== 'qr-close') return;
+  document.getElementById('qr-overlay').classList.remove('show');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+  BV_FIELDS.forEach(id => {
+    document.getElementById(id).addEventListener('input', () => {
+      refreshBuildChanged();
+      ['bv-payback', 'bv-dep', 'bv-ni', 'bv-arr-init', 'bv-arr-avg'].forEach(k => {
+        document.getElementById(k).classList.remove('correct', 'wrong');
+      });
+      document.getElementById('score5-out').textContent = '';
+      document.getElementById('step5-feedback').innerHTML = '';
+    });
+  });
+  refreshBuildChanged();
+});
+</script>
+
+</body>
+</html>
