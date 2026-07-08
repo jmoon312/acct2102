@@ -736,6 +736,14 @@
 
     <div class="qa-list">
       <div class="qa-row">
+        <div class="qa-prompt"><strong>Sales revenue</strong></div>
+        <div class="answer">
+          <label>$</label>
+          <input type="text" id="s6-sales" inputmode="decimal" placeholder="$">
+          <span class="corr-hint" id="h-s6-sales"></span>
+        </div>
+      </div>
+      <div class="qa-row">
         <div class="qa-prompt"><strong>Cost of goods sold</strong></div>
         <div class="answer">
           <label>$</label>
@@ -1191,6 +1199,8 @@ function buildSpecs() {
       explain:'Once you’ve borrowed exactly enough to reach the minimum, the ending balance equals that required floor.' }
   ];
   S6 = [
+    { inputId:'s6-sales',  hintId:'h-s6-sales',  expected:EXP.SALES_MAR, tol:0.5,
+      explain:'The income statement starts with March sales revenue — the same figure you budgeted in Step 1.' },
     { inputId:'s6-cogs',   hintId:'h-s6-cogs',   expected:EXP.COGS, tol:0.5,
       explain:'Cost of goods sold = units actually sold × the purchase cost per unit — not the units you purchased.' },
     { inputId:'s6-gross',  hintId:'h-s6-gross',  expected:EXP.GROSS, tol:0.5,
