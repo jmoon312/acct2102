@@ -211,30 +211,6 @@
   .cf-table input.correct { border-color: #5a9e3a; background: #f0f9e8; color: #2d6a1f; font-weight: 600; }
   .cf-table input.wrong { border-color: #c94040; background: #fff1f1; color: #9b2020; }
 
-  /* ── Written-adjustment field (Step 3) ── */
-  .adjust-block {
-    background: #f8fafc;
-    border: 1px solid #e1eaf3;
-    border-radius: 9px;
-    padding: 13px 16px;
-    margin-bottom: 8px;
-  }
-  .adjust-label { font-size: 13.5px; color: #1a2744; line-height: 1.5; margin-bottom: 8px; }
-  .adjust-label strong { font-weight: 700; }
-  .adjust-input {
-    width: 100%;
-    padding: 9px 12px;
-    border: 1.5px solid #cbd5e1;
-    border-radius: 6px;
-    font-size: 14px;
-    font-family: inherit;
-    background: #fff;
-    color: #1a2744;
-  }
-  .adjust-input:focus { outline: none; border-color: #3b7dd8; background: #f8fbff; }
-  .adjust-input.correct { border-color: #5a9e3a; background: #f0f9e8; color: #2d6a1f; }
-  .adjust-input.wrong { border-color: #c94040; background: #fff1f1; color: #9b2020; }
-
   .prompt {
     font-size: 14px;
     color: #1a2744;
@@ -714,13 +690,7 @@
       <p>For <strong>Project A</strong>: cost <strong>$100,000</strong>, salvage <strong>$20,000</strong>, life <strong>4 years</strong>, level operating cash inflow <strong>$32,000</strong> per year. Ramble reports ARR two ways — once against the full initial investment, once against the average investment over the asset's life.</p>
     </div>
 
-    <div class="adjust-block">
-      <div class="adjust-label">The $32,000 is a <strong>cash</strong> figure. In your own words, <strong>what adjustment must you make</strong> to turn that annual operating cash inflow into the project's annual increase in net income?</div>
-      <input type="text" id="s3-adjust" class="adjust-input" placeholder="Write out the adjustment">
-      <span class="corr-hint" id="hint-s3-adjust"></span>
-    </div>
-
-    <p class="prompt">Now put a number on it and build up the return.</p>
+    <p class="prompt">The $32,000 is a <strong>cash</strong> figure — not the same as net income. Put a number on the adjustment and build up the return.</p>
 
     <div class="qa-list">
       <div class="qa-row">
@@ -1093,15 +1063,7 @@ function resetStep2() { resetStep(STEP2_SPEC, STEP2_CHOICES, 'score2-out', 'step
 /* ═══════════════════════════════════════════════════════════════
    STEP 3 — ARR, Project A
 ═══════════════════════════════════════════════════════════════ */
-// Accept any wording that identifies depreciation AND that it is subtracted.
-function matchDepAdjust(s) {
-  const t = s.toLowerCase();
-  const mentionsDep = /deprec/.test(t);
-  const subtracts = /(subtract|less|minus|deduct|reduce|remove|net out|take out|take off|expense out)/.test(t);
-  return mentionsDep && subtracts;
-}
 const STEP3_SPEC = [
-  { inputId: 's3-adjust',   hintId: 'hint-s3-adjust',   match: matchDepAdjust },
   { inputId: 's3-dep',      hintId: 'hint-s3-dep',      expected: A_DEP,      tol: 0.5 },
   { inputId: 's3-ni',       hintId: 'hint-s3-ni',       expected: A_NI,       tol: 0.5 },
   { inputId: 's3-arr-init', hintId: 'hint-s3-arr-init', expected: A_ARR_INIT, tol: 0.5, parse: parsePct },
