@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Exam 3 Study Guide — Chapters 9, 10 &amp; 12</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  /* ── Reset & base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    background: #f4f0e8;
+    color: #1a2744;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    background: #1a2744;
+    color: #fff;
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .header-left h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+  .header-left p  { font-size: 13px; color: #a0aec0; margin-top: 2px; }
+
+  .qr-btn {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    transition: background .15s;
+  }
+  .qr-btn:hover { background: rgba(255,255,255,0.18); }
+
+  /* QR Modal */
+  .qr-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .qr-overlay.show { display: flex; }
+  .qr-modal {
+    background: #fff;
+    border-radius: 14px;
+    padding: 32px;
+    text-align: center;
+    max-width: 300px;
+    width: 90%;
+  }
+  .qr-modal h2 { font-size: 16px; font-weight: 600; color: #1a2744; margin-bottom: 6px; }
+  .qr-modal p  { font-size: 12px; color: #64748b; margin-bottom: 18px; line-height: 1.5; }
+  #qr-code { display: flex; justify-content: center; margin-bottom: 16px; }
+  #qr-url  { font-size: 11px; color: #94a3b8; word-break: break-all; margin-bottom: 18px; }
+  .qr-close {
+    background: #1a2744; color: #fff;
+    border: none; border-radius: 8px;
+    padding: 8px 24px; font-size: 13px;
+    cursor: pointer; font-family: inherit;
+  }
+
+  /* ── Main layout ── */
+  main {
+    max-width: 920px;
+    margin: 28px auto;
+    padding: 0 20px 48px;
+  }
+
+  /* ── Chapter nav ── */
+  .chapter-nav {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 22px;
+  }
+  .chapter-nav a {
+    display: inline-block;
+    padding: 7px 16px;
+    background: #fff;
+    border: 1px solid #dde3ef;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1a2744;
+    text-decoration: none;
+    transition: background .15s, border-color .15s;
+  }
+  .chapter-nav a:hover {
+    background: #e9eef7;
+    border-color: #b8c4d8;
+  }
+
+  /* ── Cards ── */
+  .part {
+    background: #fff;
+    border: 1px solid #dde3ef;
+    border-radius: 12px;
+    padding: 22px 24px 24px;
+    margin-bottom: 22px;
+  }
+
+  .part-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .part-tag {
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    background: #1a2744;
+    padding: 3px 10px;
+    border-radius: 99px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+  .part-tag.ch9  { background: #3b7dd8; }
+  .part-tag.ch10 { background: #D85A30; }
+  .part-tag.ch12 { background: #5a9e3a; }
+  .part-tag.formulas { background: #1a2744; }
+  .part-tag.practice { background: #c77900; }
+  .part-header h2 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -.01em;
+  }
+
+  /* ── Content styling ── */
+  .section-intro {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #334155;
+    margin-bottom: 16px;
+  }
+
+  h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a2744;
+    margin: 18px 0 8px;
+  }
+  h3:first-of-type { margin-top: 6px; }
+
+  .concept-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 12px;
+  }
+  .concept-list li {
+    position: relative;
+    padding: 6px 0 6px 20px;
+    font-size: 14px;
+    line-height: 1.55;
+    color: #334155;
+  }
+  .concept-list li::before {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 13px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #94a3b8;
+  }
+  .concept-list li strong { color: #1a2744; }
+
+  /* ── Callout boxes ── */
+  .callout {
+    background: #f8f6f0;
+    border: 1px solid #e6dfd0;
+    border-radius: 9px;
+    padding: 14px 16px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: #334155;
+    margin: 12px 0 16px;
+  }
+  .callout strong { color: #1a2744; }
+  .callout p + p { margin-top: 6px; }
+
+  .callout.formula-box {
+    background: #eef3fb;
+    border-color: #c5d5ed;
+    font-family: 'SF Mono', 'Consolas', 'Menlo', monospace;
+    font-size: 13px;
+  }
+  .callout.formula-box .formula-label {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-weight: 700;
+    color: #1a2744;
+    font-size: 13px;
+    margin-bottom: 4px;
+  }
+
+  /* ── Tables ── */
+  .compare-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+    margin: 10px 0 14px;
+  }
+  .compare-table th {
+    background: #e9eef7;
+    font-size: 12.5px;
+    font-weight: 700;
+    text-align: left;
+    padding: 8px 12px;
+    border-bottom: 2px solid #cbd5e1;
+  }
+  .compare-table td {
+    padding: 7px 12px;
+    border-bottom: 1px solid #f0f3f8;
+    vertical-align: top;
+  }
+  .compare-table tr:last-child td { border-bottom: none; }
+  .compare-table td.num, .compare-table th.num { text-align: right; white-space: nowrap; }
+
+  /* ── Decision framework table ── */
+  .decision-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+    margin: 10px 0 14px;
+  }
+  .decision-table th {
+    background: #f3eefe;
+    font-size: 12.5px;
+    font-weight: 700;
+    text-align: left;
+    padding: 8px 12px;
+    border-bottom: 2px solid #c4b5fd;
+  }
+  .decision-table td {
+    padding: 7px 12px;
+    border-bottom: 1px solid #f0f3f8;
+    vertical-align: top;
+  }
+  .decision-table td:first-child { font-weight: 600; white-space: nowrap; }
+  .decision-table tr:last-child td { border-bottom: none; }
+
+  /* ── Practice links ── */
+  .practice-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 10px 0 4px;
+  }
+  .practice-links a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    background: #f8f6f0;
+    border: 1px solid #e6dfd0;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1a2744;
+    text-decoration: none;
+    transition: background .15s, border-color .15s;
+  }
+  .practice-links a:hover {
+    background: #eee9dd;
+    border-color: #d4cbb6;
+  }
+  .practice-links a::before {
+    content: '\2794';
+    font-size: 11px;
+  }
+
+  /* ── Collapsible sections ── */
+  .collapse-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a2744;
+    padding: 4px 0;
+    margin: 18px 0 8px;
+  }
+  .collapse-toggle:first-of-type { margin-top: 6px; }
+  .collapse-toggle .arrow {
+    display: inline-block;
+    font-size: 12px;
+    transition: transform .2s;
+    color: #94a3b8;
+  }
+  .collapse-toggle.open .arrow { transform: rotate(90deg); }
+  .collapsible {
+    display: none;
+    padding: 0;
+  }
+  .collapsible.open { display: block; }
+
+  /* ── Self-check questions ── */
+  .selfcheck {
+    border: 1px solid #dde3ef;
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin: 12px 0;
+    background: #fcfbf8;
+  }
+  .selfcheck .q-num {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: #c77900;
+    margin-bottom: 4px;
+  }
+  .selfcheck .q-text { font-size: 14px; line-height: 1.55; color: #334155; }
+  .selfcheck .q-text strong { color: #1a2744; }
+  .reveal-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    color: #1a2744;
+    padding: 8px 0 2px;
+  }
+  .reveal-toggle .arrow { font-size: 11px; color: #94a3b8; transition: transform .2s; }
+  .reveal-toggle.open .arrow { transform: rotate(90deg); }
+  .answer {
+    display: none;
+    margin-top: 8px;
+    padding: 12px 14px;
+    background: #eef3fb;
+    border: 1px solid #c5d5ed;
+    border-radius: 8px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: #1a2744;
+  }
+  .answer.open { display: block; }
+  .answer .work {
+    font-family: 'SF Mono', 'Consolas', 'Menlo', monospace;
+    font-size: 12.5px;
+    color: #334155;
+    display: block;
+    margin: 4px 0;
+  }
+  .answer .final { font-weight: 700; }
+
+  /* ── Formula reference card ── */
+  .formula-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 10px 0;
+  }
+  @media (max-width: 640px) {
+    .formula-grid { grid-template-columns: 1fr; }
+  }
+  .formula-card {
+    background: #eef3fb;
+    border: 1px solid #c5d5ed;
+    border-radius: 9px;
+    padding: 12px 14px;
+  }
+  .formula-card .fc-title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: #64748b;
+    margin-bottom: 5px;
+  }
+  .formula-card .fc-eq {
+    font-family: 'SF Mono', 'Consolas', 'Menlo', monospace;
+    font-size: 13px;
+    color: #1a2744;
+    line-height: 1.5;
+  }
+
+  /* ── Utility ── */
+  .mt-0 { margin-top: 0; }
+  .mb-sm { margin-bottom: 6px; }
+</style>
+</head>
+<body>
+
+<!-- ═══ Header ═══ -->
+<header>
+  <div class="header-left">
+    <h1>Exam 3 Study Guide</h1>
+    <p>ACCT 2102 &mdash; Chapters 9, 10 &amp; 12</p>
+  </div>
+  <button class="qr-btn" onclick="showQR()">
+    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="3" height="3"/><line x1="21" y1="14" x2="21" y2="17"/><line x1="17" y1="21" x2="21" y2="21"/></svg>
+    Share
+  </button>
+</header>
+
+<!-- QR Overlay -->
+<div class="qr-overlay" id="qr-overlay" onclick="hideQR(event)">
+  <div class="qr-modal">
+    <h2>Scan to open</h2>
+    <p>Open this study guide on your phone or share with a classmate.</p>
+    <div id="qr-code"></div>
+    <div id="qr-url"></div>
+    <button class="qr-close" onclick="hideQR(event)">Close</button>
+  </div>
+</div>
+
+<!-- ═══ Main ═══ -->
+<main>
+
+<!-- Jump nav -->
+<nav class="chapter-nav">
+  <a href="#ch9">Ch 9</a>
+  <a href="#ch10">Ch 10</a>
+  <a href="#ch12">Ch 12</a>
+  <a href="#formulas">Formulas</a>
+  <a href="#practice">Practice</a>
+</nav>
+
+<!-- ═══ How to use ═══ -->
+<div class="part">
+  <div class="part-header">
+    <span class="part-tag">Guide</span>
+    <h2>How to Use This Guide</h2>
+  </div>
+  <p class="section-intro mt-0">
+    Exam 3 covers three chapters: <strong>budgeting</strong> (Ch 9), <strong>standard costs, variances,
+    and responsibility centers</strong> (Ch 10), and <strong>capital budgeting</strong> (Ch 12). Work
+    top-to-bottom: read each concept section, keep the <a href="#formulas">Formula Quick Reference</a>
+    open beside you, then close the loop with the <a href="#practice">Self-Check questions</a> and the
+    interactive activities. Most of the exam's computational questions randomize their numbers, so
+    <em>drill the procedure</em>, not a memorized answer.
+  </p>
+  <div class="callout">
+    <strong>Biggest trap on this exam:</strong> using the wrong volume or the wrong "base." In
+    budgeting, keep <em>sales</em> units separate from <em>production</em> units. In variances, always
+    compare against the standard <em>allowed for actual output</em> (not the original budget). In
+    capital budgeting, use the <em>annuity</em> factor for equal cash flows and the <em>PV-of-$1</em>
+    factor for uneven ones.
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     CHAPTER 9 — BUDGETING
+═══════════════════════════════════════════ -->
+<div class="part" id="ch9">
+  <div class="part-header">
+    <span class="part-tag ch9">Chapter 9</span>
+    <h2>Budgeting</h2>
+  </div>
+
+  <button class="collapse-toggle open" onclick="toggle(this)"><span class="arrow">&#9654;</span> Budgeting Approaches</button>
+  <div class="collapsible open">
+    <table class="compare-table">
+      <thead><tr><th>Approach</th><th>How it builds the budget</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Incremental</strong></td><td>Start from the prior period's budget and adjust up/down. Fast, but can <em>carry forward past inefficiencies</em>.</td></tr>
+        <tr><td><strong>Zero-based</strong></td><td>Start from zero; every dollar must be justified each period. Thorough but time-consuming.</td></tr>
+        <tr><td><strong>Output/input</strong></td><td>Used when there's a clear, measurable link between inputs and outputs (e.g., pounds per unit). Common in manufacturing, merchandising, distribution.</td></tr>
+        <tr><td><strong>Activity-based</strong></td><td>Budget the cost of each activity (setups, inspections) based on expected activity volume.</td></tr>
+      </tbody>
+    </table>
+    <ul class="concept-list">
+      <li><strong>Budgetary slack:</strong> intentionally understating budgeted revenue or overstating budgeted expenses to make targets easier to hit. It's encouraged when pay/bonuses are tied too tightly to beating the budget.</li>
+      <li><strong>Using budgets well:</strong> encourage participation at all levels, use budgets to guide behavior toward goals, and use performance reports to spot both strong <em>and</em> weak performance &mdash; <em>not</em> to punish or to bolt raises directly onto hitting the number.</li>
+    </ul>
+    <div class="callout">
+      <strong>Risk management steps:</strong> Identify &rarr; Assess (likelihood &amp; impact) &rarr; Respond (avoid, transfer, mitigate, or accept) &rarr; Monitor. You <em>manage</em> risk &mdash; you never "eliminate every risk."
+    </div>
+  </div>
+
+  <button class="collapse-toggle open" onclick="toggle(this)"><span class="arrow">&#9654;</span> The Operating Budget &amp; Its Sequence</button>
+  <div class="collapsible open">
+    <ul class="concept-list">
+      <li>The <strong>sales budget</strong> drives everything &mdash; every downstream budget depends on budgeted sales.</li>
+      <li>Order for a manufacturer: sales &rarr; <strong>production</strong> &rarr; direct materials, direct labor, and overhead &rarr; then the budgeted income statement and cash budget.</li>
+      <li>For a merchandiser there's no production step; the <strong>purchases budget</strong> takes its place.</li>
+    </ul>
+  </div>
+
+  <button class="collapse-toggle open" onclick="toggle(this)"><span class="arrow">&#9654;</span> Production, Purchases, Materials &amp; Labor Budgets</button>
+  <div class="collapsible open">
+    <div class="callout formula-box">
+      <div class="formula-label">The one relationship behind all of them</div>
+      Needed = What you must supply + Desired ending balance &minus; Beginning balance
+    </div>
+    <ul class="concept-list">
+      <li><strong>Production budget (manufacturer, in units):</strong> Budgeted sales + desired ending finished goods &minus; beginning finished goods. Desired ending FG is usually a % of <em>next</em> period's sales.</li>
+      <li><strong>Purchases budget (merchandiser):</strong> Budgeted cost of goods sold (or unit sales) + desired ending inventory &minus; beginning inventory. Works in units <em>or</em> dollars.</li>
+      <li><strong>Direct materials budget:</strong> materials needed for production = (production units &times; input per unit); then purchases = needed + desired ending materials &minus; beginning materials.</li>
+      <li><strong>Direct labor budget:</strong> total hours = (production &times; hours per unit) <em>plus</em> any fixed per-batch/per-run/per-setup hours; multiply total hours by the wage rate. Watch for a per-unit <em>and</em> a per-batch component in the same problem.</li>
+      <li><strong>Budgeted COGS (merchandiser):</strong> often a stated % of budgeted sales.</li>
+    </ul>
+    <div class="callout">
+      <strong>Don't get baited by inventory of the wrong thing.</strong> "Materials used in production = production &times; input per unit." Beginning/ending <em>materials</em> inventory changes the <em>purchases</em> figure, not the amount <em>used</em>.
+    </div>
+  </div>
+
+  <h3>Practice Activities</h3>
+  <div class="practice-links">
+    <a href="https://jmoon312.github.io/acct2102/budgeting-approaches.html" target="_blank">Budgeting Approaches</a>
+    <a href="https://jmoon312.github.io/acct2102/master-budget-builder.html" target="_blank">Master Budget Builder</a>
+    <a href="https://jmoon312.github.io/acct2102/manufacturing-budget-builder.html" target="_blank">Manufacturing Budget Builder</a>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     CHAPTER 10 — STANDARD COSTS & VARIANCES
+═══════════════════════════════════════════ -->
+<div class="part" id="ch10">
+  <div class="part-header">
+    <span class="part-tag ch10">Chapter 10</span>
+    <h2>Standard Costs, Variances &amp; Responsibility Centers</h2>
+  </div>
+
+  <button class="collapse-toggle open" onclick="toggle(this)"><span class="arrow">&#9654;</span> Standard Costs &amp; Responsibility Centers</button>
+  <div class="collapsible open">
+    <ul class="concept-list">
+      <li><strong>Standard cost:</strong> what it <em>should</em> cost to produce one unit under planned operating conditions. Built from engineering analysis plus history adjusted for expected changes &mdash; not just average past costs.</li>
+    </ul>
+    <table class="compare-table">
+      <thead><tr><th>Responsibility center</th><th>Manager is accountable for&hellip;</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Cost center</strong></td><td>Costs only (e.g., accounting department, a factory maintenance shop).</td></tr>
+        <tr><td><strong>Revenue center</strong></td><td>Revenues only (e.g., a regional sales office).</td></tr>
+        <tr><td><strong>Profit center</strong></td><td>Both revenues and costs &mdash; i.e., profit (e.g., an individual store).</td></tr>
+        <tr><td><strong>Investment center</strong></td><td>Revenues, costs, <em>and</em> the assets invested; evaluated on ROI (e.g., an autonomous division).</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <button class="collapse-toggle open" onclick="toggle(this)"><span class="arrow">&#9654;</span> Flexible Budgets &amp; the Variance Framework</button>
+  <div class="collapsible open">
+    <ul class="concept-list">
+      <li>A <strong>flexible budget</strong> restates the budget at the <em>actual</em> output level: standard cost per unit &times; actual units produced. Fixed costs stay fixed.</li>
+      <li>A <strong>flexible-budget variance</strong> compares actual cost to the flexible budget. Actual &gt; standard &rarr; <strong>Unfavorable</strong>; actual &lt; standard &rarr; <strong>Favorable</strong> (for a cost).</li>
+      <li>The key discipline: always compare against the standard <em>allowed for the output actually produced</em>, never the original static budget.</li>
+    </ul>
+  </div>
+
+  <button class="collapse-toggle open" onclick="toggle(this)"><span class="arrow">&#9654;</span> Materials, Labor &amp; Overhead Variances</button>
+  <div class="collapsible open">
+    <div class="callout formula-box">
+      <div class="formula-label">Price/rate vs. quantity/efficiency (same shape every time)</div>
+      Materials price = (AP &minus; SP) &times; AQ purchased<br>
+      Materials quantity = (AQ used &minus; SQ allowed) &times; SP<br>
+      Labor rate = (AR &minus; SR) &times; AH<br>
+      Labor efficiency = (AH &minus; SH allowed) &times; SR<br>
+      VOH spending = Actual VOH &minus; (AH &times; std VOH rate)<br>
+      VOH efficiency = (AH &minus; SH allowed) &times; std VOH rate
+    </div>
+    <ul class="concept-list">
+      <li><strong>Sign rule:</strong> a positive result (actual &gt; standard) is <strong>Unfavorable</strong>; negative is <strong>Favorable</strong>. Report the amount as a positive number with an F/U label.</li>
+      <li><strong>SQ / SH "allowed"</strong> = standard input per unit &times; <em>actual units produced</em>. This is the single most common place to slip.</li>
+      <li><strong>Price</strong> variances multiply by the <em>actual</em> quantity; <strong>quantity/efficiency</strong> variances multiply by the <em>standard price/rate</em>.</li>
+    </ul>
+    <table class="decision-table">
+      <thead><tr><th>Variance</th><th>Common causes</th></tr></thead>
+      <tbody>
+        <tr><td>Materials price F</td><td>Volume discount, distressed seller, hard bargaining. (Buying <em>higher</em>-quality material raises price &rarr; unfavorable.)</td></tr>
+        <tr><td>Materials quantity U</td><td>Poorly trained workers wasting material, inferior materials, faulty equipment.</td></tr>
+        <tr><td>Labor efficiency F</td><td>Skilled, experienced workers; well-maintained equipment; good material quality.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <button class="collapse-toggle open" onclick="toggle(this)"><span class="arrow">&#9654;</span> Sales Variances</button>
+  <div class="collapsible open">
+    <div class="callout formula-box">
+      <div class="formula-label">Revenue vs. volume</div>
+      Revenue variance = (Actual units &times; actual price) &minus; (Budgeted units &times; budgeted price)<br>
+      Net sales volume variance = (Actual units &minus; budgeted units) &times; <em>budgeted contribution margin per unit</em>
+    </div>
+    <ul class="concept-list">
+      <li>The <strong>revenue variance</strong> (for a revenue center) captures the total top-line difference &mdash; both price and volume effects together.</li>
+      <li>The <strong>net sales volume variance</strong> isolates the volume effect and values it at the <em>budgeted contribution margin</em> per unit (not price, not full revenue).</li>
+    </ul>
+  </div>
+
+  <h3>Practice Activities</h3>
+  <div class="practice-links">
+    <a href="https://jmoon312.github.io/acct2102/standard-flexible-variances.html" target="_blank">Standard &amp; Flexible-Budget Variances</a>
+    <a href="https://jmoon312.github.io/acct2102/variance-profit-reconciliation.html" target="_blank">Variance &amp; Profit Reconciliation</a>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     CHAPTER 12 — CAPITAL BUDGETING
+═══════════════════════════════════════════ -->
+<div class="part" id="ch12">
+  <div class="part-header">
+    <span class="part-tag ch12">Chapter 12</span>
+    <h2>Capital Budgeting</h2>
+  </div>
+
+  <button class="collapse-toggle open" onclick="toggle(this)"><span class="arrow">&#9654;</span> Vocabulary &amp; Project Phases</button>
+  <div class="collapsible open">
+    <ul class="concept-list">
+      <li><strong>Capital expenditures:</strong> investments of significant resources in projects to develop/introduce products, expand capacity, or change facilities.</li>
+      <li><strong>Cost of capital:</strong> the average cost of funds from creditors and shareholders &mdash; often used as the <em>discount rate</em>.</li>
+      <li><strong>Phases:</strong> initial/investment (the outlay) &rarr; operations (cash receipts &amp; expenditures over the life) &rarr; divestment/end (salvage, recovery of working capital).</li>
+    </ul>
+  </div>
+
+  <button class="collapse-toggle open" onclick="toggle(this)"><span class="arrow">&#9654;</span> Payback Period</button>
+  <div class="collapsible open">
+    <div class="callout formula-box">
+      <div class="formula-label">Payback</div>
+      Even cash flows: Payback = Initial investment / annual cash inflow<br>
+      Uneven: full years to recover + (unrecovered cost / next year's inflow)
+    </div>
+    <ul class="concept-list">
+      <li>A quick <em>screening</em> tool: how fast cash is recovered. Shorter = less risky.</li>
+      <li><strong>Weaknesses:</strong> ignores the time value of money <em>and</em> ignores all cash flows <em>after</em> payback &mdash; so it doesn't measure overall profitability.</li>
+    </ul>
+  </div>
+
+  <button class="collapse-toggle open" onclick="toggle(this)"><span class="arrow">&#9654;</span> Net Present Value &amp; Internal Rate of Return</button>
+  <div class="collapsible open">
+    <div class="callout formula-box">
+      <div class="formula-label">NPV</div>
+      NPV = (PV of all cash inflows) &minus; initial investment<br>
+      Equal inflows &rarr; use the <em>PV-of-annuity</em> factor &times; annual inflow<br>
+      Uneven inflows &rarr; discount each year with the <em>PV-of-$1</em> factor, then sum
+    </div>
+    <ul class="concept-list">
+      <li><strong>NPV decision rule:</strong> NPV &ge; 0 &rarr; the project earns at least the discount rate &rarr; acceptable. NPV &lt; 0 &rarr; reject.</li>
+      <li><strong>IRR</strong> is the discount rate that makes NPV = 0. Accept if IRR &ge; the cost of capital.</li>
+      <li><strong>IRR shortcut for equal cash flows:</strong> compute the annuity factor = initial investment / annual inflow, then find the rate whose factor (for that number of periods) matches it in the table.</li>
+    </ul>
+  </div>
+
+  <button class="collapse-toggle open" onclick="toggle(this)"><span class="arrow">&#9654;</span> Accounting Rate of Return (ARR)</button>
+  <div class="collapsible open">
+    <div class="callout formula-box">
+      <div class="formula-label">ARR</div>
+      ARR = Average annual operating income / Average investment<br>
+      Average investment = (Initial investment + Salvage value) / 2
+    </div>
+    <ul class="concept-list">
+      <li>ARR uses <em>accrual net income</em> (after depreciation), not cash flow, and it <em>ignores the time value of money</em>.</li>
+      <li>When a problem says "based on average investment," divide by <strong>(initial + salvage)/2</strong> &mdash; not the full initial cost. Using the full initial investment is the classic wrong denominator.</li>
+    </ul>
+  </div>
+
+  <h3>Practice Activities</h3>
+  <div class="practice-links">
+    <a href="https://jmoon312.github.io/acct2102/capital-npv-irr.html" target="_blank">Capital Budgeting: NPV &amp; IRR</a>
+    <a href="https://jmoon312.github.io/acct2102/capital-payback-arr.html" target="_blank">Capital Budgeting: Payback &amp; ARR</a>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     FORMULA QUICK REFERENCE
+═══════════════════════════════════════════ -->
+<div class="part" id="formulas">
+  <div class="part-header">
+    <span class="part-tag formulas">Reference</span>
+    <h2>Formula Quick Reference</h2>
+  </div>
+
+  <div class="formula-grid">
+    <div class="formula-card">
+      <div class="fc-title">Production Budget (units)</div>
+      <div class="fc-eq">Sales + desired ending FG &minus; beginning FG</div>
+    </div>
+    <div class="formula-card">
+      <div class="fc-title">Purchases Budget (merchandiser)</div>
+      <div class="fc-eq">COGS/sales + desired ending inv &minus; beginning inv</div>
+    </div>
+    <div class="formula-card">
+      <div class="fc-title">Materials Purchases</div>
+      <div class="fc-eq">(Production &times; input/unit) + desired end &minus; beginning</div>
+    </div>
+    <div class="formula-card">
+      <div class="fc-title">Direct Labor Cost</div>
+      <div class="fc-eq">[(Production &times; hrs/unit) + fixed batch hrs] &times; wage</div>
+    </div>
+    <div class="formula-card">
+      <div class="fc-title">Materials Price Variance</div>
+      <div class="fc-eq">(AP &minus; SP) &times; AQ purchased</div>
+    </div>
+    <div class="formula-card">
+      <div class="fc-title">Materials Quantity Variance</div>
+      <div class="fc-eq">(AQ used &minus; SQ allowed) &times; SP</div>
+    </div>
+    <div class="formula-card">
+      <div class="fc-title">Labor Rate Variance</div>
+      <div class="fc-eq">(AR &minus; SR) &times; AH</div>
+    </div>
+    <div class="formula-card">
+      <div class="fc-title">Labor Efficiency Variance</div>
+      <div class="fc-eq">(AH &minus; SH allowed) &times; SR</div>
+    </div>
+    <div class="formula-card">
+      <div class="fc-title">VOH Spending / Efficiency</div>
+      <div class="fc-eq">Spend: Actual &minus; (AH &times; rate)<br>Eff: (AH &minus; SH) &times; rate</div>
+    </div>
+    <div class="formula-card">
+      <div class="fc-title">Net Sales Volume Variance</div>
+      <div class="fc-eq">(Actual &minus; budgeted units) &times; budgeted CM/unit</div>
+    </div>
+    <div class="formula-card">
+      <div class="fc-title">Revenue Variance</div>
+      <div class="fc-eq">(Actual u &times; actual p) &minus; (budget u &times; budget p)</div>
+    </div>
+    <div class="formula-card">
+      <div class="fc-title">Payback (even / uneven)</div>
+      <div class="fc-eq">Invest / annual inflow<br>or yrs + (unrecovered / next inflow)</div>
+    </div>
+    <div class="formula-card">
+      <div class="fc-title">NPV</div>
+      <div class="fc-eq">PV of inflows &minus; initial investment</div>
+    </div>
+    <div class="formula-card">
+      <div class="fc-title">IRR (equal cash flows)</div>
+      <div class="fc-eq">Factor = investment / annual inflow &rarr; read rate</div>
+    </div>
+    <div class="formula-card">
+      <div class="fc-title">ARR</div>
+      <div class="fc-eq">Avg annual net income / average investment</div>
+    </div>
+    <div class="formula-card">
+      <div class="fc-title">Average Investment</div>
+      <div class="fc-eq">(Initial investment + salvage) / 2</div>
+    </div>
+  </div>
+  <div class="callout" style="margin-top:14px;">
+    <strong>Factor tables:</strong> use the <em>PV of an annuity of $1</em> factor when cash flows are equal every year, and the <em>PV of $1</em> factor (year by year) when they're uneven. The exam provides both tables at 8%, 10%, and 12%.
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SELF-CHECK QUESTIONS
+═══════════════════════════════════════════ -->
+<div class="part" id="practice">
+  <div class="part-header">
+    <span class="part-tag practice">Practice</span>
+    <h2>Self-Check Questions</h2>
+  </div>
+  <p class="section-intro mt-0">
+    Fresh problems &mdash; different companies and numbers from the exam and the practice worksheet.
+    Work each one on paper first, then reveal the worked answer. If you can do all eleven cleanly,
+    you're in good shape.
+  </p>
+
+  <h3>Chapter 9 &mdash; Budgeting</h3>
+
+  <div class="selfcheck">
+    <div class="q-num">Self-Check 1 &middot; Production budget</div>
+    <div class="q-text">Basswood Bikes expects to sell <strong>12,000</strong> units in July and <strong>15,000</strong> in August. It keeps ending finished-goods inventory equal to <strong>30% of next month's sales</strong>. July&nbsp;1 inventory is <strong>3,600</strong> units. Compute <strong>July's budgeted production</strong>.</div>
+    <button class="reveal-toggle" onclick="reveal(this)"><span class="arrow">&#9654;</span> Show worked answer</button>
+    <div class="answer">
+      <span class="work">Desired ending FG = 30% &times; 15,000 = 4,500</span>
+      <span class="work">Production = 12,000 sales + 4,500 ending &minus; 3,600 beginning</span>
+      <span class="final">= 12,900 units</span>
+    </div>
+  </div>
+
+  <div class="selfcheck">
+    <div class="q-num">Self-Check 2 &middot; Merchandise purchases</div>
+    <div class="q-text">Rivermark Retail budgets <strong>August cost of goods sold of $210,000</strong>. Beginning merchandise inventory is <strong>$26,000</strong> and desired ending inventory is <strong>$34,000</strong>. Compute <strong>budgeted purchases</strong>.</div>
+    <button class="reveal-toggle" onclick="reveal(this)"><span class="arrow">&#9654;</span> Show worked answer</button>
+    <div class="answer">
+      <span class="work">Purchases = COGS + desired ending &minus; beginning</span>
+      <span class="work">= 210,000 + 34,000 &minus; 26,000</span>
+      <span class="final">= $218,000</span>
+    </div>
+  </div>
+
+  <div class="selfcheck">
+    <div class="q-num">Self-Check 3 &middot; Direct labor budget</div>
+    <div class="q-text">Fernwood Furniture budgets production of <strong>8,000 chairs</strong>. Each chair requires <strong>0.75 direct-labor hours</strong>, plus <strong>4 setup-hours per batch</strong>, with <strong>50 batches</strong> scheduled. The wage rate is <strong>$19 per hour</strong>. Compute <strong>total budgeted direct-labor cost</strong>.</div>
+    <button class="reveal-toggle" onclick="reveal(this)"><span class="arrow">&#9654;</span> Show worked answer</button>
+    <div class="answer">
+      <span class="work">Hours = (8,000 &times; 0.75) + (50 &times; 4) = 6,000 + 200 = 6,200 hrs</span>
+      <span class="work">Cost = 6,200 &times; $19</span>
+      <span class="final">= $117,800</span>
+    </div>
+  </div>
+
+  <h3>Chapter 10 &mdash; Standard Costs &amp; Variances</h3>
+
+  <div class="selfcheck">
+    <div class="q-num">Self-Check 4 &middot; Responsibility centers</div>
+    <div class="q-text">The manager of Northgate Division controls the division's revenues and costs and is held accountable for the <strong>level of assets invested</strong> in the division, and is evaluated on <strong>return on investment</strong>. What type of responsibility center is Northgate?</div>
+    <button class="reveal-toggle" onclick="reveal(this)"><span class="arrow">&#9654;</span> Show worked answer</button>
+    <div class="answer">
+      <span class="work">Revenues + costs + invested assets, judged on ROI</span>
+      <span class="final">= Investment center</span>
+    </div>
+  </div>
+
+  <div class="selfcheck">
+    <div class="q-num">Self-Check 5 &middot; Materials variances</div>
+    <div class="q-text">Alderman Mfg has a standard of <strong>3 pounds per unit at $5.00 per pound</strong>. It produced <strong>2,000 units</strong> and purchased and used <strong>6,300 pounds</strong> at <strong>$4.80 per pound</strong>. Compute the <strong>materials price and quantity variances</strong> (amount and F/U).</div>
+    <button class="reveal-toggle" onclick="reveal(this)"><span class="arrow">&#9654;</span> Show worked answer</button>
+    <div class="answer">
+      <span class="work">SQ allowed = 3 &times; 2,000 = 6,000 lbs</span>
+      <span class="work">Price = (4.80 &minus; 5.00) &times; 6,300 = &minus;1,260 &rarr; $1,260 F</span>
+      <span class="work">Quantity = (6,300 &minus; 6,000) &times; 5.00 = +1,500 &rarr; $1,500 U</span>
+      <span class="final">Price $1,260 F &middot; Quantity $1,500 U</span>
+    </div>
+  </div>
+
+  <div class="selfcheck">
+    <div class="q-num">Self-Check 6 &middot; Labor variances</div>
+    <div class="q-text">Coldwater Tools has a standard of <strong>2.5 direct-labor hours per unit at $16.00 per hour</strong>. It produced <strong>4,000 units</strong> and used <strong>10,300 hours</strong> at <strong>$15.60 per hour</strong>. Compute the <strong>labor rate and efficiency variances</strong> (amount and F/U).</div>
+    <button class="reveal-toggle" onclick="reveal(this)"><span class="arrow">&#9654;</span> Show worked answer</button>
+    <div class="answer">
+      <span class="work">SH allowed = 2.5 &times; 4,000 = 10,000 hrs</span>
+      <span class="work">Rate = (15.60 &minus; 16.00) &times; 10,300 = &minus;4,120 &rarr; $4,120 F</span>
+      <span class="work">Efficiency = (10,300 &minus; 10,000) &times; 16.00 = +4,800 &rarr; $4,800 U</span>
+      <span class="final">Rate $4,120 F &middot; Efficiency $4,800 U</span>
+    </div>
+  </div>
+
+  <div class="selfcheck">
+    <div class="q-num">Self-Check 7 &middot; Net sales volume variance</div>
+    <div class="q-text">Brightleaf Co. budgeted sales of <strong>10,000 units at $40</strong> each, with a budgeted variable cost of <strong>$24 per unit</strong>. Actual sales were <strong>9,300 units</strong>. Compute the <strong>net sales volume variance</strong> (amount and F/U).</div>
+    <button class="reveal-toggle" onclick="reveal(this)"><span class="arrow">&#9654;</span> Show worked answer</button>
+    <div class="answer">
+      <span class="work">Budgeted CM/unit = 40 &minus; 24 = $16</span>
+      <span class="work">= (9,300 &minus; 10,000) &times; 16 = &minus;700 &times; 16 = &minus;11,200</span>
+      <span class="final">= $11,200 U (sold fewer units than budgeted)</span>
+    </div>
+  </div>
+
+  <h3>Chapter 12 &mdash; Capital Budgeting</h3>
+
+  <div class="selfcheck">
+    <div class="q-num">Self-Check 8 &middot; Payback (uneven)</div>
+    <div class="q-text">Halcyon Co. invests <strong>$90,000</strong> in a project with net cash inflows of <strong>Year 1 $30,000, Year 2 $36,000, Year 3 $40,000</strong>. Compute the <strong>payback period</strong> (two decimals).</div>
+    <button class="reveal-toggle" onclick="reveal(this)"><span class="arrow">&#9654;</span> Show worked answer</button>
+    <div class="answer">
+      <span class="work">After 2 years: 30,000 + 36,000 = 66,000 recovered</span>
+      <span class="work">Unrecovered = 90,000 &minus; 66,000 = 24,000; Year 3 inflow = 40,000</span>
+      <span class="work">= 2 + (24,000 / 40,000) = 2 + 0.60</span>
+      <span class="final">= 2.60 years</span>
+    </div>
+  </div>
+
+  <div class="selfcheck">
+    <div class="q-num">Self-Check 9 &middot; NPV (equal cash flows)</div>
+    <div class="q-text">Kestrel Co. buys equipment for <strong>$120,000</strong> that generates <strong>equal annual cost savings of $32,000 for 5 years</strong>. The discount rate is <strong>10%</strong> (PV-of-annuity factor, 5 periods at 10% = <strong>3.79079</strong>). Compute the <strong>NPV</strong>.</div>
+    <button class="reveal-toggle" onclick="reveal(this)"><span class="arrow">&#9654;</span> Show worked answer</button>
+    <div class="answer">
+      <span class="work">PV of savings = 32,000 &times; 3.79079 = 121,305.28</span>
+      <span class="work">NPV = 121,305.28 &minus; 120,000</span>
+      <span class="final">= $1,305.28 (positive &rarr; accept)</span>
+    </div>
+  </div>
+
+  <div class="selfcheck">
+    <div class="q-num">Self-Check 10 &middot; IRR (equal cash flows)</div>
+    <div class="q-text">Dunmore Co. considers a project costing <strong>$72,000</strong> with <strong>equal annual inflows of $19,000 for 5 years</strong>. Using the 5-period annuity factors (8% = 3.99271, 10% = 3.79079, 12% = 3.60478), the <strong>IRR is closest to</strong> which rate?</div>
+    <button class="reveal-toggle" onclick="reveal(this)"><span class="arrow">&#9654;</span> Show worked answer</button>
+    <div class="answer">
+      <span class="work">Factor = 72,000 / 19,000 = 3.7895</span>
+      <span class="work">3.7895 matches the 10% factor (3.79079) almost exactly</span>
+      <span class="final">IRR &asymp; 10%</span>
+    </div>
+  </div>
+
+  <div class="selfcheck">
+    <div class="q-num">Self-Check 11 &middot; ARR on average investment</div>
+    <div class="q-text">Vireo Co. considers a project costing <strong>$180,000</strong> with an expected <strong>salvage value of $20,000</strong>. It generates <strong>average annual net income of $25,000</strong>. Compute the <strong>ARR based on average investment</strong>.</div>
+    <button class="reveal-toggle" onclick="reveal(this)"><span class="arrow">&#9654;</span> Show worked answer</button>
+    <div class="answer">
+      <span class="work">Average investment = (180,000 + 20,000) / 2 = 100,000</span>
+      <span class="work">ARR = 25,000 / 100,000</span>
+      <span class="final">= 25%</span>
+    </div>
+  </div>
+
+  <h3>More Interactive Practice</h3>
+  <div class="practice-links">
+    <a href="https://jmoon312.github.io/acct2102/budgeting-approaches.html" target="_blank">Budgeting Approaches</a>
+    <a href="https://jmoon312.github.io/acct2102/master-budget-builder.html" target="_blank">Master Budget Builder</a>
+    <a href="https://jmoon312.github.io/acct2102/manufacturing-budget-builder.html" target="_blank">Manufacturing Budget Builder</a>
+    <a href="https://jmoon312.github.io/acct2102/standard-flexible-variances.html" target="_blank">Standard &amp; Flexible-Budget Variances</a>
+    <a href="https://jmoon312.github.io/acct2102/variance-profit-reconciliation.html" target="_blank">Variance &amp; Profit Reconciliation</a>
+    <a href="https://jmoon312.github.io/acct2102/capital-npv-irr.html" target="_blank">Capital Budgeting: NPV &amp; IRR</a>
+    <a href="https://jmoon312.github.io/acct2102/capital-payback-arr.html" target="_blank">Capital Budgeting: Payback &amp; ARR</a>
+  </div>
+</div>
+
+</main>
+
+<!-- ═══ Scripts ═══ -->
+<script>
+/* ── Collapsible sections ── */
+function toggle(btn) {
+  btn.classList.toggle('open');
+  const content = btn.nextElementSibling;
+  content.classList.toggle('open');
+}
+
+/* ── Self-check reveal ── */
+function reveal(btn) {
+  btn.classList.toggle('open');
+  const ans = btn.nextElementSibling;
+  ans.classList.toggle('open');
+  btn.lastChild.textContent = ans.classList.contains('open') ? ' Hide answer' : ' Show worked answer';
+}
+
+/* ── QR / Share ── */
+function showQR() {
+  const url = location.href;
+  document.getElementById('qr-url').textContent = url;
+  const qrEl = document.getElementById('qr-code');
+  qrEl.innerHTML = '';
+  if (window.QRCode) {
+    new QRCode(qrEl, { text: url, width: 180, height: 180, colorDark: '#1a2744', colorLight: '#ffffff' });
+  }
+  document.getElementById('qr-overlay').classList.add('show');
+}
+function hideQR(ev) {
+  if (ev && ev.target.id !== 'qr-overlay' && ev.target.className !== 'qr-close') return;
+  document.getElementById('qr-overlay').classList.remove('show');
+}
+</script>
+
+</body>
+</html>
