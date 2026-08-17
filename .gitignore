@@ -2,8 +2,6 @@
 .github-pat.*
 .canvas-pat
 .canvas-pat.*
-.gemini-key
-.gemini-key.*
 .DS_Store
 pptx/
 CLAUDE.md
