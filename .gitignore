@@ -20,3 +20,41 @@ class-prep/
 .canvas/
 canvas_token*
 canvas-cache/
+
+# ─────────────────────────────────────────────────────────────────────────
+# THIS REPOSITORY IS PUBLIC (github.com/jmoon312/acct2102 — it serves the
+# GitHub Pages activities and study guides). Nothing below may ever be
+# committed. These files currently live here untracked, which means a single
+# `git add -A` would publish them, so they are named explicitly.
+# Add named files to commits — never `git add -A` / `git add .` in this repo.
+# ─────────────────────────────────────────────────────────────────────────
+
+# Exams themselves
+exam1.pdf
+exam2.pdf
+exam3.pdf
+exam*.docx
+
+# Answer keys and worked solutions (PDF only — exam2-review-solutions.html is
+# a deliberately published student page and must stay tracked)
+*-key.md
+*-key.pdf
+*-solution.pdf
+*-solutions.pdf
+
+# Exam construction notes and question banks
+exam*-canvas-spec.md
+exam*-notes.txt
+exam*-edits.md
+*quiz_payload.json
+
+# Anything containing student work or identifiable student content
+*student-reply*
+*student-submission*
+grades*.csv
+
+# Local tooling and internal reports — not student-facing
+.tools/
+.claude/
+canvas-audit-report.md
+prepublish-audit-*.md
