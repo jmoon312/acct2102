@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Departments vs. activities</title>
+<style>
+:root{--bg:#ffffff;--card:#f5f4ef;--text:#1f1e1d;--text2:#5f5e5a;--muted:#888780;--border:rgba(0,0,0,.18);--acc-bg:#e6f1fb;--acc-tx:#0c447c;--acc-bd:#85b7eb;
+--pur:#534ab7;--pur-bg:#eeedfe;--tea:#0f6e56;--tea-bg:#e1f5ee;--dim:.28}
+@media (prefers-color-scheme: dark){:root{--bg:#1f1e1d;--card:#2c2c2a;--text:#f1efe8;--text2:#d3d1c7;--muted:#b4b2a9;--border:rgba(255,255,255,.22);--acc-bg:#0c447c;--acc-tx:#e6f1fb;--acc-bd:#378add;
+--pur:#afa9ec;--pur-bg:#3c3489;--tea:#5dcaa5;--tea-bg:#085041}}
+body{margin:0;padding:16px;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:720px;margin:0 auto}
+.btns{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+button{font:inherit;font-size:14px;padding:8px 14px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text);cursor:pointer}
+button.on{background:var(--acc-bg);color:var(--acc-tx);border-color:var(--acc-bd)}
+table{border-collapse:separate;border-spacing:4px;width:100%;font-variant-numeric:tabular-nums}
+th,td{padding:8px 10px;border-radius:6px;text-align:center;transition:opacity .25s,background .25s,color .25s}
+thead th{font-size:13px;font-weight:600;color:var(--text2)}
+tbody th{text-align:left;font-weight:600;font-size:14px}
+tbody th .lvl{display:block;font-size:12px;font-weight:400;color:var(--muted)}
+td.cell{font-size:16px;font-weight:600}
+.tot{font-size:15px;font-weight:600;background:var(--card)}
+.rate{display:block;font-size:12px;font-weight:400;color:var(--text2);margin-top:2px}
+.dim{opacity:var(--dim)}
+.cap{font-size:13px;color:var(--text2);margin:6px 2px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:14px}
+.card{background:var(--card);border-radius:8px;padding:12px 16px}
+.lbl{font-size:13px;color:var(--text2)}.big{font-size:26px;font-weight:600}.sub{font-size:13px;color:var(--muted)}
+.calc{font-size:12px;color:var(--text2);margin-top:6px;line-height:1.45}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="btns">
+<button class="on" id="b-dept" onclick="setMode('dept')">Read down the columns: department rates</button>
+<button id="b-abc" onclick="setMode('abc')">Read across the rows: activity-based costing</button>
+</div>
+<table aria-label="Overhead by activity and department, in thousands of dollars">
+<thead><tr><th></th><th id="h0">Machining dept</th><th id="h1">Assembly dept</th><th id="h2">Activity total</th></tr></thead>
+<tbody id="tb"></tbody>
+</table>
+<p class="cap">Overhead in $ thousands. Every cell is the same in both views; only the direction you add them changes.</p>
+<div class="grid">
+<div class="card"><div class="lbl">Standard · 10,000 units · overhead per unit</div><div class="big" id="m-std"></div><div class="sub" id="m-std2"></div><div class="calc" id="c-std"></div></div>
+<div class="card"><div class="lbl">Deluxe · 1,000 units · overhead per unit</div><div class="big" id="m-dlx"></div><div class="sub" id="m-dlx2"></div><div class="calc" id="c-dlx"></div></div>
+</div>
+</div>
+<script>
+// Activity x department overhead ($k). Rows sum to the activity pools, columns to the department pools.
+const A=[
+ {n:'Machine run',l:'Unit level',c:[190,10],rate:8,unit:'mach. hour',drv:[20000,5000]},
+ {n:'Setups',l:'Batch level',c:[60,60],rate:2000,unit:'setup',drv:[20,40]},
+ {n:'Purchasing',l:'Batch level',c:[40,40],rate:200,unit:'order',drv:[100,300]},
+ {n:'Engineering',l:'Product level',c:[10,90],rate:4000,unit:'change',drv:[10,15]}];
+const D=[{n:'Machining',rate:12,unit:'mach. hour',drv:[20000,5000]},{n:'Assembly',rate:10,unit:'labor hour',drv:[15000,5000]}];
+const U=[10000,1000],PN=['Standard','Deluxe'];
+const colTot=[0,1].map(j=>A.reduce((s,a)=>s+a.c[j],0));
+const max=Math.max(...A.flatMap(a=>a.c));
+const f=n=>n.toLocaleString(), $=n=>'$'+f(n);
+function cost(m,p){return m==='dept'?D.reduce((s,d)=>s+d.rate*d.drv[p],0):A.reduce((s,a)=>s+a.rate*a.drv[p],0)}
+function calc(m,p){const items=m==='dept'?D:A;return items.map(x=>f(x.drv[p])+' '+x.unit+(x.drv[p]===1?'':'s')+' × '+$(x.rate)).join(' + ')+' = '+$(cost(m,p))+' ÷ '+f(U[p])+' units'}
+function setMode(m){
+ const dept=m==='dept',acc=dept?'var(--pur)':'var(--tea)',bg=dept?'var(--pur-bg)':'var(--tea-bg)';
+ document.getElementById('b-dept').classList.toggle('on',dept);document.getElementById('b-abc').classList.toggle('on',!dept);
+ let h='';
+ A.forEach(a=>{const t=a.c[0]+a.c[1];
+  h+='<tr><th>'+a.n+'<span class="lvl">'+a.l+'</span></th>';
+  a.c.forEach(v=>{const k=.18+.82*v/max;h+='<td class="cell" style="background:color-mix(in srgb,'+acc+' '+Math.round(k*55)+'%,transparent);color:var(--text)">'+v+'</td>'});
+  h+='<td class="tot'+(dept?' dim':'')+'" style="'+(dept?'':'box-shadow:inset 0 0 0 2px '+acc)+'">$'+t+'k<span class="rate">'+$(a.rate)+' / '+a.unit+'</span></td></tr>'});
+ h+='<tr><th>Department total</th>';
+ D.forEach((d,j)=>h+='<td class="tot'+(dept?'':' dim')+'" style="'+(dept?'box-shadow:inset 0 0 0 2px '+acc:'')+'">$'+colTot[j]+'k<span class="rate">'+$(d.rate)+' / '+d.unit+'</span></td>');
+ h+='<td class="tot">$'+(colTot[0]+colTot[1])+'k</td></tr>';
+ document.getElementById('tb').innerHTML=h;
+ const o=dept?'abc':'dept',lab=dept?'ABC':'department rates';
+ [0,1].forEach(p=>{const k=['std','dlx'][p];
+  document.getElementById('m-'+k).textContent=$(Math.round(cost(m,p)/U[p]));
+  document.getElementById('m-'+k+'2').textContent='vs '+$(Math.round(cost(o,p)/U[p]))+' under '+lab;
+  document.getElementById('c-'+k).textContent=calc(m,p)});
+}
+setMode('dept');
+</script>
+</body>
+</html>
