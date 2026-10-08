@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Department rates vs. ABC</title>
+<style>
+:root{--bg:#ffffff;--card:#f5f4ef;--text:#1f1e1d;--text2:#5f5e5a;--muted:#888780;--border:rgba(0,0,0,.18);--acc-bg:#e6f1fb;--acc-tx:#0c447c;--acc-bd:#85b7eb}
+@media (prefers-color-scheme: dark){:root{--bg:#1f1e1d;--card:#2c2c2a;--text:#f1efe8;--text2:#d3d1c7;--muted:#b4b2a9;--border:rgba(255,255,255,.22);--acc-bg:#0c447c;--acc-tx:#e6f1fb;--acc-bd:#378add}}
+body{margin:0;padding:16px;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:720px;margin:0 auto}
+.btns{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+button{font:inherit;font-size:14px;padding:8px 14px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text);cursor:pointer}
+button.on{background:var(--acc-bg);color:var(--acc-tx);border-color:var(--acc-bd)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:12px}
+.card{background:var(--card);border-radius:8px;padding:12px 16px}
+.lbl{font-size:13px;color:var(--text2)}.big{font-size:26px;font-weight:600}.sub{font-size:13px;color:var(--muted)}
+svg text{font-family:inherit}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="btns">
+<button class="on" id="b-dept" onclick="setMode('dept')">Department overhead rates</button>
+<button id="b-abc" onclick="setMode('abc')">Activity-based costing</button>
+</div>
+<svg width="100%" viewBox="0 0 680 440" role="img" aria-label="Overhead flowing from resources through cost pools to products"><g id="g"></g></svg>
+<div class="grid">
+<div class="card"><div class="lbl">Standard · 10,000 units · overhead per unit</div><div class="big" id="m-std"></div><div class="sub" id="m-std2"></div></div>
+<div class="card"><div class="lbl">Deluxe · 1,000 units · overhead per unit</div><div class="big" id="m-dlx"></div><div class="sub" id="m-dlx2"></div></div>
+</div>
+</div>
+<script>
+const dark=window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches;
+const R={
+gray:dark?{f:'#444441',s:'#b4b2a9',t:'#f1efe8',u:'#d3d1c7'}:{f:'#f1efe8',s:'#5f5e5a',t:'#444441',u:'#5f5e5a'},
+purple:dark?{f:'#3c3489',s:'#afa9ec',t:'#eeedfe',u:'#cecbf6'}:{f:'#eeedfe',s:'#534ab7',t:'#3c3489',u:'#534ab7'},
+teal:dark?{f:'#085041',s:'#5dcaa5',t:'#e1f5ee',u:'#9fe1cb'}:{f:'#e1f5ee',s:'#0f6e56',t:'#085041',u:'#0f6e56'}};
+const L=[['Indirect labor',180],['Depreciation',150],['Utilities',70],['Supplies',100]];
+const P=[['Standard',10000],['Deluxe',1000]];
+const M={
+dept:{hdr:'Department pools',ramp:'purple',col:'#7F77DD',
+mid:[['Machining dept',300,'$12 / mach. hour'],['Assembly dept',200,'$10 / labor hour']],
+s1:[[60,120],[130,20],[50,20],[60,40]],s2:[[240,60],[150,50]]},
+abc:{hdr:'Activity pools',ramp:'teal',col:'#1D9E75',
+mid:[['Machine run',200,'$8 / mach. hour'],['Setups',120,'$2,000 / setup'],['Purchasing',80,'$200 / order'],['Engineering',100,'$4,000 / change']],
+s1:[[0,60,50,70],[130,20,0,0],[60,0,10,0],[10,40,20,30]],s2:[[160,40],[40,80],[20,60],[40,60]]}};
+const K=0.7,SPAN=386,TOP=34,W=130,X=[10,275,540];
+const hdrCol=dark?'#d3d1c7':'#5f5e5a';
+function lay(v){const t=v.reduce((a,b)=>a+b,0),g=v.length>1?(SPAN-t*K)/(v.length-1):0;let y=TOP;return v.map(x=>{const r={y,h:x*K};y+=x*K+g;return r})}
+function band(x0,a0,a1,x1,b0,b1,c,o){const xm=(x0+x1)/2;return `<path d="M${x0} ${a0}C${xm} ${a0} ${xm} ${b0} ${x1} ${b0}L${x1} ${b1}C${xm} ${b1} ${xm} ${a1} ${x0} ${a1}Z" fill="${c}" opacity="${o}"/>`}
+function node(x,p,ramp,lines){const c=R[ramp],cy=p.y+p.h/2,st=cy-(lines.length-1)*8;let s=`<rect x="${x}" y="${p.y}" width="${W}" height="${p.h}" rx="4" fill="${c.f}" stroke="${c.s}" stroke-width="0.6"/>`;lines.forEach((t,i)=>{s+=`<text x="${x+W/2}" y="${st+i*16}" text-anchor="middle" dominant-baseline="central" font-size="${i?12:14}" font-weight="${i?400:600}" fill="${i?c.u:c.t}">${t}</text>`});return s}
+function flows(sp,dp,mat,x0,x1,c,o){let s='',so=sp.map(p=>p.y),to=dp.map(p=>p.y);mat.forEach((row,i)=>row.forEach((v,j)=>{if(!v)return;const h=v*K;s+=band(x0,so[i],so[i]+h,x1,to[j],to[j]+h,c,o);so[i]+=h;to[j]+=h}));return s}
+function hdr(x,t){return `<text x="${x+W/2}" y="16" text-anchor="middle" font-size="12" fill="${hdrCol}">${t}</text>`}
+function setMode(m){const d=M[m];
+document.getElementById('b-dept').classList.toggle('on',m==='dept');document.getElementById('b-abc').classList.toggle('on',m==='abc');
+const lp=lay(L.map(x=>x[1])),mp=lay(d.mid.map(x=>x[1]));
+const pt=[0,1].map(j=>d.s2.reduce((a,r)=>a+r[j],0)),pp=lay(pt);
+let s=hdr(X[0],'Resources')+hdr(X[1],d.hdr)+hdr(X[2],'Products');
+s+=flows(lp,mp,d.s1,X[0]+W,X[1],'#888780',0.25);
+s+=flows(mp,pp,d.s2,X[1]+W,X[2],d.col,0.38);
+L.forEach((r,i)=>s+=node(X[0],lp[i],'gray',[r[0],'$'+r[1]+'k']));
+d.mid.forEach((r,i)=>s+=node(X[1],mp[i],d.ramp,[r[0],'$'+r[1]+'k',r[2]]));
+P.forEach((r,j)=>{const u=Math.round(pt[j]*1000/r[1]);s+=node(X[2],pp[j],'gray',[r[0],r[1].toLocaleString()+' units','$'+pt[j]+'k · $'+u+'/unit'])});
+document.getElementById('g').innerHTML=s;
+const o=m==='dept'?'abc':'dept',ot=[0,1].map(j=>M[o].s2.reduce((a,r)=>a+r[j],0)),lab=o==='abc'?'ABC':'department rates';
+document.getElementById('m-std').textContent='$'+Math.round(pt[0]*1000/10000);
+document.getElementById('m-dlx').textContent='$'+Math.round(pt[1]*1000/1000);
+document.getElementById('m-std2').textContent='vs $'+Math.round(ot[0]*1000/10000)+' under '+lab;
+document.getElementById('m-dlx2').textContent='vs $'+Math.round(ot[1]*1000/1000)+' under '+lab;}
+setMode('dept');
+</script>
+</body>
+</html>
