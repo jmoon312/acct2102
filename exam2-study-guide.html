@@ -391,6 +391,22 @@
 </nav>
 
 <!-- ═══════════════════════════════════════════
+     INTRO
+═══════════════════════════════════════════ -->
+<div class="part">
+  <div class="part-header">
+    <span class="part-tag">Guide</span>
+    <h2>How to Use This Guide</h2>
+  </div>
+  <p class="section-intro">
+    This guide covers <strong>Chapters 5&ndash;8</strong> of our course material. Each section highlights the key
+    concepts, definitions, and analytical techniques from that chapter. At the bottom you'll find a
+    <strong>formula quick-reference</strong> and links to the <strong>interactive practice activities</strong>. Use the jump links above to navigate between chapters.
+    Exam 2 is on paper, in class, on Tuesday, November 3, and runs 75 minutes.
+  </p>
+</div>
+
+<!-- ═══════════════════════════════════════════
      CHAPTER 5
 ═══════════════════════════════════════════ -->
 <div class="part" id="ch5">
@@ -399,13 +415,12 @@
     <h2>Product Costing Systems</h2>
   </div>
 
-  <button class="collapse-toggle open" onclick="toggle(this)"><span class="arrow">&#9654;</span> Product vs. Period Costs &amp; Inventory Types</button>
+  <button class="collapse-toggle open" onclick="toggle(this)"><span class="arrow">&#9654;</span> Product vs. Period Costs</button>
   <div class="collapsible open">
     <ul class="concept-list">
       <li><strong>Product (inventoriable) costs</strong> are the costs of making the product: <strong>direct materials</strong>, <strong>direct labor</strong>, and <strong>manufacturing overhead</strong>. They sit in inventory and become an expense (Cost of Goods Sold) only when the units are sold.</li>
       <li><strong>Period costs</strong> are non-manufacturing costs (selling and administrative). They are expensed in the period incurred, regardless of when goods are sold.</li>
-      <li><strong>Manufacturing overhead</strong> is every <em>indirect</em> factory cost: indirect materials, indirect labor, factory utilities, factory insurance, and <strong>depreciation on the factory building and production equipment</strong>. Watch the classic trap: factory depreciation is a <em>product</em> cost (overhead), not a period expense.</li>
-      <li><strong>Inventory by organization type:</strong> service firms generally hold only <em>supplies</em>; merchandisers hold <em>merchandise</em> (plus supplies); manufacturers hold <em>raw materials, work-in-process, and finished goods</em> (plus supplies). Only manufacturers convert inputs into outputs, so only they carry RM/WIP/FG.</li>
+      <li><strong>Manufacturing overhead</strong> is every <em>indirect</em> factory cost: indirect materials, indirect labor, factory utilities, factory insurance, and <strong>depreciation on the factory building and production equipment</strong>. Factory depreciation is a <em>product</em> cost (overhead), not a period expense.</li>
     </ul>
     <div class="callout">
       <strong>Quick test:</strong> "Could this cost be traced into a unit on the factory floor?" If yes &rarr; product cost (DM, DL, or overhead). If it's about selling or running the office &rarr; period cost.
@@ -420,7 +435,6 @@
       Applied overhead = POHR &times; <em>actual</em> activity used
     </div>
     <ul class="concept-list">
-      <li><strong>Why use a predetermined rate?</strong> So jobs can be costed <em>promptly during the period</em> (you don't wait until year-end to learn actual overhead) and so unit costs aren't distorted by <em>seasonal or cyclical swings</em> in activity. It is <em>not</em> a fraud-prevention tool, and actual overhead is still tracked at period end.</li>
       <li>The <strong>allocation base</strong> (cost driver) should be what actually <em>drives</em> overhead &mdash; commonly direct labor hours or machine hours.</li>
       <li>Apply the rate using the job's <em>actual</em> base usage.</li>
     </ul>
@@ -440,7 +454,8 @@
       COGS = Beg FG + COGM &minus; End FG
     </div>
     <ul class="concept-list">
-      <li><strong>Over- / under-applied overhead:</strong> compare overhead <em>applied</em> to overhead <em>actually incurred</em>. Applied &gt; actual = <strong>over-applied</strong>; applied &lt; actual = <strong>under-applied</strong>.</li>
+      <li><strong>Over- / under-applied overhead:</strong> compare overhead <em>applied</em> to overhead <em>actually incurred</em>. Actual &gt; applied = <strong>under-applied</strong>; applied &gt; actual = <strong>over-applied</strong>.</li>
+      <li>At year end the balance is closed to Cost of Goods Sold: under-applied overhead increases COGS; over-applied overhead decreases it.</li>
     </ul>
   </div>
 
@@ -449,6 +464,7 @@
     <ul class="concept-list">
       <li><strong>Process costing</strong> is used for continuous, homogeneous production (vs. job costing for distinct jobs). Costs are averaged across all units passing through the process.</li>
       <li><strong>Equivalent units (EU)</strong> translate partially-complete units into whole-unit equivalents.</li>
+      <li>When completed units are not given: <strong>units completed = beginning WIP + units started &minus; ending WIP</strong>.</li>
       <li><strong>Weighted-average</strong> method: combines beginning inventory work with current-period work (it does <em>not</em> separate out the prior period's effort the way FIFO does).</li>
     </ul>
     <div class="callout formula-box">
@@ -457,9 +473,6 @@
       Cost per EU = (Beginning cost + Current-period cost) / EU<br>
       Cost of goods completed = Units completed &times; Cost per EU<br>
       Cost of ending WIP = Ending EU &times; Cost per EU
-    </div>
-    <div class="callout">
-      <strong>Tip:</strong> when "all costs are added uniformly," materials and conversion share one completion percentage, so you only need a single equivalent-unit computation.
     </div>
   </div>
 
@@ -547,7 +560,8 @@
     <ul class="concept-list">
       <li>ABC applies beyond the factory: assign <strong>customer-service / support activity costs</strong> (visits, calls, special handling) to each customer using the appropriate drivers.</li>
       <li><strong>Customer profit = the customer's gross profit &minus; assigned support costs.</strong> Two customers with identical gross profit can have very different bottom-line profitability if one consumes far more support resources.</li>
-      <li>The <strong>customer profitability profile</strong> ("whale curve") plots cumulative profit against customers ranked most- to least-profitable. Cumulative profit <em>rises</em> to a <strong>peak</strong>, then <em>declines</em> &mdash; customers past the peak are unprofitable and erode total profit. The peak marks the number of profitable customers; the most expensive/least profitable customers are the ones to analyze and fix.</li>
+      <li><strong>Customer profitability ratio = customer profit / customer sales</strong> = (sales &minus; cost of goods sold &minus; assigned customer activity costs) / sales.</li>
+      <li>The <strong>customer profitability profile</strong> plots cumulative profit against customers ranked most- to least-profitable. Cumulative profit <em>rises</em> to a <strong>peak</strong>, then <em>declines</em> &mdash; customers past the peak are unprofitable and erode total profit. The peak marks the number of profitable customers; the most expensive/least profitable customers are the ones to analyze and fix. The drop from the peak to the end point is the loss the customers past the peak cause as a group, and the gain from dropping them.</li>
     </ul>
   </div>
 
@@ -555,8 +569,8 @@
   <div class="collapsible open">
     <ul class="concept-list">
       <li>A <strong>multi-level (cost-hierarchy) contribution statement</strong> peels costs off in tiers &mdash; subtract unit-level costs to get a unit-level margin, then batch-, product-, customer-, and finally facility-level costs. This shows profitability at each level, not just the bottom line.</li>
-      <li><strong>Break-even / target volume</strong> works the same as in CVP (Chapter 3): the contribution earned per unit (or per customer) must cover the higher-level costs plus any target profit. Solve <em>required volume = (higher-level costs + target profit) / contribution per unit</em>, and round customer counts <em>up</em>.</li>
-      <li>When the "contribution" is a margin on each sales dollar (e.g., a commission rate net of a per-dollar cost), divide the fixed/structural costs by that contribution <em>rate</em> to find the sales dollars needed to break even.</li>
+      <li>When unit-level costs are stated per sales dollar, they behave as variable costs, and the <strong>contribution margin ratio = 1 &minus; unit-level cost per sales dollar</strong>. Order-, customer-, and facility-level costs are treated as fixed.</li>
+      <li><strong>Break-even sales dollars = (order-level + customer-level + facility-level costs) / contribution margin ratio.</strong> For a target profit, add it to the numerator.</li>
     </ul>
     <div class="callout">
       <strong>Connection to Exam 1:</strong> this is the CVP profit equation applied at the activity/customer level &mdash; revisit the Chapter 3 break-even and target-profit formulas if this feels rusty.
@@ -585,14 +599,14 @@
     <ul class="concept-list">
       <li>Service departments (maintenance, IT, payroll) support production departments. Their costs are allocated to production departments using a reasonable base.</li>
       <li><strong>Direct method:</strong> allocate each service department's cost <em>only</em> to production departments &mdash; ignore services provided to other service departments.</li>
-      <li><strong>Step (step-down) method:</strong> allocate service departments in sequence, recognizing services provided to <em>other</em> service departments. Start with the department that serves the most other service departments.</li>
+      <li><strong>Step (step-down) method:</strong> allocate service departments in sequence, recognizing services provided to <em>other</em> service departments. Start with the service department that provides the largest share of its services to the other service departments (its own use of the base is left out).</li>
     </ul>
   </div>
 
   <button class="collapse-toggle open" onclick="toggle(this)"><span class="arrow">&#9654;</span> Capacity &amp; the Cost of Excess Capacity</button>
   <div class="collapsible open">
     <ul class="concept-list">
-      <li>Three capacity measures: <strong>theoretical</strong> (the absolute maximum, never achievable), <strong>practical</strong> (realistic sustainable output allowing for downtime), and <strong>normal/budgeted</strong> (expected actual usage).</li>
+      <li>Three capacity measures: <strong>theoretical</strong> (the absolute maximum, never achievable), <strong>practical</strong> (realistic sustainable output allowing for downtime), and <strong>actual</strong> (what the plant actually produces or expects to use).</li>
       <li><strong>Use practical capacity</strong> as the denominator for the overhead rate that goes on a customer quote. This charges products only for capacity they use and isolates the cost of idle capacity.</li>
       <li><strong>Denominator matters:</strong> the larger the capacity denominator, the lower the rate. Using <em>theoretical</em> capacity yields a rate that is too low &mdash; it understates unit product cost and leaves a large pool of unassigned cost.</li>
     </ul>
@@ -611,11 +625,11 @@
     <ul class="concept-list">
       <li><strong>Just-in-time (JIT)</strong> is a <em>pull</em> system: produce in response to demand, minimizing inventory storage and waiting time. It is the opposite of a "just-in-case" / push (forecast-driven, buffer-stock) approach.</li>
       <li><strong>Cycle time (throughput time)</strong> is the total time to move a batch/unit through the process.</li>
-      <li><strong>Manufacturing cycle efficiency (MCE)</strong> measures how much of that time is value-adding. Only <em>processing</em> time adds value; moving, waiting, and inspection do not. A higher MCE = a more efficient process.</li>
+      <li><strong>Manufacturing cycle efficiency (MCE)</strong> measures how much of that time is value-adding. Only <em>processing</em> time adds value; setup, moving, waiting, and inspection do not. A higher MCE = a more efficient process.</li>
     </ul>
     <div class="callout formula-box">
       <div class="formula-label">Cycle Time &amp; Efficiency</div>
-      Cycle (throughput) time = processing + inspection + movement + waiting time<br>
+      Cycle (throughput) time = setup + processing + movement + waiting + inspection time<br>
       MCE = Value-added (processing) time / Total cycle time
     </div>
   </div>
@@ -640,7 +654,7 @@
   <div class="collapsible open">
     <ul class="concept-list">
       <li>Cost-plus pricing builds a selling price by adding a <strong>markup</strong> on top of a cost base. The markup must cover all the costs <em>not</em> in the base, plus the desired profit.</li>
-      <li><strong>Variable-cost markup method:</strong> the base is total variable cost, so the markup must cover total fixed costs and target profit.</li>
+      <li><strong>Variable-cost markup method:</strong> the base is total variable cost (manufacturing <em>and</em> selling &amp; administrative), so the markup must cover total fixed costs and target profit.</li>
     </ul>
     <div class="callout formula-box">
       <div class="formula-label">Variable-Cost Markup Method</div>
@@ -648,7 +662,8 @@
       Unit selling price = Unit variable cost &times; (1 + Markup %)
     </div>
     <ul class="concept-list">
-      <li><strong>Critique of cost-based pricing:</strong> it ignores customer demand. Because the price is built from internal cost data alone, the resulting price may be one <em>customers are unwilling to pay</em>. (Cost data themselves are readily available &mdash; that is not the weakness.)</li>
+      <li><strong>Price for a required profit:</strong> at the planned volume, price = [(unit variable cost &times; planned volume) + fixed costs + required profit] / planned volume.</li>
+      <li><strong>Critique of cost-based pricing:</strong> it ignores customer demand. Because the price is built from internal cost data alone, the resulting price may be one <em>customers are unwilling to pay</em>.</li>
     </ul>
   </div>
 
@@ -660,7 +675,7 @@
     </div>
     <ul class="concept-list">
       <li>Target costing is <strong>market-driven</strong> and runs in reverse: start from the price the market will bear and the profit the company requires, then back into the cost the product <em>must</em> hit.</li>
-      <li>The product is then engineered (design for production) to meet that target cost &mdash; cost management happens up front, in design, not after the fact.</li>
+      <li>Most of a product's cost is committed at the design stage, long before the money is spent. The product is engineered to meet the target cost while it is still being designed, because that is where the cost is decided.</li>
     </ul>
   </div>
 
@@ -672,8 +687,7 @@
     </div>
     <ul class="concept-list">
       <li><strong>Kaizen costing</strong> builds a continuous cost-reduction target into the budget. When volume (and therefore cost) is also expected to grow, apply the growth factor <em>and</em> the improvement reduction &mdash; grow first, then trim by the improvement target.</li>
-      <li><strong>Benchmarking</strong> is the systematic search for, and adoption of, the <em>best practices</em> used by leading organizations in order to improve performance.</li>
-      <li>Related continuous-improvement ideas: total quality management (TQM), the costs of quality, and lean/JIT (Chapter 7) all push toward eliminating waste and improving over time.</li>
+      <li><strong>Benchmarking</strong> is the systematic search for, and adoption of, the <em>best practices</em> used by leading organizations, inside or outside the industry, in order to improve performance.</li>
     </ul>
   </div>
 
@@ -681,7 +695,6 @@
   <div class="practice-links">
     <a href="https://jmoon312.github.io/acct2102/cost-based-pricing.html" target="_blank">Cost-Based Pricing</a>
     <a href="https://jmoon312.github.io/acct2102/kaizen-and-tools.html" target="_blank">Kaizen Costing &amp; Pricing Toolkit</a>
-    <a href="https://jmoon312.github.io/acct2102/budgeting-approaches.html" target="_blank">Budgeting Approaches</a>
   </div>
 </div>
 
@@ -705,7 +718,7 @@
     </div>
     <div class="formula-card">
       <div class="fc-title">Cost of Goods Manufactured</div>
-      <div class="fc-eq">Beg WIP + (DM + DL + OH) &minus; End WIP</div>
+      <div class="fc-eq">Beg WIP + (DM used + DL + OH applied) &minus; End WIP</div>
     </div>
     <div class="formula-card">
       <div class="fc-title">Cost of Goods Sold</div>
@@ -713,7 +726,7 @@
     </div>
     <div class="formula-card">
       <div class="fc-title">Over- / Under-Applied OH</div>
-      <div class="fc-eq">Applied &minus; Actual<br>(+ over-applied, &minus; under-applied)</div>
+      <div class="fc-eq">Actual &minus; Applied<br>Actual &gt; applied: under-applied<br>Applied &gt; actual: over-applied</div>
     </div>
     <div class="formula-card">
       <div class="fc-title">Equivalent Units (WA)</div>
@@ -722,6 +735,10 @@
     <div class="formula-card">
       <div class="fc-title">Cost per Equivalent Unit (WA)</div>
       <div class="fc-eq">(Beg cost + Current cost) / EU</div>
+    </div>
+    <div class="formula-card">
+      <div class="fc-title">Direct Method Allocation</div>
+      <div class="fc-eq">Service cost &times; (producing dept&rsquo;s base / total base of the producing depts only)</div>
     </div>
     <div class="formula-card">
       <div class="fc-title">Departmental OH Rate</div>
@@ -736,6 +753,10 @@
       <div class="fc-eq">Customer gross profit &minus; assigned support costs</div>
     </div>
     <div class="formula-card">
+      <div class="fc-title">Customer Profitability Ratio</div>
+      <div class="fc-eq">Customer profit / Customer sales</div>
+    </div>
+    <div class="formula-card">
       <div class="fc-title">Cost of Excess Capacity</div>
       <div class="fc-eq">Rate = budgeted cost / practical capacity<br>(Practical &minus; used) &times; rate</div>
     </div>
@@ -745,11 +766,19 @@
     </div>
     <div class="formula-card">
       <div class="fc-title">Variable-Cost Markup</div>
-      <div class="fc-eq">(Fixed costs + Target profit) / Total VC<br>Price = unit VC &times; (1 + markup)</div>
+      <div class="fc-eq">Markup % = (Total fixed costs + Target profit) / Total VC<br>Price = unit VC &times; (1 + markup)</div>
     </div>
     <div class="formula-card">
       <div class="fc-title">Target Cost</div>
       <div class="fc-eq">Target price &minus; Required profit per unit</div>
+    </div>
+    <div class="formula-card">
+      <div class="fc-title">Multi-Level Break-Even (Sales $)</div>
+      <div class="fc-eq">CM ratio = 1 &minus; unit-level cost per $<br>BE = (order + customer + facility costs) / CM ratio</div>
+    </div>
+    <div class="formula-card">
+      <div class="fc-title">Price for a Required Profit</div>
+      <div class="fc-eq">[(Unit VC &times; Q) + FC + Profit] / Q</div>
     </div>
     <div class="formula-card">
       <div class="fc-title">Kaizen Budget</div>
@@ -771,17 +800,16 @@
     <h2>All Practice Activities</h2>
   </div>
   <p class="section-intro">
-    These are the interactive activities from class. Each one lets you work through problems
+    These interactive activities let you work through problems
     and check your answers. They're organized by chapter &mdash; start with the topics you find
     most challenging.
   </p>
 
   <h3>Comprehensive Practice Problem (Ch 5&ndash;6)</h3>
   <p class="section-intro" style="margin-bottom:8px">
-    The <strong>Boulangerie Saint-Louis</strong> problem we worked through in class ties Chapters 5 and 6
+    The <strong>Boulangerie Saint-Louis</strong> problem, linked below, ties Chapters 5 and 6
     together in a single scenario: job-order cost flows, a plantwide predetermined overhead rate,
-    over-/under-applied overhead, and an activity-based-costing overlay. It's the closest single problem to
-    the exam &mdash; work it start to finish, then check yourself against the worked solution.
+    over-/under-applied overhead, and an activity-based-costing overlay. Work it start to finish, then check yourself against the worked solution.
   </p>
   <div class="practice-links">
     <a href="https://jmoon312.github.io/acct2102/boulangerie-jobcost-abc-problem-student.pdf" target="_blank">Boulangerie Practice Problem</a>
@@ -802,7 +830,7 @@
     <a href="https://jmoon312.github.io/acct2102/customer-profitability.html" target="_blank">Customer Profitability Analysis</a>
   </div>
 
-  <h3>Chapter 7 &mdash; Capacity &amp; Lean Operations</h3>
+  <h3>Chapter 7 &mdash; Service Allocation, Capacity &amp; Lean</h3>
   <div class="practice-links">
     <a href="https://jmoon312.github.io/acct2102/service-allocation.html" target="_blank">Service Department Cost Allocation</a>
     <a href="https://jmoon312.github.io/acct2102/capacity-rate-sandbox.html" target="_blank">Capacity Rates &amp; Excess Capacity</a>
@@ -812,38 +840,41 @@
   <div class="practice-links">
     <a href="https://jmoon312.github.io/acct2102/cost-based-pricing.html" target="_blank">Cost-Based Pricing</a>
     <a href="https://jmoon312.github.io/acct2102/kaizen-and-tools.html" target="_blank">Kaizen Costing &amp; Pricing Toolkit</a>
-    <a href="https://jmoon312.github.io/acct2102/budgeting-approaches.html" target="_blank">Budgeting Approaches</a>
   </div>
 
   <h3>Note Packet Practice Problems</h3>
   <div class="callout">
-    <p>Work these problems straight out of your chapter note packets &mdash; the same PDFs posted on each chapter&rsquo;s Canvas page. Page numbers are the packet&rsquo;s PDF pages.</p>
+    <p>Work these problems straight out of your chapter note packets &mdash; the same PDFs posted on each chapter&rsquo;s Canvas page. Page numbers are the packet&rsquo;s PDF pages. Worked solutions to the packet problems are on each chapter&rsquo;s Recap page in Canvas (the Chapter 8 Recap goes up Thursday, October 29).</p>
     <p><strong>Chapter 5 packet</strong></p>
     <ul class="concept-list" style="margin-bottom:0">
-      <li><strong>p.&nbsp;2 &mdash; Categorize the Costs</strong> &mdash; product vs. period costs, and which inventory account each one lands in</li>
-      <li><strong>p.&nbsp;8 &mdash; Problem 1: Tallulah Trailer Works</strong> &mdash; the predetermined overhead rate, over-/under-applied overhead, the schedule of cost of goods manufactured, and COGS before and after the year-end adjustment</li>
+      <li><strong>p.&nbsp;2 &mdash; Categorize the Costs</strong> &mdash; sorting a month&rsquo;s costs into direct materials, direct labor, overhead, or period cost, and totaling each</li>
+      <li><strong>p.&nbsp;7 &mdash; Reading the Overhead Account</strong> &mdash; what a year-end balance in Manufacturing Overhead means and what it does to Cost of Goods Sold</li>
+      <li><strong>p.&nbsp;8 &mdash; Problem 1: Tallulah Trailer Works</strong> &mdash; the predetermined overhead rate, over-/under-applied overhead, the schedule of cost of goods manufactured, and COGS before and after the year-end adjustment, and Year 2 ending work in process</li>
       <li><strong>p.&nbsp;10 &mdash; Problem 2: Ocmulgee Pulp &amp; Paper Co.</strong> &mdash; process costing: equivalent units, cost per equivalent unit, and cost transferred out through two departments</li>
       <li><strong>p.&nbsp;12 &mdash; Problem 3: Sope Creek Sauce Co.</strong> &mdash; absorption vs. variable costing, and reconciling the two income figures</li>
     </ul>
     <p style="margin-top:12px"><strong>Chapter 6 packet</strong></p>
     <ul class="concept-list" style="margin-bottom:0">
       <li><strong>p.&nbsp;2 &mdash; Problem 1: Chattahoochee Canoe Co.</strong> &mdash; plantwide vs. departmental overhead rates, and which model each one favors</li>
-      <li><strong>p.&nbsp;4 &mdash; The Activity Cost Hierarchy</strong> &mdash; unit-, batch-, product-, and facility-level costs, with your own example at each level</li>
-      <li><strong>p.&nbsp;6 &mdash; Problem 2: Lindbergh Lighting Co.</strong> &mdash; ABC activity rates, and comparing ABC unit cost to the plantwide rate to see the distortion</li>
+      <li><strong>p.&nbsp;4 &mdash; The Activity Cost Hierarchy</strong> &mdash; unit-, batch-, product-, and facility-level costs, with examples at each level</li>
+      <li><strong>p.&nbsp;6 &mdash; Problem 2: Lindbergh Lighting Co.</strong> &mdash; classifying the activity pools, ABC activity rates, and comparing ABC unit cost to the plantwide rate to see the distortion</li>
+      <li><strong>p.&nbsp;7 &mdash; Cost Distortion</strong> &mdash; which product the plantwide rate under-priced and over-priced, and what changes once ABC shows the real cost</li>
       <li><strong>p.&nbsp;9 &mdash; Reading the Profile</strong> &mdash; the customer profitability profile: where the curve peaks and what sits past it</li>
       <li><strong>p.&nbsp;10 &mdash; Problem 3: Ormewood Restaurant Supply Co.</strong> &mdash; customer profitability and the customer profitability ratio across three customers</li>
-      <li><strong>p.&nbsp;11 &mdash; Multi-Level Break-Even</strong> &mdash; the multi-level contribution income statement and break-even at the unit level</li>
+      <li><strong>p.&nbsp;11 &mdash; Multi-Level Break-Even</strong> &mdash; break-even sales dollars from a multi-level contribution income statement, and the sales needed for a target profit</li>
     </ul>
     <p style="margin-top:12px"><strong>Chapter 7 packet</strong></p>
     <ul class="concept-list" style="margin-bottom:0">
       <li><strong>p.&nbsp;4 &mdash; Problem 1: Decatur Drivetrain Co.</strong> &mdash; service-department allocation under the direct and step methods, and when the step method is worth it</li>
+      <li><strong>p.&nbsp;6 &mdash; Which Rate Goes on the Quote?</strong> &mdash; where unrecovered idle-capacity cost ends up, and which capacity base to defend</li>
       <li><strong>p.&nbsp;7 &mdash; Problem 2: Westview Laminates Inc.</strong> &mdash; theoretical, practical, and expected capacity rates, idle hours, and the cost of excess capacity</li>
       <li><strong>p.&nbsp;11 &mdash; Problem 3: Reynoldstown Racquet Co.</strong> &mdash; cycle time, manufacturing cycle efficiency, and non-value-added time under a pull system</li>
     </ul>
     <p style="margin-top:12px"><strong>Chapter 8 packet</strong></p>
     <ul class="concept-list" style="margin-bottom:0">
+      <li><strong>p.&nbsp;2 &mdash; Lawn Chopper</strong> &mdash; one product priced two ways: markup on total variable cost and on full manufacturing cost, and what the markup has to cover</li>
       <li><strong>p.&nbsp;3 &mdash; Problem 1: Sweetwater Skillet Co.</strong> &mdash; cost-based pricing: markup on total variable cost and on full manufacturing cost</li>
-      <li><strong>p.&nbsp;6 &mdash; Problem 2: Ashby Street Rain Gear</strong> &mdash; target costing, the target cost per unit, and the cost reduction the season requires</li>
+      <li><strong>p.&nbsp;6 &mdash; Problem 2: Ashby Street Rain Gear</strong> &mdash; the price that earns the required profit, the target cost per jacket at the matched price, and the cost reduction the season requires</li>
       <li><strong>p.&nbsp;7 &mdash; Brightway Telecom</strong> &mdash; Kaizen costing: setting next period&rsquo;s budget a step below this one</li>
       <li><strong>p.&nbsp;8 &mdash; Problem 3: Northlake Mail-Order Pharmacy</strong> &mdash; Kaizen budgets carried across years, adjusted for the change in volume</li>
       <li><strong>p.&nbsp;10 &mdash; Four Tools, One Question</strong> &mdash; cost-based pricing, target costing, Kaizen, and benchmarking: what each starts from</li>
